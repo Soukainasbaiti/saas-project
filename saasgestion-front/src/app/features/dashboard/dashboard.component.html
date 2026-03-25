@@ -1,0 +1,320 @@
+<div class="dash-shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="segula-logo">
+        <img src="assets/logo_segula.png" alt="SEGULA Technologies" style="height: 60px; width: auto; object-fit: contain;" />
+      </div>
+      <div class="brand-div"></div>
+      <div class="brand-right">
+        <div class="brand-title">Project Management</div>
+        <span class="brand-platform">Platform</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button mat-button class="btn-dash-active">
+        <mat-icon>dashboard</mat-icon> Dashboard
+      </button>
+      <button mat-flat-button class="btn-new-proj" routerLink="/projects/new">
+        + Nouveau Projet
+      </button>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div class="dash-body">
+
+    <!-- Page Hero -->
+    <div class="page-hero">
+      <h1>Portfolio de Projets</h1>
+      <p *ngIf="stats">{{ stats.totalProjects }} projet(s) &bull; Marge moyenne: {{ fmtPct(stats.avgMarginRate) }}</p>
+      <p *ngIf="!stats">Chargement des statistiques...</p>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" *ngIf="stats">
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-label">Total Projets</div>
+          <div class="kpi-value">{{ stats.totalProjects }}</div>
+          <div class="kpi-trend neutral">↗ {{ stats.activeProjects }} Actifs</div>
+        </div>
+        <div class="kpi-icon blue">🎯</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-label">Revenu Total</div>
+          <div class="kpi-value">{{ fmt(stats.totalRevenue) }}</div>
+          <div class="kpi-trend up">↗ CA Budget {{ selectedYear }}</div>
+        </div>
+        <div class="kpi-icon green">💰</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-label">Coût Total</div>
+          <div class="kpi-value">{{ fmt(stats.totalCost) }}</div>
+          <div class="kpi-trend down">↘ Coûts cumulés</div>
+        </div>
+        <div class="kpi-icon orange">💸</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-left">
+          <div class="kpi-label">Marge Totale</div>
+          <div class="kpi-value">{{ fmt(stats.totalMargin) }}</div>
+          <div class="kpi-trend purple">↗ {{ fmtPct(stats.avgMarginRate) }} avg</div>
+        </div>
+        <div class="kpi-icon purple">📈</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="filters-head">
+        <div class="filter-icon">🔽</div>
+        <h3>Filtres Avancés</h3>
+      </div>
+      <form [formGroup]="filterForm" class="filters-row">
+        <div class="filter-group">
+          <label>Business Unit</label>
+          <mat-select formControlName="buId" class="mat-filter-select" placeholder="Tous les BU">
+            <mat-option [value]="null">Tous les BU</mat-option>
+           <mat-option *ngFor="let b of bus" [value]="b.id">{{ b.id }} — {{ b.label }}</mat-option>
+          </mat-select>
+        </div>
+        <div class="filter-group">
+          <label>Statut du Projet</label>
+          <mat-select formControlName="status" class="mat-filter-select" placeholder="Tous les statuts">
+            <mat-option [value]="null">Tous les statuts</mat-option>
+            <mat-option value="On Going">On Going</mat-option>
+            <mat-option value="Closed">Closed</mat-option>
+            <mat-option value="Planned">Planned</mat-option>
+            <mat-option value="On Hold">On Hold</mat-option>
+            <mat-option value="Canceled">Canceled</mat-option>
+          </mat-select>
+        </div>
+        <div class="filter-group">
+          <label>Customer</label>
+          <mat-select formControlName="customerId" class="mat-filter-select" placeholder="Tous les clients">
+            <mat-option [value]="null">Tous les clients</mat-option>
+            <mat-option *ngFor="let c of customers" [value]="c.id">{{ c.label }}</mat-option>
+          </mat-select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-topbar">
+        <span class="table-title">Liste des Projets</span>
+        <div class="table-topbar-right">
+          <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
+          <span class="table-count">{{ totalElements }} projets trouvés</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table mat-table [dataSource]="projects">
+
+          <ng-container matColumnDef="projectName">
+            <th mat-header-cell *matHeaderCellDef>Project Name</th>
+            <td mat-cell *matCellDef="let p">
+              <div class="proj-name-cell">
+                <div class="pn-main">{{ p.projectName }}</div>
+                <div class="pn-sub">
+                  <span *ngIf="p.projectCode" class="code-badge">{{ p.projectCode }}</span>
+                  · {{ p.projectYear }}
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="frontFinancier">
+            <th mat-header-cell *matHeaderCellDef>Front Financier</th>
+            <td mat-cell *matCellDef="let p">{{ p.frontFinancier }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="bu">
+            <th mat-header-cell *matHeaderCellDef>BU</th>
+            <td mat-cell *matCellDef="let p">
+              <span class="bu-badge" [class]="buClass(p.buTrigram)">{{ p.buTrigram }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="customer">
+            <th mat-header-cell *matHeaderCellDef>Customer</th>
+            <td mat-cell *matCellDef="let p">{{ p.customerName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="activity">
+            <th mat-header-cell *matHeaderCellDef>Activity</th>
+            <td mat-cell *matCellDef="let p">
+              <span class="activity-text">{{ p.activity }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="revenueBudget">
+            <th mat-header-cell *matHeaderCellDef class="num">Revenu</th>
+            <td mat-cell *matCellDef="let p" class="num">
+              <span class="rev-val">{{ fmt(p.revenueBudget) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="costBudget">
+            <th mat-header-cell *matHeaderCellDef class="num">Coût</th>
+            <td mat-cell *matCellDef="let p" class="num">
+              <span class="cost-val">{{ fmt(p.costBudget) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="marginBudget">
+            <th mat-header-cell *matHeaderCellDef class="num">Marge €</th>
+            <td mat-cell *matCellDef="let p" class="num">
+              <span class="marge-eur">{{ fmt(p.marginBudget) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="projectMargin">
+            <th mat-header-cell *matHeaderCellDef class="num">Marge %</th>
+            <td mat-cell *matCellDef="let p" class="num">
+              <span class="marge-pct" [class]="marginClass(p.projectMargin)">
+                {{ fmtPct(p.projectMargin) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let p">
+              <span [class]="p.status === 'On Going' ? 'status-on' : 'status-cl'">
+                {{ p.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let p">
+              <button class="btn-voir" (click)="openModal(p.id); $event.stopPropagation()">
+                👁 Voir
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="empty-state" [attr.colspan]="displayedColumns.length">
+              <div>📂</div><p>Aucun projet trouvé</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALE DÉTAIL PROJET -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Détail du Projet</h2>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-loading" *ngIf="modalLoading">⏳ Chargement...</div>
+
+    <div class="modal-body" *ngIf="!modalLoading && selectedProject">
+
+      <div class="modal-badges">
+        <span class="d-badge">{{ selectedProject.frontFinancier }}</span>
+        <span class="d-badge">{{ selectedProject.buTrigram }}</span>
+        <span class="d-badge" [class.d-badge-on]="selectedProject.status==='On Going'">{{ selectedProject.status }}</span>
+        <span class="d-badge d-badge-major" *ngIf="selectedProject.majorProject">⭐ Majeur</span>
+      </div>
+
+      <div class="modal-title">{{ selectedProject.projectName }}</div>
+      <div class="modal-sub">{{ selectedProject.activity }} · {{ selectedProject.engagementType }}</div>
+
+      <div class="modal-fin-bar">
+        <div class="fin-item">
+          <div class="fin-lbl">💰 CA Budget</div>
+          <div class="fin-val rev">{{ fmt(selectedProject.revenueBudget) }}</div>
+        </div>
+        <div class="fin-item">
+          <div class="fin-lbl">💸 Coût</div>
+          <div class="fin-val cost">{{ fmt(selectedProject.costBudget) }}</div>
+        </div>
+        <div class="fin-item">
+          <div class="fin-lbl">📈 Marge</div>
+          <div class="fin-val marg">{{ fmt(selectedProject.marginBudget) }}</div>
+          <div class="fin-pct" [class]="marginClass(selectedProject.projectMargin)">{{ fmtPct(selectedProject.projectMargin) }}</div>
+        </div>
+      </div>
+
+      <div class="modal-grid">
+
+        <div class="modal-card">
+          <div class="mc-title">🏢 Organisation</div>
+          <table class="info-table">
+            <tr><td>Project ID</td><td>{{ selectedProject.projectId }}</td></tr>
+            <tr><td>Année</td><td>{{ selectedProject.projectYear }}</td></tr>
+            <tr><td>Front Financier</td><td>{{ selectedProject.frontFinancier }} — {{ selectedProject.frontFinancierLabel }}</td></tr>
+            <tr><td>BU ID</td><td>{{ selectedProject.buId }}</td></tr>
+            <tr><td>Business Unit</td><td>{{ selectedProject.buTrigram }} — {{ selectedProject.buName }}</td></tr>
+            <tr><td>BUM</td><td>{{ selectedProject.bumName }}</td></tr>
+            <tr><td>Projet Majeur</td><td>
+              <span *ngIf="selectedProject.majorProject" style="color:#d97706;font-weight:700;">⭐ Oui</span>
+              <span *ngIf="!selectedProject.majorProject" style="color:#94a3b8;">Non</span>
+            </td></tr>
+          </table>
+        </div>
+
+        <div class="modal-card">
+          <div class="mc-title">🤝 Client & Marché</div>
+          <table class="info-table">
+            <tr><td>Client</td><td>{{ selectedProject.customerName }}</td></tr>
+            <tr><td>Groupe Client</td><td>{{ selectedProject.customerGroup }}</td></tr>
+            <tr><td>Trigramme Client</td><td>{{ selectedProject.customerTrigram }}</td></tr>
+            <tr><td>Industrie</td><td>{{ selectedProject.industryName }}</td></tr>
+            <tr><td>Trigramme Industrie</td><td>{{ selectedProject.industryTrigram }}</td></tr>
+            <tr><td>Engagement</td><td>{{ selectedProject.engagement }}</td></tr>
+            <tr><td>Type Engagement</td><td>{{ selectedProject.engagementType }}</td></tr>
+          </table>
+        </div>
+
+        <div class="modal-card">
+          <div class="mc-title">⚙️ Technique</div>
+          <table class="info-table">
+            <tr><td>Discipline</td><td>{{ selectedProject.engineeringDiscipline }}</td></tr>
+            <tr><td>Fonction</td><td>{{ selectedProject.functionName }}</td></tr>
+            <tr><td>Activity</td><td>{{ selectedProject.activity }}</td></tr>
+            <tr><td>Chef de Projet</td><td>{{ selectedProject.projectManager }}</td></tr>
+            <tr><td>Email PM</td><td>{{ selectedProject.pmEmail }}</td></tr>
+            <tr><td>Bureau Tech.</td><td>{{ selectedProject.technicalOffice }}</td></tr>
+          </table>
+        </div>
+
+        <div class="modal-card">
+          <div class="mc-title">📅 Planning</div>
+          <table class="info-table">
+            <tr><td>Date Début</td><td>{{ formatDate(selectedProject.startDate) }}</td></tr>
+            <tr><td>Date Fin</td><td>{{ formatDate(selectedProject.endDate) }}</td></tr>
+            <tr><td>Statut</td><td>{{ selectedProject.status }}</td></tr>
+            <tr><td>Créé le</td><td>{{ formatDate(selectedProject.createdAt) }}</td></tr>
+            <tr><td>Modifié le</td><td>{{ formatDate(selectedProject.updatedAt) }}</td></tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-annuler" (click)="closeModal()">Fermer</button>
+    </div>
+
+  </div>
+</div>

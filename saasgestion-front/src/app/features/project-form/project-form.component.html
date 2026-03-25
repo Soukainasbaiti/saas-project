@@ -1,0 +1,241 @@
+<div class="form-shell">
+
+  <!-- Hero Banner -->
+  <div class="form-hero">
+    <div class="form-hero-icon">✨</div>
+    <div>
+      <h1>Créer Nouveau Projet</h1>
+      <p>Configurez les paramètres de votre nouveau projet</p>
+    </div>
+    <button class="btn-retour" routerLink="/">← Retour Dashboard</button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <!-- Section 1 -->
+    <div class="form-card">
+      <div class="section-title">🏢 Informations Financières & Équipe</div>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label class="form-label">Front Financier <span class="req">*</span></label>
+          <input class="form-input" formControlName="frontFinancier"
+                 placeholder="Entrez le front financier"
+                 [class.invalid]="form.get('frontFinancier')?.invalid && form.get('frontFinancier')?.touched">
+          <span class="error-msg" *ngIf="form.get('frontFinancier')?.invalid && form.get('frontFinancier')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Project Manager <span class="req">*</span></label>
+          <select class="form-select" formControlName="projectManagerId"
+                  [class.invalid]="form.get('projectManagerId')?.invalid && form.get('projectManagerId')?.touched">
+            <option [ngValue]="null" disabled>Nom du project manager</option>
+            <option *ngFor="let pm of pms" [ngValue]="pm.id">{{ pm.label }}</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('projectManagerId')?.invalid && form.get('projectManagerId')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Revenu Budget (€) <span class="req">*</span></label>
+          <input class="form-input" type="number" formControlName="revenueBudget"
+                 [class.invalid]="form.get('revenueBudget')?.invalid && form.get('revenueBudget')?.touched">
+          <span class="error-msg" *ngIf="form.get('revenueBudget')?.invalid && form.get('revenueBudget')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cost Budget (€) <span class="req">*</span></label>
+          <input class="form-input" type="number" formControlName="costBudget"
+                 [class.invalid]="form.get('costBudget')?.invalid && form.get('costBudget')?.touched">
+          <span class="error-msg" *ngIf="form.get('costBudget')?.invalid && form.get('costBudget')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Margin Preview -->
+      <div class="margin-preview" *ngIf="(form.get('revenueBudget')?.value || 0) > 0">
+        <div class="mp-item">
+          <span class="mp-label">CA</span>
+          <span class="mp-val rev">{{ form.get('revenueBudget')?.value | number:'1.0-0' }} €</span>
+        </div>
+        <div class="mp-sep">−</div>
+        <div class="mp-item">
+          <span class="mp-label">Coût</span>
+          <span class="mp-val cost">{{ form.get('costBudget')?.value | number:'1.0-0' }} €</span>
+        </div>
+        <div class="mp-sep">=</div>
+        <div class="mp-item">
+          <span class="mp-label">Marge</span>
+          <span class="mp-val"
+                [class.marge-high]="marginPreview>=25"
+                [class.marge-mid]="marginPreview>=10 && marginPreview<25"
+                [class.marge-low]="marginPreview<10">
+            {{ marginEur | number:'1.0-0' }} € ({{ marginPreview | number:'1.1-1' }}%)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="form-card">
+      <div class="section-title">🔧 Détails Techniques & Classification</div>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label class="form-label">Function <span class="req">*</span></label>
+          <input class="form-input" formControlName="functionName"
+                 placeholder="Entrez la fonction"
+                 [class.invalid]="form.get('functionName')?.invalid && form.get('functionName')?.touched">
+          <span class="error-msg" *ngIf="form.get('functionName')?.invalid && form.get('functionName')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Activity <span class="req">*</span></label>
+          <input class="form-input" formControlName="activity"
+                 [class.invalid]="form.get('activity')?.invalid && form.get('activity')?.touched">
+          <span class="error-msg" *ngIf="form.get('activity')?.invalid && form.get('activity')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">BU <span class="req">*</span></label>
+          <select class="form-select" formControlName="buId"
+                  [class.invalid]="form.get('buId')?.invalid && form.get('buId')?.touched">
+            <option [ngValue]="null" disabled>Sélectionner BU</option>
+            <option *ngFor="let b of bus" [ngValue]="b.id">{{ b.code }} — {{ b.label }}</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('buId')?.invalid && form.get('buId')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Customer <span class="req">*</span></label>
+          <select class="form-select" formControlName="customerId"
+                  [class.invalid]="form.get('customerId')?.invalid && form.get('customerId')?.touched">
+            <option [ngValue]="null" disabled>Sélectionner Customer</option>
+            <option *ngFor="let c of customers" [ngValue]="c.id">{{ c.label }}</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('customerId')?.invalid && form.get('customerId')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Industry <span class="req">*</span></label>
+          <select class="form-select" formControlName="industryId"
+                  [class.invalid]="form.get('industryId')?.invalid && form.get('industryId')?.touched">
+            <option [ngValue]="null" disabled>Sélectionner Industry</option>
+            <option *ngFor="let i of industries" [ngValue]="i.id">{{ i.label }}</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('industryId')?.invalid && form.get('industryId')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Engineering Discipline <span class="req">*</span></label>
+          <select class="form-select" formControlName="engineeringDisciplineId"
+                  [class.invalid]="form.get('engineeringDisciplineId')?.invalid && form.get('engineeringDisciplineId')?.touched">
+            <option [ngValue]="null" disabled>Sélectionner Discipline</option>
+            <option *ngFor="let d of disciplines" [ngValue]="d.id">{{ d.label }}</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('engineeringDisciplineId')?.invalid && form.get('engineeringDisciplineId')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Engagement <span class="req">*</span></label>
+          <select class="form-select" formControlName="engagementId"
+                  [class.invalid]="form.get('engagementId')?.invalid && form.get('engagementId')?.touched">
+            <option [ngValue]="null" disabled>Sélectionner Engagement</option>
+            <option *ngFor="let e of engagements" [ngValue]="e.id">{{ e.code }} — {{ e.label }}</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('engagementId')?.invalid && form.get('engagementId')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Major Project</label>
+          <select class="form-select" formControlName="majorProject">
+            <option [ngValue]="false">Non</option>
+            <option [ngValue]="true">Oui</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status <span class="req">*</span></label>
+          <select class="form-select" formControlName="status"
+                  [class.invalid]="form.get('status')?.invalid && form.get('status')?.touched">
+            <option value="" disabled>Sélectionner Status</option>
+            <option value="On Going">On Going</option>
+            <option value="Closed">Closed</option>
+            <option value="Planned">Planned</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Canceled">Canceled</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('status')?.invalid && form.get('status')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Technical Office <span class="req">*</span></label>
+          <select class="form-select" formControlName="technicalOffice">
+            <option value="Front Office">Front Office</option>
+            <option value="Back Office">Back Office</option>
+          </select>
+        </div>
+
+        <!-- Dates -->
+        <div class="form-group">
+          <label class="form-label">Start Date <span class="req">*</span></label>
+          <input type="date" class="form-input" formControlName="startDate"
+                 [class.invalid]="form.get('startDate')?.invalid && form.get('startDate')?.touched">
+          <span class="error-msg" *ngIf="form.get('startDate')?.invalid && form.get('startDate')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">End Date <span class="req">*</span></label>
+          <input type="date" class="form-input" formControlName="endDate"
+                 [class.invalid]="form.get('endDate')?.invalid && form.get('endDate')?.touched">
+          <span class="error-msg" *ngIf="form.get('endDate')?.invalid && form.get('endDate')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+      </div>
+
+      <!-- ERREUR DATE -->
+      <div class="error-msg"
+           *ngIf="form.errors?.['dateInvalid'] && (form.get('startDate')?.touched || form.get('endDate')?.touched)">
+        ⚠️ La date de fin doit être supérieure à la date de début
+      </div>
+
+      <div class="form-divider"></div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-annuler" routerLink="/">Annuler</button>
+        <button type="submit" class="btn-creer" [disabled]="saving">
+          <span *ngIf="saving">Création en cours...</span>
+          <span *ngIf="!saving">Créer Projet →</span>
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
