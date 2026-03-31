@@ -1,0 +1,74 @@
+<div class="login-shell">
+
+  <div class="login-card">
+
+    <!-- Logo -->
+    <div class="login-logo">
+      <img src="assets/logo_segula.png" alt="SEGULA Technologies" />
+    </div>
+
+    <div class="login-header">
+      <h1>Connexion</h1>
+      <p>Project Management Platform</p>
+    </div>
+
+    <!-- Erreur -->
+    <div class="alert-error" *ngIf="errorMsg">
+      <span class="alert-icon">⚠</span>
+      {{ errorMsg }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+      <!-- Email -->
+      <div class="field-group">
+        <label class="field-label">Adresse email</label>
+        <input
+          type="email"
+          class="field-input"
+          formControlName="email"
+          placeholder="votre@email.com"
+          autocomplete="email"
+          [class.invalid]="form.get('email')?.invalid && form.get('email')?.touched">
+        <span class="field-error"
+          *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+          {{ form.get('email')?.hasError('required') ? 'Email requis' : 'Email invalide' }}
+        </span>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="field-group">
+        <label class="field-label">Mot de passe</label>
+        <div class="input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            class="field-input"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            [class.invalid]="form.get('password')?.invalid && form.get('password')?.touched">
+          <button type="button" class="toggle-pw" (click)="togglePassword()">
+            {{ showPassword ? '🙈' : '👁' }}
+          </button>
+        </div>
+        <span class="field-error"
+          *ngIf="form.get('password')?.invalid && form.get('password')?.touched">
+          Mot de passe requis
+        </span>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn-login" [disabled]="loading">
+        <span *ngIf="!loading">Se connecter</span>
+        <span *ngIf="loading" class="spinner"></span>
+      </button>
+
+    </form>
+
+    <div class="login-footer">
+      SEGULA Technologies &copy; {{ year }}
+    </div>
+
+  </div>
+
+</div>

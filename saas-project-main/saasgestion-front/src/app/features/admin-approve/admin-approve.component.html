@@ -1,0 +1,121 @@
+<div class="approve-shell">
+
+  <!-- Header -->
+  <header class="approve-header">
+    <img src="assets/logo_segula.png" alt="SEGULA" class="header-logo" />
+    <span class="header-title">Administration — Validation projet</span>
+    <div class="header-user">
+      <span>{{ auth.currentUser()?.fullName }}</span>
+      <button class="btn-back" routerLink="/">← Dashboard</button>
+    </div>
+  </header>
+
+  <div class="approve-body">
+
+    <!-- Loading -->
+    <div class="state-card" *ngIf="loading">
+      <div class="spinner-lg"></div>
+      <p>Chargement du projet...</p>
+    </div>
+
+    <!-- Erreur -->
+    <div class="state-card error" *ngIf="!loading && errorMsg && !done">
+      <div class="state-icon">⚠️</div>
+      <h2>{{ errorMsg }}</h2>
+      <button class="btn-primary" routerLink="/">Retour au dashboard</button>
+    </div>
+
+    <!-- Succès final -->
+    <div class="state-card success" *ngIf="done && doneAction === 'approve'">
+      <div class="state-icon">✅</div>
+      <h2>Projet approuvé avec succès</h2>
+      <p>Le projet a été créé dans le système et le créateur a été notifié par email.</p>
+      <button class="btn-primary" routerLink="/">Retour au dashboard</button>
+    </div>
+
+    <div class="state-card reject-done" *ngIf="done && doneAction === 'reject'">
+      <div class="state-icon">❌</div>
+      <h2>Projet rejeté</h2>
+      <p>Le créateur a été notifié du rejet par email.</p>
+      <button class="btn-primary" routerLink="/">Retour au dashboard</button>
+    </div>
+
+    <!-- Détail projet -->
+    <div *ngIf="!loading && detail && !done && !errorMsg">
+
+      <div class="page-title">
+        <h1>Nouveau projet à valider</h1>
+        <p>Soumis par <strong>{{ detail.submittedBy }}</strong> le {{ formatDate(detail.submittedAt) }} · Expire le {{ formatDate(detail.expiresAt) }}</p>
+      </div>
+
+      <!-- Fiche projet -->
+      <div class="detail-grid">
+
+        <div class="detail-card">
+          <div class="card-title">💰 Financier</div>
+          <table class="info-table">
+            <tr><td>Front Financier</td><td><span class="chip">{{ detail.project.frontFinancier }}</span></td></tr>
+            <tr><td>Revenue Budget</td><td class="val-green">{{ fmt(detail.project.revenueBudget) }}</td></tr>
+            <tr><td>Cost Budget</td><td class="val-red">{{ fmt(detail.project.costBudget) }}</td></tr>
+            <tr><td>Marge estimée</td><td class="val-blue">{{ fmt(detail.project.revenueBudget - detail.project.costBudget) }}</td></tr>
+          </table>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-title">🏢 Organisation</div>
+          <table class="info-table">
+            <tr><td>Business Unit</td><td><span class="chip">{{ detail.project.buId }}</span></td></tr>
+            <tr><td>Statut demandé</td><td><span class="chip chip-status">{{ detail.project.status }}</span></td></tr>
+            <tr><td>Projet majeur</td><td>{{ detail.project.majorProject ? '⭐ Oui' : 'Non' }}</td></tr>
+            <tr><td>Bureau tech.</td><td>{{ detail.project.technicalOffice }}</td></tr>
+          </table>
+        </div>
+
+        <div class="detail-card wide">
+          <div class="card-title">📋 Activité & Planning</div>
+          <table class="info-table">
+            <tr><td>Activité</td><td><strong>{{ detail.project.activity }}</strong></td></tr>
+            <tr><td>Code projet</td><td><span class="code-mono">{{ detail.project.projectCode || '— BizDev —' }}</span></td></tr>
+            <tr><td>Date début</td><td>{{ detail.project.startDate || '—' }}</td></tr>
+            <tr><td>Date fin</td><td>{{ detail.project.endDate || '—' }}</td></tr>
+            <tr><td>Ancien nom</td><td>{{ detail.project.projectNameLegacy || '—' }}</td></tr>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- Zone d'action -->
+      <div class="action-zone">
+
+        <!-- Bouton approuver -->
+        <button class="btn-approve" (click)="approve()" [disabled]="processing">
+          <span *ngIf="!processing">✓ Approuver le projet</span>
+          <span *ngIf="processing" class="spinner-sm"></span>
+        </button>
+
+        <!-- Bouton rejeter -->
+        <button class="btn-reject-toggle" (click)="showReject = !showReject" [disabled]="processing">
+          {{ showReject ? '↑ Annuler le rejet' : '✗ Rejeter le projet' }}
+        </button>
+
+        <!-- Zone rejet -->
+        <div class="reject-zone" *ngIf="showReject">
+          <label class="field-label">Motif du rejet <span class="req">*</span></label>
+          <textarea
+            class="reject-textarea"
+            [(ngModel)]="rejectReason"
+            placeholder="Expliquez pourquoi ce projet est rejeté..."
+            rows="3">
+          </textarea>
+          <div class="alert-error" *ngIf="errorMsg">⚠ {{ errorMsg }}</div>
+          <button class="btn-reject-confirm" (click)="reject()" [disabled]="processing || !rejectReason.trim()">
+            <span *ngIf="!processing">Confirmer le rejet</span>
+            <span *ngIf="processing" class="spinner-sm"></span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

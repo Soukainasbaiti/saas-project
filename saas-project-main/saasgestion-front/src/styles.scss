@@ -1,0 +1,59 @@
+/* ── Google Fonts ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ── Reset ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  height: 100%; margin: 0; padding: 0;
+  font-family: 'Inter', sans-serif;
+  background: #f0f4f8;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Angular Material Override — Light Theme ─────────────────── */
+.mat-mdc-option {
+  background: #fff !important;
+  color: #374151 !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  &:hover { background: #f8fbff !important; }
+  &.mdc-list-item--selected { background: #eff6ff !important; color: #0066cc !important; }
+}
+.mat-mdc-select-panel {
+  background: #fff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1) !important;
+}
+.mat-mdc-form-field {
+  font-family: 'Inter', sans-serif !important;
+}
+.mat-mdc-snack-bar-container {
+  &.snack-success .mdc-snackbar__surface {
+    background: #fff !important;
+    border-left: 4px solid #16a34a;
+    color: #1e293b !important;
+  }
+  &.snack-error .mdc-snackbar__surface {
+    background: #fff !important;
+    border-left: 4px solid #dc2626;
+    color: #1e293b !important;
+  }
+}
+
+/* ── Paginator ───────────────────────────────────────────────── */
+mat-paginator {
+  background: #f8fafc !important;
+  border-top: 1px solid #f1f5f9;
+  font-family: 'Inter', sans-serif !important;
+  color: #64748b !important;
+  .mat-mdc-icon-button { color: #64748b !important; }
+  .mat-mdc-select-value { color: #374151 !important; }
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }

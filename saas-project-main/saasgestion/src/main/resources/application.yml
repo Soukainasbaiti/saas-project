@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: SaaSGestion
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/project_saas?preferQueryMode=simple
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  sql:
+    init:
+      mode: never
+
+  # ── Mail (Mailtrap pour dev) ────────────────────────────────────
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: afd1a097f0c6d6
+    password: c2324a4ad37f96
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# ── JWT ─────────────────────────────────────────────────────────────
+app:
+  jwt:
+    secret: segula-saas-super-secret-key-2024-must-be-at-least-32-chars
+    access-token-ms: 900000       # 15 minutes
+    refresh-token-ms: 604800000   # 7 jours
+  base-url: http://localhost:4200
+
+logging:
+  level:
+    root: INFO
+    com.segula.saasgestion: DEBUG
