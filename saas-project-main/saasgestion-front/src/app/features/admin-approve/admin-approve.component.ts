@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -37,7 +37,8 @@ export class AdminApproveComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private http: HttpClient,
-    public  auth: AuthService
+    public  auth: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -46,14 +47,24 @@ export class AdminApproveComponent implements OnInit {
   }
 
   loadDetail(): void {
+    console.log('[AdminApprove] loadDetail() token=', this.token);
     this.http.get<PendingDetail>(`http://localhost:8080/api/admin/approve/${this.token}`)
       .subscribe({
-        next:  d => { this.detail = d; this.loading = false; },
+        next: d => {
+          console.log('[AdminApprove] réponse OK:', d);
+          this.detail  = d;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
         error: err => {
+          console.error('[AdminApprove] erreur HTTP:', err.status, err.error);
           this.loading  = false;
-          this.errorMsg = err.status === 404
-            ? 'Token invalide ou expiré.'
-            : err.error?.error || 'Erreur de chargement.';
+          this.errorMsg = err.status === 0
+            ? 'Impossible de joindre le serveur.'
+            : err.status === 404
+              ? 'Token invalide ou expiré.'
+              : err.error?.error || `Erreur ${err.status}`;
+          this.cdr.detectChanges();
         }
       });
   }
@@ -61,16 +72,22 @@ export class AdminApproveComponent implements OnInit {
   approve(): void {
     if (!confirm('Confirmer l\'approbation de ce projet ?')) return;
     this.processing = true;
+    this.errorMsg   = '';
+    console.log('[AdminApprove] POST approve...');
     this.http.post(`http://localhost:8080/api/admin/approve/${this.token}`, { action: 'approve' })
       .subscribe({
-        next: () => {
+        next: (res) => {
+          console.log('[AdminApprove] approve OK:', res);
           this.processing = false;
           this.done       = true;
           this.doneAction = 'approve';
+          this.cdr.detectChanges();
         },
         error: err => {
+          console.error('[AdminApprove] approve ERREUR:', err.status, err.error);
           this.processing = false;
-          this.errorMsg   = err.error?.error || 'Erreur lors de l\'approbation.';
+          this.errorMsg   = err.error?.error || `Erreur ${err.status} lors de l\'approbation.`;
+          this.cdr.detectChanges();
         }
       });
   }

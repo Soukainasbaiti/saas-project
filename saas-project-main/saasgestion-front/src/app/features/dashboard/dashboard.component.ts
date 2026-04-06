@@ -44,6 +44,10 @@ export class DashboardComponent implements OnInit {
 
   filterForm: FormGroup;
 
+  // ── Propriétés simples initialisées dans ngOnInit ─────────────
+  currentUser: { fullName: string; role: string; email: string } | null = null;
+  isAdmin = false;
+
   displayedColumns = [
     'projectName', 'frontFinancier', 'bu', 'customer',
     'activity', 'revenueBudget', 'costBudget', 'marginBudget',
@@ -64,11 +68,12 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // ── Getters réactifs — lisent auth APRÈS initialisation ──────
-  get currentUser() { return this.auth.currentUser(); }
-  get isAdmin()     { return this.auth.isAdmin(); }
-
   ngOnInit(): void {
+    // Lire une seule fois après init — évite ExpressionChangedAfterChecked
+    this.currentUser = this.auth.currentUser();
+    this.isAdmin     = this.auth.isAdmin();
+    this.cdr.detectChanges();
+
     this.loadRefData();
     this.loadStats();
     this.loadProjects();
@@ -86,7 +91,10 @@ export class DashboardComponent implements OnInit {
   }
 
   loadStats(): void {
-    this.api.getDashboardStats(new Date().getFullYear()).subscribe(s => this.stats = s);
+    this.api.getDashboardStats(new Date().getFullYear()).subscribe(s => {
+      this.stats = s;
+      this.cdr.detectChanges();
+    });
   }
 
   loadProjects(): void {
@@ -106,7 +114,10 @@ export class DashboardComponent implements OnInit {
         this.loading       = false;
         this.cdr.detectChanges();
       },
-      error: () => this.loading = false
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -115,8 +126,16 @@ export class DashboardComponent implements OnInit {
     this.modalLoading = true;
     this.selectedProject = null;
     this.api.getProject(id).subscribe({
-      next:  p => { this.selectedProject = p; this.modalLoading = false; this.cdr.detectChanges(); },
-      error: () => { this.modalLoading = false; this.showModal = false; }
+      next: p => {
+        this.selectedProject = p;
+        this.modalLoading    = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.modalLoading = false;
+        this.showModal    = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -132,7 +151,7 @@ export class DashboardComponent implements OnInit {
     }).format(v);
   }
 
-  fmtPct(v: number): string  { return v == null ? '—' : (v * 100).toFixed(1) + '%'; }
+  fmtPct(v: number): string { return v == null ? '—' : (v * 100).toFixed(1) + '%'; }
 
   marginClass(v: number): string {
     if (v >= 0.25) return 'marge-high';

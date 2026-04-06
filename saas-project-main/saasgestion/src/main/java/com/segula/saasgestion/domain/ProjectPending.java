@@ -19,7 +19,7 @@ public class ProjectPending {
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
     private String payload;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "submitted_by", nullable = false)
     private AppUser submittedBy;
 

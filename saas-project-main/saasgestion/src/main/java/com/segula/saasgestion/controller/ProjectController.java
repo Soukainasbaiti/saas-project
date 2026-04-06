@@ -1,18 +1,23 @@
 package com.segula.saasgestion.controller;
 
 import com.segula.saasgestion.dto.*;
+import com.segula.saasgestion.service.ProjectPendingService;
 import com.segula.saasgestion.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
 public class ProjectController {
 
-    private final ProjectService projectService;
+    private final ProjectService        projectService;
+    private final ProjectPendingService pendingService;
 
     @GetMapping
     public ResponseEntity<PagedResponse<ProjectListDto>> list(
@@ -23,7 +28,9 @@ public class ProjectController {
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(projectService.findAll(buId, customerId, status, year, search, page, size));
+        return ResponseEntity.ok(
+            projectService.findAll(buId, customerId, status, year, search, page, size)
+        );
     }
 
     @GetMapping("/{id}")
@@ -33,9 +40,21 @@ public class ProjectController {
         return ResponseEntity.ok(proj);
     }
 
+    // ── POST : soumet pour approbation admin ──────────────────────
     @PostMapping
-    public ResponseEntity<ProjectDetailDto> create(@Valid @RequestBody ProjectCreateRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.create(req));
+    public ResponseEntity<Map<String, String>> create(
+            @Valid @RequestBody ProjectCreateRequest req,
+            Authentication auth) {
+
+        Long submitterId = (Long) auth.getPrincipal();
+        String token = pendingService.submitForApproval(req, submitterId);
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .body(Map.of(
+                    "message", "Projet soumis avec succes. En attente de validation par l'administrateur.",
+                    "approvalToken", token
+                ));
     }
 
     @DeleteMapping("/{id}")
@@ -44,7 +63,6 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
-    // ✅ Endpoint stats dashboard ajouté
     @GetMapping("/stats/dashboard")
     public ResponseEntity<DashboardStatsDto> dashboardStats(
             @RequestParam(required = false) Short year) {

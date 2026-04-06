@@ -108,45 +108,41 @@ public class ProjectService {
                 req.getActivity()
         );
 
-        Project p = Project.builder()
-                .projectCode(req.getProjectCode())
-                .projectName(name)
-                .projectYear(year)
-                .projectNameLegacy(req.getProjectNameLegacy())
-                .frontFinancier(ff)
-                .projectManager(pm)
-                .bu(bu)
-                .customer(cust)
-                .industry(ind)
-                .engineeringDiscipline(disc)
-                .function(fn)
-                .engagement(eng)
-                .activity(req.getActivity())
-
-                .revenueBudget(nvl(req.getRevenueBudget()))
-                .costBudget(nvl(req.getCostBudget()))
-
-                .startDate(req.getStartDate())
-                .endDate(req.getEndDate())
-
-                .majorProject(req.isMajorProject())
-
-                // FIX ICI ✔✔✔
-                .technicalOffice(
-                        req.getTechnicalOffice() == null
-                                ? TechnicalOffice.BACK_OFFICE
-                                : TechnicalOffice.fromDbValue(req.getTechnicalOffice().trim())
-                )
-
-                // FIX ICI ✔✔✔
-                .status(
-                        req.getStatus() == null
-                                ? ProjectStatus.ON_GOING
-                                : ProjectStatus.fromDbValue(req.getStatus().trim())
-                )
-
-                .createdById(req.getProjectManagerId())
-                .build();
+      Project p = Project.builder()
+        .projectCode(
+            (req.getProjectCode() == null || req.getProjectCode().isBlank())
+                ? null
+                : req.getProjectCode().trim()
+        )
+        .projectName(name)
+        .projectYear(year)
+        .projectNameLegacy(req.getProjectNameLegacy())
+        .frontFinancier(ff)
+        .projectManager(pm)
+        .bu(bu)
+        .customer(cust)
+        .industry(ind)
+        .engineeringDiscipline(disc)
+        .function(fn)
+        .engagement(eng)
+        .activity(req.getActivity())
+        .revenueBudget(nvl(req.getRevenueBudget()))
+        .costBudget(nvl(req.getCostBudget()))
+        .startDate(req.getStartDate())
+        .endDate(req.getEndDate())
+        .majorProject(req.isMajorProject())
+        .technicalOffice(
+            req.getTechnicalOffice() == null
+                ? TechnicalOffice.BACK_OFFICE
+                : TechnicalOffice.fromDbValue(req.getTechnicalOffice().trim())
+        )
+        .status(
+            req.getStatus() == null
+                ? ProjectStatus.ON_GOING
+                : ProjectStatus.fromDbValue(req.getStatus().trim())
+        )
+        .createdById(req.getProjectManagerId())
+        .build();
 
         return toDetailDto(projectRepo.save(p));
     }
