@@ -37,6 +37,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Routes publiques
                 .requestMatchers("/auth/login", "/auth/refresh").permitAll()
+                // Approbation projet via token email (public — le token fait office d'autorisation)
+                .requestMatchers("/admin/approve/**").permitAll()
                 // Route change-password : accessible avec n'importe quel JWT valide
                 .requestMatchers("/auth/change-password").authenticated()
                 // Routes admin uniquement

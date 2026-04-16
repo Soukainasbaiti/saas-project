@@ -112,6 +112,46 @@
       </table>
     </div>
 
+    <!-- Prévisions mensuelles -->
+    <div class="detail-card wide" *ngIf="project.monthlyForecasts && project.monthlyForecasts.length > 0">
+      <div class="dc-title">📅 Prévisions Mensuelles</div>
+      <div class="forecast-table-wrap">
+        <table class="forecast-table">
+          <thead>
+            <tr>
+              <th>Mois</th>
+              <th>Revenue (€)</th>
+              <th>Cost (€)</th>
+              <th>Marge €</th>
+              <th>Marge %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let f of project.monthlyForecasts">
+              <td class="month-name">{{ monthLabel(f.month) }}</td>
+              <td class="num-cell rev">{{ fmt(f.revenue) }}</td>
+              <td class="num-cell cost">{{ fmt(f.cost) }}</td>
+              <td class="num-cell">{{ fmt(f.revenue - f.cost) }}</td>
+              <td class="num-cell" [ngClass]="monthMarginClass(f.revenue, f.cost)">
+                {{ monthMargin(f.revenue, f.cost) }}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="forecast-total">
+              <td>TOTAL</td>
+              <td class="num-cell rev">{{ fmt(forecastTotalRevenue) }}</td>
+              <td class="num-cell cost">{{ fmt(forecastTotalCost) }}</td>
+              <td class="num-cell">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
+              <td class="num-cell" [ngClass]="monthMarginClass(forecastTotalRevenue, forecastTotalCost)">
+                {{ monthMargin(forecastTotalRevenue, forecastTotalCost) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
     <!-- Nom généré -->
     <div class="detail-card wide">
       <div class="dc-title">🏷️ Nom Généré & Historique</div>

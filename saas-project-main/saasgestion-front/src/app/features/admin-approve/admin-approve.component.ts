@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -33,9 +33,38 @@ export class AdminApproveComponent implements OnInit {
   done         = false;
   doneAction   = '';
 
+  // Modale de confirmation
+  showModal        = false;
+  modalTitle       = '';
+  modalMessage     = '';
+  modalType: 'approve' | 'reject' = 'approve';
+
+  openConfirm(type: 'approve' | 'reject'): void {
+    this.modalType    = type;
+    this.modalTitle   = type === 'approve' ? 'Confirmer l\'approbation' : 'Confirmer le rejet';
+    this.modalMessage = type === 'approve'
+      ? 'Êtes-vous sûr de vouloir approuver ce projet ? Il sera créé dans le système.'
+      : 'Êtes-vous sûr de vouloir rejeter ce projet ? Le créateur sera notifié par email.';
+    this.showModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.cdr.detectChanges();
+  }
+
+  confirmAction(): void {
+    this.showModal = false;
+    if (this.modalType === 'approve') {
+      this.approve();
+    } else {
+      this.reject();
+    }
+  }
+
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private http: HttpClient,
     public  auth: AuthService,
     private cdr: ChangeDetectorRef
@@ -70,7 +99,6 @@ export class AdminApproveComponent implements OnInit {
   }
 
   approve(): void {
-    if (!confirm('Confirmer l\'approbation de ce projet ?')) return;
     this.processing = true;
     this.errorMsg   = '';
     console.log('[AdminApprove] POST approve...');
@@ -99,18 +127,23 @@ export class AdminApproveComponent implements OnInit {
     }
     this.processing = true;
     this.errorMsg   = '';
+    console.log('[AdminApprove] POST reject...');
     this.http.post(`http://localhost:8080/api/admin/approve/${this.token}`, {
       action: 'reject',
       reason: this.rejectReason
     }).subscribe({
-      next: () => {
+      next: (res) => {
+        console.log('[AdminApprove] reject OK:', res);
         this.processing = false;
         this.done       = true;
         this.doneAction = 'reject';
+        this.cdr.detectChanges();
       },
       error: err => {
+        console.error('[AdminApprove] reject ERREUR:', err.status, err.error);
         this.processing = false;
-        this.errorMsg   = err.error?.error || 'Erreur lors du rejet.';
+        this.errorMsg   = err.error?.error || `Erreur ${err.status} lors du rejet.`;
+        this.cdr.detectChanges();
       }
     });
   }

@@ -211,3 +211,73 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Modale de confirmation ─────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 30, 53, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 36px 32px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  text-align: center;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700;
+  margin: 0 auto 20px;
+  &.modal-icon-approve { background: #dcfce7; color: #16a34a; }
+  &.modal-icon-reject  { background: #fee2e2; color: #dc2626; }
+}
+
+.modal-title {
+  font-size: 18px; font-weight: 700; color: #0f1e35;
+  margin: 0 0 10px;
+}
+
+.modal-message {
+  font-size: 14px; color: #64748b;
+  line-height: 1.6; margin: 0 0 28px;
+}
+
+.modal-actions {
+  display: flex; gap: 12px; justify-content: center;
+}
+
+.modal-btn-cancel {
+  padding: 10px 24px; border-radius: 8px;
+  border: 1.5px solid #e2e8f0; background: #fff;
+  color: #64748b; font-size: 14px; font-weight: 600;
+  font-family: 'Inter', sans-serif; cursor: pointer;
+  transition: all 0.15s;
+  &:hover { border-color: #94a3b8; color: #374151; }
+}
+
+.modal-btn-confirm {
+  padding: 10px 24px; border-radius: 8px;
+  border: none; color: #fff;
+  font-size: 14px; font-weight: 600;
+  font-family: 'Inter', sans-serif; cursor: pointer;
+  transition: all 0.15s;
+  &.modal-btn-approve { background: #16a34a; &:hover { background: #15803d; } }
+  &.modal-btn-reject  { background: #dc2626; &:hover { background: #b91c1c; } }
+}

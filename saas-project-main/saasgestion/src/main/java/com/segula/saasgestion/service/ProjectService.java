@@ -17,15 +17,16 @@ import java.time.Year;
 @RequiredArgsConstructor
 public class ProjectService {
 
-    private final ProjectRepository               projectRepo;
-    private final AppUserRepository               userRepo;
-    private final BuRepository                    buRepo;
-    private final CustomerRepository              customerRepo;
-    private final IndustryRepository              industryRepo;
-    private final EngineeringDisciplineRepository disciplineRepo;
-    private final ProjectFunctionRepository       functionRepo;
-    private final EngagementRepository            engagementRepo;
-    private final FrontFinancierRepository        frontFinancierRepo;
+    private final ProjectRepository                  projectRepo;
+    private final AppUserRepository                  userRepo;
+    private final BuRepository                       buRepo;
+    private final CustomerRepository                 customerRepo;
+    private final IndustryRepository                 industryRepo;
+    private final EngineeringDisciplineRepository    disciplineRepo;
+    private final ProjectFunctionRepository          functionRepo;
+    private final EngagementRepository               engagementRepo;
+    private final FrontFinancierRepository           frontFinancierRepo;
+    private final ProjectMonthlyForecastRepository   monthlyForecastRepo;
 
     // ────────────────────────────────────────────────────────────────
     // LISTE DES PROJETS AVEC FILTRES
@@ -37,6 +38,7 @@ public class ProjectService {
             String status,
             Short year,
             String search,
+            Long createdById,
             int page,
             int size
     ) {
@@ -51,8 +53,8 @@ public class ProjectService {
 
         Page<Project> result =
                 filteredYear == null
-                        ? projectRepo.findWithFiltersNoYear(filteredBuId, customerId, filteredStatus, pageable)
-                        : projectRepo.findWithFiltersWithYear(filteredBuId, customerId, filteredStatus, filteredYear, pageable);
+                        ? projectRepo.findWithFiltersNoYear(filteredBuId, customerId, filteredStatus, createdById, pageable)
+                        : projectRepo.findWithFiltersWithYear(filteredBuId, customerId, filteredStatus, createdById, filteredYear, pageable);
 
         return PagedResponse.<ProjectListDto>builder()
                 .content(result.getContent().stream().map(this::toListDto).toList())
@@ -78,9 +80,17 @@ public class ProjectService {
     // ────────────────────────────────────────────────────────────────
     @Transactional
     public ProjectDetailDto create(ProjectCreateRequest req) {
+        return create(req, req.getProjectManagerId());
+    }
 
-        FrontFinancier ff = frontFinancierRepo.findByCodeIgnoreCase(req.getFrontFinancier().trim())
-                .orElseThrow(() -> new IllegalArgumentException("Front financier introuvable: " + req.getFrontFinancier()));
+    @Transactional
+    public ProjectDetailDto create(ProjectCreateRequest req, Long createdById) {
+
+        String ffCode = req.getFrontFinancier().trim();
+        FrontFinancier ff = frontFinancierRepo.findByCodeIgnoreCase(ffCode)
+                .orElseGet(() -> frontFinancierRepo.save(
+                        FrontFinancier.builder().code(ffCode).label(ffCode).isActive(true).build()
+                ));
 
         AppUser pm = userRepo.findById(req.getProjectManagerId()).orElseThrow();
         BU bu = buRepo.findById(req.getBuId()).orElseThrow();
@@ -89,10 +99,14 @@ public class ProjectService {
         EngineeringDiscipline disc = disciplineRepo.findById(req.getEngineeringDisciplineId()).orElseThrow();
         Engagement eng = engagementRepo.findById(req.getEngagementId()).orElseThrow();
 
-        ProjectFunction fn =
-                (req.getFunctionName() != null && !req.getFunctionName().isBlank())
-                        ? functionRepo.findByNameIgnoreCase(req.getFunctionName().trim()).orElse(null)
-                        : null;
+        ProjectFunction fn = null;
+        if (req.getFunctionName() != null && !req.getFunctionName().isBlank()) {
+            String fname = req.getFunctionName().trim();
+            fn = functionRepo.findByNameIgnoreCase(fname)
+                    .orElseGet(() -> functionRepo.save(
+                            ProjectFunction.builder().name(fname).isActive(true).build()
+                    ));
+        }
 
         Short year = req.getProjectYear() != null
                 ? req.getProjectYear()
@@ -141,8 +155,90 @@ public class ProjectService {
                 ? ProjectStatus.ON_GOING
                 : ProjectStatus.fromDbValue(req.getStatus().trim())
         )
-        .createdById(req.getProjectManagerId())
+        .createdById(createdById)
         .build();
+
+        Project saved = projectRepo.save(p);
+        saveMonthlyForecasts(saved.getId(), req);
+        return toDetailDto(saved);
+    }
+
+    private void saveMonthlyForecasts(Long projectId, ProjectCreateRequest req) {
+        if (req.getMonthlyForecasts() == null || req.getMonthlyForecasts().isEmpty()) return;
+        monthlyForecastRepo.deleteByProjectId(projectId);
+        req.getMonthlyForecasts().forEach(f -> monthlyForecastRepo.save(
+            ProjectMonthlyForecast.builder()
+                .projectId(projectId)
+                .month(f.getMonth())
+                .revenue(f.getRevenue() != null ? f.getRevenue() : BigDecimal.ZERO)
+                .cost(f.getCost()     != null ? f.getCost()     : BigDecimal.ZERO)
+                .build()
+        ));
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // CRÉATION DIRECTE (admin, sans approbation)
+    // ────────────────────────────────────────────────────────────────
+    @Transactional
+    public ProjectDetailDto createDirect(ProjectCreateRequest req, Long adminId) {
+        return create(req, adminId);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // MISE À JOUR PROJET (admin)
+    // ────────────────────────────────────────────────────────────────
+    @Transactional
+    public ProjectDetailDto update(Long id, ProjectCreateRequest req) {
+        Project p = projectRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Projet introuvable: " + id));
+
+        String ffCode = req.getFrontFinancier().trim();
+        FrontFinancier ff = frontFinancierRepo.findByCodeIgnoreCase(ffCode)
+                .orElseGet(() -> frontFinancierRepo.save(
+                        FrontFinancier.builder().code(ffCode).label(ffCode).isActive(true).build()));
+
+        AppUser pm   = userRepo.findById(req.getProjectManagerId()).orElseThrow();
+        BU bu        = buRepo.findById(req.getBuId()).orElseThrow();
+        Customer cust = customerRepo.findById(req.getCustomerId()).orElseThrow();
+        Industry ind  = industryRepo.findById(req.getIndustryId()).orElseThrow();
+        EngineeringDiscipline disc = disciplineRepo.findById(req.getEngineeringDisciplineId()).orElseThrow();
+        Engagement eng = engagementRepo.findById(req.getEngagementId()).orElseThrow();
+
+        ProjectFunction fn = null;
+        if (req.getFunctionName() != null && !req.getFunctionName().isBlank()) {
+            String fname = req.getFunctionName().trim();
+            fn = functionRepo.findByNameIgnoreCase(fname)
+                    .orElseGet(() -> functionRepo.save(
+                            ProjectFunction.builder().name(fname).isActive(true).build()));
+        }
+
+        p.setFrontFinancier(ff);
+        p.setProjectManager(pm);
+        p.setBu(bu);
+        p.setCustomer(cust);
+        p.setIndustry(ind);
+        p.setEngineeringDiscipline(disc);
+        p.setFunction(fn);
+        p.setEngagement(eng);
+        p.setActivity(req.getActivity());
+        p.setRevenueBudget(nvl(req.getRevenueBudget()));
+        p.setCostBudget(nvl(req.getCostBudget()));
+        p.setStartDate(req.getStartDate());
+        p.setEndDate(req.getEndDate());
+        p.setMajorProject(req.isMajorProject());
+        if (req.getProjectNameLegacy() != null) p.setProjectNameLegacy(req.getProjectNameLegacy());
+        // Mettre à jour projectId seulement si envoyé et non vide ; sinon conserver l'existant
+        if (req.getProjectId() != null && !req.getProjectId().trim().isEmpty()) {
+            p.setProjectId(req.getProjectId().trim());
+        } else if (req.getProjectId() != null && req.getProjectId().trim().isEmpty()) {
+            p.setProjectId(null); // l'admin efface volontairement
+        }
+        p.setTechnicalOffice(req.getTechnicalOffice() == null
+                ? TechnicalOffice.BACK_OFFICE
+                : TechnicalOffice.fromDbValue(req.getTechnicalOffice().trim()));
+        p.setStatus(req.getStatus() == null
+                ? ProjectStatus.ON_GOING
+                : ProjectStatus.fromDbValue(req.getStatus().trim()));
 
         return toDetailDto(projectRepo.save(p));
     }
@@ -161,13 +257,14 @@ public class ProjectService {
     // STATISTIQUES DASHBOARD
     // ────────────────────────────────────────────────────────────────
     @Transactional(readOnly = true)
-    public DashboardStatsDto getDashboardStats(Short year) {
+    public DashboardStatsDto getDashboardStats(Short year, Long createdById) {
 
         if (year == null) year = (short) Year.now().getValue();
         final Short y = year;
 
         var projects = projectRepo.findAll().stream()
                 .filter(p -> p.getDeletedAt() == null && y.equals(p.getProjectYear()))
+                .filter(p -> createdById == null || createdById.equals(p.getCreatedById()))
                 .toList();
 
         long total = projects.size();
@@ -240,6 +337,10 @@ public class ProjectService {
                 .buTrigram(p.getBu().getTrigram())
                 .customerName(p.getCustomer().getName())
                 .customerTrigram(p.getCustomer().getTrigram())
+                .industryTrigram(p.getIndustry().getTrigram())
+                .projectManager(p.getProjectManager().getFullName())
+                .engagementType(p.getEngagement().getEngagementType())
+                .technicalOffice(p.getTechnicalOffice().getDbValue())
                 .activity(p.getActivity())
                 .status(p.getStatus().getDbValue())
                 .majorProject(p.isMajorProject())
@@ -309,6 +410,15 @@ public class ProjectService {
                 .createdAt(p.getCreatedAt())
                 .updatedAt(p.getUpdatedAt())
                 .deletedAt(p.getDeletedAt())
+                .monthlyForecasts(
+                    monthlyForecastRepo.findByProjectIdOrderByMonthAsc(p.getId()).stream()
+                        .map(f -> MonthlyForecastDto.builder()
+                                .month(f.getMonth())
+                                .revenue(f.getRevenue())
+                                .cost(f.getCost())
+                                .build())
+                        .toList()
+                )
                 .build();
     }
 }

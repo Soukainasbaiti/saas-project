@@ -3,6 +3,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ProjectDetailDto {
@@ -50,4 +51,5 @@ public class ProjectDetailDto {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private OffsetDateTime deletedAt;
+    private List<MonthlyForecastDto> monthlyForecasts;
 }

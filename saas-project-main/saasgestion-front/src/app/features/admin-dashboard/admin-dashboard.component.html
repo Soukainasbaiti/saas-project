@@ -1,0 +1,549 @@
+<div class="admin-layout">
+
+  <app-admin-sidebar></app-admin-sidebar>
+
+  <div class="admin-main">
+
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-left">
+        <h1>Dashboard Projets</h1>
+        <span class="header-sub">{{ filteredProjects.length }} projets</span>
+      </div>
+      <div class="header-right">
+        <input class="search-input" [(ngModel)]="searchTerm" placeholder="🔍 Rechercher...">
+        <select class="filter-select" [(ngModel)]="filterStatus">
+          <option value="">Tous les statuts</option>
+          <option value="On Going">On Going</option>
+          <option value="Planned">Planned</option>
+          <option value="Closed">Closed</option>
+          <option value="On Hold">On Hold</option>
+          <option value="Canceled">Canceled</option>
+        </select>
+        <button class="btn-export" (click)="openExportModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exporter
+        </button>
+        <a routerLink="/projects/new" class="btn-new">+ Nouveau Projet</a>
+      </div>
+    </header>
+
+    <!-- KPI cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Projets</span>
+        <span class="kpi-value">{{ projects.length }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">On Going</span>
+        <span class="kpi-value kpi-blue">{{ onGoingCount }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Revenue Total</span>
+        <span class="kpi-value kpi-green">{{ fmt(totalRevenue) }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Marge Totale</span>
+        <span class="kpi-value kpi-purple">{{ fmt(totalMargin) }}</span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+
+      <div class="table-loading" *ngIf="loading">
+        <div class="spinner"></div>
+        <span>Chargement...</span>
+      </div>
+
+      <table class="projects-table" *ngIf="!loading">
+        <thead>
+          <tr>
+            <th>Projet</th>
+            <th>BU</th>
+            <th>Client</th>
+            <th>Front Financier</th>
+            <th>Statut</th>
+            <th>Revenue</th>
+            <th>Marge</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredProjects">
+            <td>
+              <div class="proj-name">{{ p.projectName || p.activity }}</div>
+              <div class="proj-sub">{{ p.activity }}</div>
+            </td>
+            <td><span class="bu-badge">{{ p.buTrigram }}</span></td>
+            <td>{{ p.customerName }}</td>
+            <td>{{ p.frontFinancier }}</td>
+            <td><span class="badge" [class]="statusClass(p.status)">{{ p.status }}</span></td>
+            <td class="val-money">{{ fmt(p.revenueBudget) }}</td>
+            <td class="val-money" [class.neg]="(p.revenueBudget - p.costBudget) < 0">
+              {{ fmt(p.revenueBudget - p.costBudget) }}
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-action btn-view" title="Voir" (click)="openDetail(p)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="btn-action btn-edit" title="Modifier" (click)="openEdit(p)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn-action btn-delete" title="Supprimer" (click)="openDelete(p)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredProjects.length === 0">
+            <td colspan="8" class="empty-row">Aucun projet trouvé</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /admin-main -->
+
+</div><!-- /admin-layout -->
+
+<!-- ── Modale Export ──────────────────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showExportModal" (click)="closeExportModal()">
+  <div class="modal-box modal-export" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="export-header-left">
+        <div class="export-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Exporter les projets</h2>
+          <p class="export-sub">Appliquez des filtres puis choisissez le format</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="closeExportModal()">✕</button>
+    </div>
+
+    <div class="modal-body export-body">
+
+      <!-- Filtres -->
+      <div class="export-filters-title">Filtres d'export</div>
+      <div class="export-filters-grid">
+
+        <div class="ef-group">
+          <label>Statut</label>
+          <select class="ef-select" [(ngModel)]="exportFilters.status">
+            <option value="">Tous</option>
+            <option *ngFor="let s of uniqueValues.statuses" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+
+        <div class="ef-group">
+          <label>Business Unit (ID)</label>
+          <select class="ef-select" [(ngModel)]="exportFilters.buId">
+            <option value="">Toutes</option>
+            <option *ngFor="let b of uniqueValues.buIds" [value]="b">{{ b }}</option>
+          </select>
+        </div>
+
+        <div class="ef-group">
+          <label>Client</label>
+          <select class="ef-select" [(ngModel)]="exportFilters.customerName">
+            <option value="">Tous</option>
+            <option *ngFor="let c of uniqueValues.customers" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <div class="ef-group">
+          <label>Industrie</label>
+          <select class="ef-select" [(ngModel)]="exportFilters.industryName">
+            <option value="">Toutes</option>
+            <option *ngFor="let i of uniqueValues.industries" [value]="i">{{ i }}</option>
+          </select>
+        </div>
+
+        <div class="ef-group">
+          <label>Chef de Projet</label>
+          <select class="ef-select" [(ngModel)]="exportFilters.projectManager">
+            <option value="">Tous</option>
+            <option *ngFor="let pm of uniqueValues.projectManagers" [value]="pm">{{ pm }}</option>
+          </select>
+        </div>
+
+        <div class="ef-group">
+          <label>Type Engagement</label>
+          <select class="ef-select" [(ngModel)]="exportFilters.engagementType">
+            <option value="">Tous</option>
+            <option *ngFor="let e of uniqueValues.engagementTypes" [value]="e">{{ e }}</option>
+          </select>
+        </div>
+
+        <div class="ef-group">
+          <label>Projet Majeur</label>
+          <select class="ef-select" [(ngModel)]="exportFilters.majorProject">
+            <option value="">Tous</option>
+            <option value="true">Oui</option>
+            <option value="false">Non</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Aperçu compteur -->
+      <div class="export-preview-bar">
+        <div class="preview-count" [class.preview-empty]="exportPreview.length === 0">
+          <span class="preview-num">{{ exportPreview.length }}</span>
+          projet(s) sélectionné(s) sur {{ projects.length }}
+        </div>
+        <button class="btn-reset-filters" (click)="exportFilters = {status:'',buId:'',customerName:'',industryName:'',projectManager:'',engagementType:'',majorProject:''}">
+          Réinitialiser les filtres
+        </button>
+      </div>
+
+      <!-- Format -->
+      <div class="export-filters-title" style="margin-top:20px">Format d'export</div>
+      <div class="export-format-row">
+        <button class="btn-format" [class.active]="exportFormat==='excel'" (click)="exportFormat='excel'">
+          <span class="format-icon excel-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+          </span>
+          <div class="format-info">
+            <b>Excel (.xlsx)</b>
+            <small>Ouvrable dans Excel et Google Sheets</small>
+          </div>
+          <div class="format-check" *ngIf="exportFormat==='excel'">✓</div>
+        </button>
+
+        <button class="btn-format" [class.active]="exportFormat==='pdf'" (click)="exportFormat='pdf'">
+          <span class="format-icon pdf-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          </span>
+          <div class="format-info">
+            <b>PDF</b>
+            <small>Rapport prêt à imprimer (paysage A4)</small>
+          </div>
+          <div class="format-check" *ngIf="exportFormat==='pdf'">✓</div>
+        </button>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeExportModal()">Annuler</button>
+      <button class="btn-export-run" (click)="runExport()" [disabled]="exportPreview.length === 0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exporter {{ exportPreview.length }} projet(s)
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Modale Détail ──────────────────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetail()">
+  <div class="modal-box modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Détail du projet</h2>
+      <button class="modal-close" (click)="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedProject">
+
+      <!-- Nom du projet + badges -->
+      <div class="detail-hero-row">
+        <div class="detail-proj-name">{{ selectedProject.projectName || selectedProject.activity }}</div>
+        <div class="detail-badges-row">
+          <span class="d-chip">{{ selectedProject.frontFinancier }}</span>
+          <span class="d-chip">{{ selectedProject.buTrigram }}</span>
+          <span class="d-chip" [class.d-chip-on]="selectedProject.status==='On Going'">{{ selectedProject.status }}</span>
+          <span class="d-chip d-chip-gold" *ngIf="selectedProject.majorProject">⭐ Projet Majeur</span>
+        </div>
+      </div>
+
+      <!-- Barre financière -->
+      <div class="detail-fin-bar">
+        <div class="fin-item">
+          <div class="fin-lbl">Revenue Budget</div>
+          <div class="fin-val c-green">{{ fmt(selectedProject.revenueBudget) }}</div>
+        </div>
+        <div class="fin-sep"></div>
+        <div class="fin-item">
+          <div class="fin-lbl">Coût Budget</div>
+          <div class="fin-val c-red">{{ fmt(selectedProject.costBudget) }}</div>
+        </div>
+        <div class="fin-sep"></div>
+        <div class="fin-item">
+          <div class="fin-lbl">Marge</div>
+          <div class="fin-val c-blue">{{ fmt(selectedProject.marginBudget) }}</div>
+        </div>
+      </div>
+
+      <!-- 4 sections -->
+      <div class="detail-grid">
+
+        <div class="detail-section">
+          <div class="ds-title">Organisation</div>
+          <div class="ds-row" *ngIf="selectedProject.projectId">
+            <span>Project ID</span><b class="pid-badge">{{ selectedProject.projectId }}</b>
+          </div>
+          <div class="ds-row"><span>Année</span><b>{{ selectedProject.projectYear }}</b></div>
+          <div class="ds-row"><span>Front Financier</span><b>{{ selectedProject.frontFinancier }}</b></div>
+          <div class="ds-row"><span>BU ID</span><b>{{ selectedProject.buId }}</b></div>
+          <div class="ds-row"><span>Business Unit</span><b>{{ selectedProject.buName }}</b></div>
+          <div class="ds-row"><span>BUM</span><b>{{ selectedProject.bumName || '—' }}</b></div>
+          <div class="ds-row"><span>Projet Majeur</span>
+            <span class="d-chip d-chip-gold" *ngIf="selectedProject.majorProject">Oui</span>
+            <b *ngIf="!selectedProject.majorProject" style="color:#94a3b8">Non</b>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="ds-title">Client & Marché</div>
+          <div class="ds-row"><span>Client</span><b>{{ selectedProject.customerName }}</b></div>
+          <div class="ds-row"><span>Groupe Client</span><b>{{ selectedProject.customerGroup || '—' }}</b></div>
+          <div class="ds-row"><span>Trigramme Client</span><b class="pid-badge">{{ selectedProject.customerTrigram }}</b></div>
+          <div class="ds-row"><span>Industrie</span><b>{{ selectedProject.industryName }}</b></div>
+          <div class="ds-row"><span>Trigramme Industrie</span><b class="pid-badge">{{ selectedProject.industryTrigram }}</b></div>
+          <div class="ds-row"><span>Engagement</span><b>{{ selectedProject.engagement }}</b></div>
+          <div class="ds-row"><span>Type Engagement</span><b class="pid-badge">{{ selectedProject.engagementType }}</b></div>
+        </div>
+
+        <div class="detail-section">
+          <div class="ds-title">Technique</div>
+          <div class="ds-row"><span>Discipline</span><b>{{ selectedProject.engineeringDiscipline }}</b></div>
+          <div class="ds-row"><span>Fonction</span><b>{{ selectedProject.functionName || '—' }}</b></div>
+          <div class="ds-row"><span>Activité</span><b>{{ selectedProject.activity }}</b></div>
+          <div class="ds-row"><span>Chef de Projet</span><b>{{ selectedProject.projectManager }}</b></div>
+          <div class="ds-row"><span>Email PM</span><b class="email-val">{{ selectedProject.pmEmail }}</b></div>
+          <div class="ds-row"><span>Bureau Tech.</span><b>{{ selectedProject.technicalOffice }}</b></div>
+        </div>
+
+        <div class="detail-section">
+          <div class="ds-title">Planning & Audit</div>
+          <div class="ds-row"><span>Date Début</span><b>{{ formatDate(selectedProject.startDate) }}</b></div>
+          <div class="ds-row"><span>Date Fin</span><b>{{ formatDate(selectedProject.endDate) }}</b></div>
+          <div class="ds-row"><span>Statut</span>
+            <span class="badge" [class]="statusClass(selectedProject.status)">{{ selectedProject.status }}</span>
+          </div>
+          <div class="ds-row"><span>Créé le</span><b>{{ formatDate(selectedProject.createdAt) }}</b></div>
+          <div class="ds-row"><span>Modifié le</span><b>{{ formatDate(selectedProject.updatedAt) }}</b></div>
+        </div>
+
+      </div>
+
+      <!-- Prévisions mensuelles -->
+      <div class="forecast-section"
+           *ngIf="selectedProject.monthlyForecasts && selectedProject.monthlyForecasts.length > 0">
+        <div class="ds-title">📅 Prévisions Mensuelles</div>
+        <div class="forecast-scroll">
+          <table class="forecast-tbl">
+            <thead>
+              <tr>
+                <th>Mois</th>
+                <th>Revenue</th>
+                <th>Coût</th>
+                <th>Marge €</th>
+                <th>Marge %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of selectedProject.monthlyForecasts">
+                <td class="month-cell">{{ monthLabel(f.month) }}</td>
+                <td class="c-green num">{{ fmt(f.revenue) }}</td>
+                <td class="c-red   num">{{ fmt(f.cost) }}</td>
+                <td class="num">{{ fmt(f.revenue - f.cost) }}</td>
+                <td class="num" [ngClass]="monthMarginClass(f.revenue, f.cost)">
+                  {{ monthMarginPct(f.revenue, f.cost) }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="f-total">
+                <td>TOTAL</td>
+                <td class="c-green num">{{ fmt(forecastTotalRevenue) }}</td>
+                <td class="c-red   num">{{ fmt(forecastTotalCost) }}</td>
+                <td class="num">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
+                <td class="num" [ngClass]="monthMarginClass(forecastTotalRevenue, forecastTotalCost)">
+                  {{ monthMarginPct(forecastTotalRevenue, forecastTotalCost) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDetail()">Fermer</button>
+      <button class="btn-primary-blue" (click)="closeDetail(); openEdit(editTarget!)" *ngIf="editTarget">Modifier</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Suppression ─────────────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDelete()">
+  <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-icon-wrap danger">🗑️</div>
+    <h2 class="modal-title">Supprimer le projet</h2>
+    <p class="modal-msg">Voulez-vous supprimer <b>{{ deleteTarget?.projectName || deleteTarget?.activity }}</b> ? Cette action est irréversible.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeDelete()" [disabled]="deleting">Annuler</button>
+      <button class="btn-danger" (click)="confirmDelete()" [disabled]="deleting">
+        <span *ngIf="!deleting">Oui, supprimer</span>
+        <span *ngIf="deleting">Suppression...</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Édition ─────────────────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEdit()">
+  <div class="modal-box modal-xlarge" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Modifier le projet</h2>
+      <button class="modal-close" (click)="closeEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="editForm" class="edit-form-grid">
+
+        <!-- Project ID — champ admin uniquement -->
+        <div class="form-group project-id-group">
+          <label class="project-id-label">🔑 Project ID <span class="pid-hint">(identifiant attribué par l'admin)</span></label>
+          <input class="fi project-id-input" formControlName="projectId"
+                 placeholder="Ex: PRJ-2026-001"
+                 maxlength="50">
+        </div>
+
+        <div class="form-group">
+          <label>Front Financier *</label>
+          <input class="fi" formControlName="frontFinancier" placeholder="Code front financier">
+        </div>
+
+        <div class="form-group">
+          <label>Project Manager *</label>
+          <select class="fi" formControlName="projectManagerId">
+            <option [ngValue]="null" disabled>Sélectionner PM</option>
+            <option *ngFor="let pm of pms" [ngValue]="pm.id">{{ pm.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>BU *</label>
+          <select class="fi" formControlName="buId">
+            <option [ngValue]="null" disabled>Sélectionner BU</option>
+            <option *ngFor="let b of bus" [ngValue]="b.id">{{ b.id }} — {{ b.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Customer *</label>
+          <select class="fi" formControlName="customerId">
+            <option [ngValue]="null" disabled>Sélectionner</option>
+            <option *ngFor="let c of customers" [ngValue]="c.id">{{ c.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Industry *</label>
+          <select class="fi" formControlName="industryId">
+            <option [ngValue]="null" disabled>Sélectionner</option>
+            <option *ngFor="let i of industries" [ngValue]="i.id">{{ i.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Discipline *</label>
+          <select class="fi" formControlName="engineeringDisciplineId">
+            <option [ngValue]="null" disabled>Sélectionner</option>
+            <option *ngFor="let d of disciplines" [ngValue]="d.id">{{ d.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Engagement *</label>
+          <select class="fi" formControlName="engagementId">
+            <option [ngValue]="null" disabled>Sélectionner</option>
+            <option *ngFor="let e of engagements" [ngValue]="e.id">{{ e.code }} — {{ e.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Function</label>
+          <input class="fi" formControlName="functionName" placeholder="Fonction">
+        </div>
+
+        <div class="form-group form-group-wide">
+          <label>Activité *</label>
+          <input class="fi" formControlName="activity" placeholder="Activité">
+        </div>
+
+        <div class="form-group">
+          <label>Revenue Budget (€) *</label>
+          <input class="fi" type="number" formControlName="revenueBudget">
+        </div>
+
+        <div class="form-group">
+          <label>Cost Budget (€) *</label>
+          <input class="fi" type="number" formControlName="costBudget">
+        </div>
+
+        <div class="form-group">
+          <label>Start Date *</label>
+          <input class="fi" type="date" formControlName="startDate">
+        </div>
+
+        <div class="form-group">
+          <label>End Date *</label>
+          <input class="fi" type="date" formControlName="endDate">
+        </div>
+
+        <div class="form-group">
+          <label>Statut</label>
+          <select class="fi" formControlName="status">
+            <option value="On Going">On Going</option>
+            <option value="Planned">Planned</option>
+            <option value="Closed">Closed</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Canceled">Canceled</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Technical Office</label>
+          <select class="fi" formControlName="technicalOffice">
+            <option value="Front Office">Front Office</option>
+            <option value="Back Office">Back Office</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Major Project</label>
+          <select class="fi" formControlName="majorProject">
+            <option [ngValue]="false">Non</option>
+            <option [ngValue]="true">Oui</option>
+          </select>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeEdit()" [disabled]="saving">Annuler</button>
+      <button class="btn-primary-blue" (click)="submitEdit()" [disabled]="saving">
+        <span *ngIf="!saving">Enregistrer les modifications</span>
+        <span *ngIf="saving">Enregistrement...</span>
+      </button>
+    </div>
+  </div>
+</div>

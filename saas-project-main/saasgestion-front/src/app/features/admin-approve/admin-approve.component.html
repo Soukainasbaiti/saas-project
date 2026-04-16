@@ -6,7 +6,7 @@
     <span class="header-title">Administration — Validation projet</span>
     <div class="header-user">
       <span>{{ auth.currentUser()?.fullName }}</span>
-      <button class="btn-back" routerLink="/">← Dashboard</button>
+      <button class="btn-back" routerLink="/admin">← Dashboard</button>
     </div>
   </header>
 
@@ -22,7 +22,7 @@
     <div class="state-card error" *ngIf="!loading && errorMsg && !done">
       <div class="state-icon">⚠️</div>
       <h2>{{ errorMsg }}</h2>
-      <button class="btn-primary" routerLink="/">Retour au dashboard</button>
+      <button class="btn-primary" routerLink="/admin">Retour au dashboard</button>
     </div>
 
     <!-- Succès final -->
@@ -30,14 +30,14 @@
       <div class="state-icon">✅</div>
       <h2>Projet approuvé avec succès</h2>
       <p>Le projet a été créé dans le système et le créateur a été notifié par email.</p>
-      <button class="btn-primary" routerLink="/">Retour au dashboard</button>
+      <button class="btn-primary" routerLink="/admin">Retour au dashboard</button>
     </div>
 
     <div class="state-card reject-done" *ngIf="done && doneAction === 'reject'">
       <div class="state-icon">❌</div>
       <h2>Projet rejeté</h2>
       <p>Le créateur a été notifié du rejet par email.</p>
-      <button class="btn-primary" routerLink="/">Retour au dashboard</button>
+      <button class="btn-primary" routerLink="/admin">Retour au dashboard</button>
     </div>
 
     <!-- Détail projet -->
@@ -88,7 +88,7 @@
       <div class="action-zone">
 
         <!-- Bouton approuver -->
-        <button class="btn-approve" (click)="approve()" [disabled]="processing">
+        <button class="btn-approve" (click)="openConfirm('approve')" [disabled]="processing">
           <span *ngIf="!processing">✓ Approuver le projet</span>
           <span *ngIf="processing" class="spinner-sm"></span>
         </button>
@@ -108,7 +108,7 @@
             rows="3">
           </textarea>
           <div class="alert-error" *ngIf="errorMsg">⚠ {{ errorMsg }}</div>
-          <button class="btn-reject-confirm" (click)="reject()" [disabled]="processing || !rejectReason.trim()">
+          <button class="btn-reject-confirm" (click)="openConfirm('reject')" [disabled]="processing || !rejectReason.trim()">
             <span *ngIf="!processing">Confirmer le rejet</span>
             <span *ngIf="processing" class="spinner-sm"></span>
           </button>
@@ -118,4 +118,27 @@
 
     </div>
   </div>
+
+  <!-- Modale de confirmation -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon" [class.modal-icon-approve]="modalType === 'approve'" [class.modal-icon-reject]="modalType === 'reject'">
+        <span *ngIf="modalType === 'approve'">✓</span>
+        <span *ngIf="modalType === 'reject'">✗</span>
+      </div>
+      <h2 class="modal-title">{{ modalTitle }}</h2>
+      <p class="modal-message">{{ modalMessage }}</p>
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" (click)="closeModal()">Annuler</button>
+        <button class="modal-btn-confirm"
+                [class.modal-btn-approve]="modalType === 'approve'"
+                [class.modal-btn-reject]="modalType === 'reject'"
+                (click)="confirmAction()">
+          <span *ngIf="modalType === 'approve'">✓ Oui, approuver</span>
+          <span *ngIf="modalType === 'reject'">✗ Oui, rejeter</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

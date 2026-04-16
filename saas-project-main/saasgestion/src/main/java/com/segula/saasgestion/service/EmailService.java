@@ -32,37 +32,95 @@ public class EmailService {
     public void sendApprovalRequestToAdmin(
             String adminEmail, String adminName,
             String submitterName, String submitterEmail,
-            ProjectCreateRequest req, String approvalToken) {
+            ProjectCreateRequest req, String approvalToken, String projectName,
+            String pmName, String buId, String buTrigram,
+            String industryName, String customerName,
+            String discName, String engName) {
 
         try {
             log.info("=== DEBUT ENVOI EMAIL ADMIN via Brevo API ===");
             log.info("To: {}", adminEmail);
 
             String approveUrl = baseUrl + "/admin/approve/" + approvalToken;
-            String rejectUrl  = baseUrl + "/admin/approve/" + approvalToken + "?action=reject";
+
+            // Calcul marge
+            double rev  = req.getRevenueBudget()  != null ? req.getRevenueBudget().doubleValue()  : 0;
+            double cost = req.getCostBudget()      != null ? req.getCostBudget().doubleValue()     : 0;
+            String marge = rev > 0
+                ? String.format("%.0f%%", ((rev - cost) / rev) * 100)
+                : "—";
+
+            // Perimeter = Discipline : Fonction
+            String perimeter = discName;
+            if (req.getFunctionName() != null && !req.getFunctionName().isBlank()) {
+                perimeter = discName + " : " + req.getFunctionName();
+            }
+
+            // FO/BO abrégé
+            String foBo = "Back Office".equalsIgnoreCase(req.getTechnicalOffice()) ? "BO" : "FO";
+
+            // Dates
+            String startDate = req.getStartDate() != null ? req.getStartDate().toString() : "—";
+            String endDate   = req.getEndDate()   != null ? req.getEndDate().toString()   : "—";
+
+            String tdStyle = "padding:6px 10px;border:1px solid #ccc;";
+            String thStyle = tdStyle + "background:#f1f5f9;font-weight:600;width:200px;";
 
             String html = """
-                <div style='font-family:Arial,sans-serif'>
-                    <h2>Nouveau projet a approuver</h2>
-                    <p>Bonjour <b>%s</b>,</p>
-                    <p><b>%s</b> (%s) a soumis un projet.</p>
-                    <table border='1' style='border-collapse:collapse;width:100%%'>
-                        <tr><td><b>Activite</b></td><td>%s</td></tr>
-                        <tr><td><b>Front Financier</b></td><td>%s</td></tr>
-                        <tr><td><b>Revenue Budget</b></td><td>%s EUR</td></tr>
-                        <tr><td><b>Cost Budget</b></td><td>%s EUR</td></tr>
-                        <tr><td><b>BU</b></td><td>%s</td></tr>
-                    </table>
-                    <br>
-                    <a href='%s' style='background:#16a34a;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;margin-right:10px'>Approuver</a>
-                    <a href='%s' style='background:#dc2626;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px'>Rejeter</a>
-                    <p style='color:#64748b;font-size:12px'>Ce lien expire dans 48 heures.</p>
+                <div style='font-family:Arial,sans-serif;max-width:650px;margin:0 auto'>
+                    <div style='background:#1e3a5f;padding:16px 24px;border-radius:8px 8px 0 0'>
+                        <h2 style='color:#fff;margin:0;font-size:18px'>Demande de creation de ligne projet</h2>
+                    </div>
+                    <div style='padding:20px;background:#fff;border:1px solid #e2e8f0;border-top:none'>
+                        <p>Bonjour <b>%s</b>,</p>
+                        <p>Ci-apres une demande de creation de ligne projet <b>"%s"</b> soumise par <b>%s</b> (%s) :</p>
+                        <table style='border-collapse:collapse;width:100%%'>
+                            <tr><td style='%s'>Chef de projet</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>ID BU</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>BU</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Indus</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Client final</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Entite de facturation</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Perimeter</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Nom d activite (ou projet)</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Start date</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>End date</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Major Project</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Engagement</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>FO/BO</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Previsions Ventes</td><td style='%s'>%s EUR</td></tr>
+                            <tr><td style='%s'>Previsions Couts</td><td style='%s'>%s EUR</td></tr>
+                            <tr><td style='%s'>Marge Projet</td><td style='%s'>%s</td></tr>
+                        </table>
+                        <br>
+                        <p>Merci.<br>Cordialement.</p>
+                        <div style='margin-top:24px'>
+                            <a href='%s' style='background:#16a34a;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600'>
+                                Approuver / Rejeter le projet
+                            </a>
+                        </div>
+                        <p style='color:#64748b;font-size:12px;margin-top:16px'>Ce lien expire dans 48 heures.</p>
+                    </div>
                 </div>
                 """.formatted(
-                    adminName, submitterName, submitterEmail,
-                    req.getActivity(), req.getFrontFinancier(),
-                    req.getRevenueBudget(), req.getCostBudget(),
-                    req.getBuId(), approveUrl, rejectUrl
+                    adminName, projectName, submitterName, submitterEmail,
+                    thStyle, tdStyle, pmName,
+                    thStyle, tdStyle, buId,
+                    thStyle, tdStyle, buTrigram,
+                    thStyle, tdStyle, industryName,
+                    thStyle, tdStyle, customerName,
+                    thStyle, tdStyle, req.getFrontFinancier(),
+                    thStyle, tdStyle, perimeter,
+                    thStyle, tdStyle, req.getActivity(),
+                    thStyle, tdStyle, startDate,
+                    thStyle, tdStyle, endDate,
+                    thStyle, tdStyle, req.isMajorProject() ? "Oui" : "Non",
+                    thStyle, tdStyle, engName,
+                    thStyle, tdStyle, foBo,
+                    thStyle, tdStyle, req.getRevenueBudget(),
+                    thStyle, tdStyle, req.getCostBudget(),
+                    thStyle, tdStyle, marge,
+                    approveUrl
             );
 
             sendViaBrevo(adminEmail, adminName,
@@ -102,7 +160,7 @@ public class EmailService {
 
     @Async
     public void sendRejectionToUser(
-            String userEmail, String userName, String activity, String reason) {
+            String userEmail, String userName, String activity, String reason, String editUrl) {
 
         try {
             log.info("=== DEBUT ENVOI EMAIL REJET USER {} ===", userEmail);
@@ -113,13 +171,20 @@ public class EmailService {
                     <p>Bonjour <b>%s</b>,</p>
                     <p>Votre projet <b>%s</b> n'a pas ete approuve.</p>
                     %s
+                    <br>
+                    <p>Vous pouvez modifier votre projet et le soumettre a nouveau :</p>
+                    <a href='%s' style='background:#2563eb;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block'>
+                        Modifier et resoumettre le projet
+                    </a>
+                    <p style='color:#64748b;font-size:12px;margin-top:16px'>Ce lien expire dans 48 heures.</p>
                 </div>
                 """.formatted(
                     userName, activity,
-                    reason != null ? "<p><b>Motif :</b> " + reason + "</p>" : ""
+                    reason != null ? "<p><b>Motif :</b> " + reason + "</p>" : "",
+                    editUrl
             );
 
-            sendViaBrevo(userEmail, userName, "[SEGULA] Projet non approuve", html);
+            sendViaBrevo(userEmail, userName, "[SEGULA] Projet non approuve - modification requise", html);
 
             log.info("=== EMAIL REJET ENVOYE a {} ===", userEmail);
 

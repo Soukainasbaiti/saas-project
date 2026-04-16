@@ -18,6 +18,12 @@ export const authGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
+  // Redirect admin away from PM dashboard
+  if (auth.isAdmin() && state.url === '/') {
+    router.navigate(['/admin']);
+    return false;
+  }
+
   return true;
 };
 
@@ -45,7 +51,7 @@ export const loginGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (auth.isTokenValid() && !auth.isForceChange()) {
-    router.navigate(['/']);
+    router.navigate([auth.isAdmin() ? '/admin' : '/']);
     return false;
   }
 

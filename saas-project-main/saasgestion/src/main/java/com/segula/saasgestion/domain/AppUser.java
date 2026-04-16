@@ -36,6 +36,9 @@ public class AppUser {
     private OffsetDateTime passwordResetAt;
     // ───────────────────────────────────────────────────────────────
 
+    @Column(name = "created_by_id")
+    private Long createdById;
+
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 

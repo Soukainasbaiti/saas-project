@@ -171,4 +171,31 @@ export class DashboardComponent implements OnInit {
     if (!d) return '—';
     return new Intl.DateTimeFormat('fr-FR').format(new Date(d));
   }
+
+  monthLabel(month: string): string {
+    const M = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const [y, m] = month.split('-').map(Number);
+    return `${M[m - 1]} ${y}`;
+  }
+
+  monthMarginPct(revenue: number, cost: number): string {
+    if (!revenue) return '—';
+    return (((revenue - cost) / revenue) * 100).toFixed(0) + '%';
+  }
+
+  monthMarginClass(revenue: number, cost: number): string {
+    if (!revenue) return '';
+    const pct = ((revenue - cost) / revenue) * 100;
+    if (pct >= 25) return 'marge-high';
+    if (pct >= 10) return 'marge-mid';
+    return 'marge-low';
+  }
+
+  get forecastTotalRevenue(): number {
+    return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.revenue || 0), 0);
+  }
+
+  get forecastTotalCost(): number {
+    return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.cost || 0), 0);
+  }
 }

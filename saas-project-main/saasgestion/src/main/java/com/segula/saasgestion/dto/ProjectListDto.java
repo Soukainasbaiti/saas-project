@@ -16,6 +16,10 @@ public class ProjectListDto {
     private String     buTrigram;
     private String     customerName;
     private String     customerTrigram;
+    private String     industryTrigram;
+    private String     projectManager;
+    private String     engagementType;
+    private String     technicalOffice;
     private String     activity;
     private String     status;
     private boolean    majorProject;

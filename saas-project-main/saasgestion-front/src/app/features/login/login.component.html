@@ -8,8 +8,9 @@
     </div>
 
     <div class="login-header">
-      <h1>Connexion</h1>
-      <p>Project Management Platform</p>
+      <h1>Espace Project Management</h1>
+      <p>Connectez-vous pour accéder à votre plateforme</p>
+      <div class="header-line"></div>
     </div>
 
     <!-- Erreur -->
@@ -59,7 +60,12 @@
 
       <!-- Submit -->
       <button type="submit" class="btn-login" [disabled]="loading">
-        <span *ngIf="!loading">Se connecter</span>
+        <span *ngIf="!loading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;vertical-align:middle">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Se connecter
+        </span>
         <span *ngIf="loading" class="spinner"></span>
       </button>
 

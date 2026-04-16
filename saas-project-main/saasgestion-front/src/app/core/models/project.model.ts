@@ -12,6 +12,10 @@ export interface ProjectListDto {
   buTrigram: string;
   customerName: string;
   customerTrigram: string;
+  industryTrigram: string;
+  projectManager: string;
+  engagementType: string;
+  technicalOffice: string;
   activity: string;
   status: 'On Going' | 'Closed';
   majorProject: boolean;
@@ -21,6 +25,12 @@ export interface ProjectListDto {
   costBudget: number;
   marginBudget: number;
   projectMargin: number;
+}
+
+export interface MonthlyForecastDto {
+  month: string;     // "2026-03"
+  revenue: number;
+  cost: number;
 }
 
 export interface ProjectDetailDto extends ProjectListDto {
@@ -49,6 +59,7 @@ export interface ProjectDetailDto extends ProjectListDto {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  monthlyForecasts: MonthlyForecastDto[];
 }
 
 export interface PagedResponse<T> {
@@ -97,4 +108,6 @@ export interface ProjectCreateRequest {
   status: string;
   projectYear?: number;
   projectNameLegacy?: string;
+  projectId?: string;
+  monthlyForecasts?: MonthlyForecastDto[];
 }

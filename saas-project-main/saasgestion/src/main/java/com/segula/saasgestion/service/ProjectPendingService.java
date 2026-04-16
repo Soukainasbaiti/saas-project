@@ -6,10 +6,10 @@ import com.segula.saasgestion.domain.AppUser;
 import com.segula.saasgestion.domain.ProjectPending;
 import com.segula.saasgestion.dto.ProjectCreateRequest;
 import com.segula.saasgestion.dto.ProjectDetailDto;
-import com.segula.saasgestion.repository.AppUserRepository;
-import com.segula.saasgestion.repository.ProjectPendingRepository;
+import com.segula.saasgestion.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
@@ -21,10 +21,18 @@ import java.util.UUID;
 @Slf4j
 public class ProjectPendingService {
 
-    private final ProjectPendingRepository pendingRepo;
-    private final AppUserRepository        userRepo;
-    private final ProjectService           projectService;
-    private final EmailService             emailService;
+    private final ProjectPendingRepository       pendingRepo;
+    private final AppUserRepository              userRepo;
+    private final BuRepository                   buRepo;
+    private final CustomerRepository             customerRepo;
+    private final IndustryRepository             industryRepo;
+    private final EngineeringDisciplineRepository disciplineRepo;
+    private final EngagementRepository           engagementRepo;
+    private final ProjectService                 projectService;
+    private final EmailService                   emailService;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
@@ -54,6 +62,31 @@ public class ProjectPendingService {
 
         pendingRepo.save(pending);
 
+        // Résoudre les libellés pour l'email
+        String pmName          = userRepo.findById(req.getProjectManagerId())
+                                    .map(u -> u.getFullName()).orElse("—");
+        String buId            = req.getBuId();
+        String buTrigram       = buRepo.findById(req.getBuId())
+                                    .map(b -> b.getTrigram()).orElse("—");
+        String industryName    = industryRepo.findById(req.getIndustryId())
+                                    .map(i -> i.getName()).orElse("—");
+        String industryTrigram = industryRepo.findById(req.getIndustryId())
+                                    .map(i -> i.getTrigram()).orElse("—");
+        String customerName    = customerRepo.findById(req.getCustomerId())
+                                    .map(c -> c.getName()).orElse("—");
+        String customerTrigram = customerRepo.findById(req.getCustomerId())
+                                    .map(c -> c.getTrigram()).orElse("—");
+        String discName        = disciplineRepo.findById(req.getEngineeringDisciplineId())
+                                    .map(d -> d.getName()).orElse("—");
+        String engName         = engagementRepo.findById(req.getEngagementId())
+                                    .map(e -> e.getName()).orElse("—");
+
+        // Construire le nom du projet (même logique que ProjectService.buildName)
+        String projectName = String.join(" - ",
+                req.getFrontFinancier(), buId, buTrigram,
+                industryTrigram, customerTrigram, req.getActivity()
+        );
+
         // Notifier tous les admins
         List<AppUser> admins = userRepo.findAllActiveAdmins();
         if (admins.isEmpty()) {
@@ -63,7 +96,9 @@ public class ProjectPendingService {
             emailService.sendApprovalRequestToAdmin(
                     admin.getEmail(), admin.getFullName(),
                     submitter.getFullName(), submitter.getEmail(),
-                    req, token
+                    req, token, projectName,
+                    pmName, buId, buTrigram, industryName, customerName,
+                    discName, engName
             );
         }
 
@@ -76,13 +111,16 @@ public class ProjectPendingService {
     public ProjectDetailDto approve(String token, Long adminId) {
         ProjectPending pending = getPendingOrThrow(token);
 
-        AppUser admin = userRepo.findById(adminId)
-                .orElseThrow(() -> new IllegalArgumentException("Admin introuvable"));
+        // adminId peut être null si l'admin accède via lien email sans être connecté
+        AppUser admin = (adminId != null)
+                ? userRepo.findById(adminId).orElse(null)
+                : null;
 
         ProjectCreateRequest req = deserialize(pending.getPayload());
 
-        // Créer le projet réel en BD
-        ProjectDetailDto created = projectService.create(req);
+        // Créer le projet avec createdById = submitter (le vrai créateur du projet)
+        Long submitterId = pending.getSubmittedBy().getId();
+        ProjectDetailDto created = projectService.create(req, submitterId);
 
         // Mettre à jour le statut pending
         pending.setStatus("APPROVED");
@@ -105,8 +143,10 @@ public class ProjectPendingService {
     public void reject(String token, Long adminId, String reason) {
         ProjectPending pending = getPendingOrThrow(token);
 
-        AppUser admin = userRepo.findById(adminId)
-                .orElseThrow(() -> new IllegalArgumentException("Admin introuvable"));
+        // adminId peut être null si l'admin accède via lien email sans être connecté
+        AppUser admin = (adminId != null)
+                ? userRepo.findById(adminId).orElse(null)
+                : null;
 
         ProjectCreateRequest req = deserialize(pending.getPayload());
 
@@ -116,12 +156,63 @@ public class ProjectPendingService {
         pendingRepo.save(pending);
 
         AppUser submitter = pending.getSubmittedBy();
+        String editUrl = baseUrl + "/projects/edit/" + token;
         emailService.sendRejectionToUser(
                 submitter.getEmail(), submitter.getFullName(),
-                req.getActivity(), reason
+                req.getActivity(), reason, editUrl
         );
 
         log.info("Projet rejeté par adminId={}, token={}", adminId, token);
+    }
+
+    // ── Récupérer un projet rejeté pour modification ─────────────
+    @Transactional(readOnly = true)
+    public PendingDetailView getForEdit(String token) {
+        ProjectPending pending = pendingRepo.findByApprovalToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Token invalide ou introuvable"));
+
+        if ("APPROVED".equals(pending.getStatus())) {
+            throw new IllegalStateException("Ce projet a été approuvé et ne peut plus être modifié.");
+        }
+        if (!"REJECTED".equals(pending.getStatus())) {
+            throw new IllegalStateException("Ce projet n'a pas été rejeté.");
+        }
+
+        ProjectCreateRequest req = deserialize(pending.getPayload());
+        return new PendingDetailView(pending, req);
+    }
+
+    // ── Supprimer définitivement un projet rejeté ─────────────────
+    @Transactional
+    public void deleteRejected(String token, Long userId) {
+        ProjectPending pending = pendingRepo.findByApprovalToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Token invalide ou introuvable"));
+
+        if (!"REJECTED".equals(pending.getStatus())) {
+            throw new IllegalStateException("Seuls les projets rejetés peuvent être supprimés.");
+        }
+
+        // Vérifier que c'est bien le soumetteur qui supprime
+        if (!pending.getSubmittedBy().getId().equals(userId)) {
+            throw new IllegalStateException("Vous n'êtes pas autorisé à supprimer ce projet.");
+        }
+
+        pendingRepo.delete(pending);
+        log.info("Projet rejeté supprimé définitivement, token={} par userId={}", token, userId);
+    }
+
+    // ── Resoumettre un projet modifié après rejet ─────────────────
+    @Transactional
+    public String resubmit(String token, ProjectCreateRequest modifiedReq, Long submitterId) {
+        ProjectPending original = pendingRepo.findByApprovalToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Token invalide"));
+
+        if (!"REJECTED".equals(original.getStatus())) {
+            throw new IllegalStateException("Seuls les projets rejetés peuvent être resoumis.");
+        }
+
+        log.info("Resoumission du projet token={} par userId={}", token, submitterId);
+        return submitForApproval(modifiedReq, submitterId);
     }
 
     // ── Lire les détails d'un pending (pour la page admin) ───────

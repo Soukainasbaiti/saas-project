@@ -21,11 +21,13 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "WHERE p.deletedAt IS NULL " +
            "AND (:buId IS NULL OR :buId = '' OR p.bu.id = :buId) " +
            "AND (:customerId IS NULL OR p.customer.id = :customerId) " +
-           "AND (:status IS NULL OR p.status = :status)")
+           "AND (:status IS NULL OR p.status = :status) " +
+           "AND (:createdById IS NULL OR p.createdById = :createdById)")
     Page<Project> findWithFiltersNoYear(
-        @Param("buId")       String buId,
-        @Param("customerId") Long   customerId,
-        @Param("status")     ProjectStatus status,
+        @Param("buId")        String buId,
+        @Param("customerId")  Long   customerId,
+        @Param("status")      ProjectStatus status,
+        @Param("createdById") Long   createdById,
         Pageable pageable
     );
 
@@ -37,12 +39,14 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "AND (:buId IS NULL OR :buId = '' OR p.bu.id = :buId) " +
            "AND (:customerId IS NULL OR p.customer.id = :customerId) " +
            "AND (:status IS NULL OR p.status = :status) " +
+           "AND (:createdById IS NULL OR p.createdById = :createdById) " +
            "AND p.projectYear = :year")
     Page<Project> findWithFiltersWithYear(
-        @Param("buId")       String buId,
-        @Param("customerId") Long   customerId,
-        @Param("status")     ProjectStatus status,
-        @Param("year")       Short  year,
+        @Param("buId")        String buId,
+        @Param("customerId")  Long   customerId,
+        @Param("status")      ProjectStatus status,
+        @Param("createdById") Long   createdById,
+        @Param("year")        Short  year,
         Pageable pageable
     );
 

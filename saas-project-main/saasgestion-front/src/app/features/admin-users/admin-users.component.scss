@@ -1,0 +1,44 @@
+@use '../admin-dashboard/admin-dashboard.component.scss' as *;
+
+.user-cell {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.user-avatar-sm {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #2563eb; color: #fff;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.users-table td { padding: 16px 16px; }
+.users-table th { padding: 13px 16px; }
+
+.email-cell   { color: #475569; font-size: 13px; }
+.date-cell    { color: #64748b; font-size: 12px; white-space: nowrap; }
+.creator-cell { color: #64748b; font-size: 12px; }
+
+.role-badge {
+  display: inline-block; border-radius: 12px;
+  padding: 3px 10px; font-size: 11px; font-weight: 600;
+  &.role-admin  { background: #fef3c7; color: #92400e; }
+  &.role-pm     { background: #dbeafe; color: #1d4ed8; }
+  &.role-bum    { background: #f0fdf4; color: #16a34a; }
+  &.role-custom { background: #f3e8ff; color: #7c3aed; }
+}
+
+.status-dot {
+  font-size: 12px; color: #94a3b8;
+  &.active { color: #16a34a; font-weight: 600; }
+}
+
+.user-form { display: flex; flex-direction: column; gap: 16px; }
+
+.hint { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+.err {
+  font-size: 11px; color: #dc2626; margin-top: 2px;
+}
+
+.fi.invalid { border-color: #dc2626; }

@@ -52,6 +52,45 @@ export class ApiService {
     return this.http.delete<void>(`${this.base}/projects/${id}`);
   }
 
+  updateProject(id: number, req: ProjectCreateRequest): Observable<ProjectDetailDto> {
+    return this.http.put<ProjectDetailDto>(`${this.base}/projects/${id}`, req);
+  }
+
+  // ── Admin ─────────────────────────────────────────────────────
+  getUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/admin/users`);
+  }
+
+  createUser(req: { fullName: string; email: string; password: string; role: string }): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/users`, req);
+  }
+
+  updateUser(id: number, req: { fullName?: string; email?: string; role?: string; isActive?: boolean }): Observable<any> {
+    return this.http.put<any>(`${this.base}/admin/users/${id}`, req);
+  }
+
+  deleteUser(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.base}/admin/users/${id}`);
+  }
+
+  // ── Admin Ref Data ────────────────────────────────────────────
+  getAdminRef(type: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/admin/ref/${type}`);
+  }
+  createAdminRef(type: string, body: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/ref/${type}`, body);
+  }
+  updateAdminRef(type: string, id: any, body: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/admin/ref/${type}/${id}`, body);
+  }
+  toggleAdminRef(type: string, id: any): Observable<any> {
+    return this.http.patch<any>(`${this.base}/admin/ref/${type}/${id}/toggle`, {});
+  }
+
+  createProjectDirect(req: ProjectCreateRequest): Observable<ProjectDetailDto> {
+    return this.http.post<ProjectDetailDto>(`${this.base}/admin/projects/direct`, req);
+  }
+
   getDashboardStats(year?: number): Observable<DashboardStats> {
     let params = new HttpParams();
     if (year) params = params.set('year', year);

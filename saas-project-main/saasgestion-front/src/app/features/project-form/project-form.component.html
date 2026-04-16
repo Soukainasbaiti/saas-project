@@ -1,6 +1,6 @@
 <div class="form-shell">
 
-  <!-- Écran confirmation après soumission (202) -->
+  <!-- Écran confirmation après soumission (PM uniquement) -->
   <div class="submitted-shell" *ngIf="submitted">
     <div class="submitted-card">
       <div class="submitted-icon">📬</div>
@@ -10,7 +10,7 @@
         Vous recevrez un email de confirmation dès qu'il sera approuvé.
       </p>
       <div class="submitted-actions">
-        <button class="btn-dashboard" routerLink="/">Retour au dashboard</button>
+        <button class="btn-dashboard" [routerLink]="dashboardRoute">Retour au dashboard</button>
         <button class="btn-nouveau" (click)="submitted = false; form.reset()">Créer un autre projet</button>
       </div>
     </div>
@@ -25,7 +25,7 @@
       <h1>Créer Nouveau Projet</h1>
       <p>Configurez les paramètres de votre nouveau projet</p>
     </div>
-    <button class="btn-retour" routerLink="/">← Retour Dashboard</button>
+    <button class="btn-retour" [routerLink]="dashboardRoute">← Retour Dashboard</button>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -130,7 +130,7 @@
           <select class="form-select" formControlName="buId"
                   [class.invalid]="form.get('buId')?.invalid && form.get('buId')?.touched">
             <option [ngValue]="null" disabled>Sélectionner BU</option>
-            <option *ngFor="let b of bus" [ngValue]="b.id">{{ b.code }} — {{ b.label }}</option>
+            <option *ngFor="let b of bus" [ngValue]="b.id">{{ b.id }} — {{ b.label }}</option>
           </select>
           <span class="error-msg" *ngIf="form.get('buId')?.invalid && form.get('buId')?.touched">
             Champ requis
@@ -243,13 +243,27 @@
         ⚠️ La date de fin doit être supérieure à la date de début
       </div>
 
+      <!-- Bouton prévisions mensuelles -->
+      <div class="monthly-trigger" *ngIf="canOpenMonthly">
+        <button type="button" class="btn-monthly" (click)="openMonthlyModal()">
+          📅 Saisir les prévisions mensuelles
+          <span class="monthly-badge" *ngIf="monthlyRows.length > 0">{{ monthlyRows.length }} mois</span>
+        </button>
+        <span class="monthly-hint" *ngIf="monthlyRows.length > 0">
+          Total: {{ totalRevenue | number:'1.0-0' }} € rev · {{ totalCost | number:'1.0-0' }} € coût
+        </span>
+      </div>
+
       <div class="form-divider"></div>
 
       <div class="form-actions">
-        <button type="button" class="btn-annuler" routerLink="/">Annuler</button>
+        <button type="button" class="btn-annuler" [routerLink]="dashboardRoute">Annuler</button>
         <button type="submit" class="btn-creer" [disabled]="saving">
-          <span *ngIf="saving">Soumission en cours...</span>
-          <span *ngIf="!saving">Soumettre pour approbation →</span>
+          <ng-container *ngIf="!saving">
+            <span *ngIf="auth.isAdmin()">Créer le projet →</span>
+            <span *ngIf="!auth.isAdmin()">Soumettre pour approbation →</span>
+          </ng-container>
+          <span *ngIf="saving">{{ auth.isAdmin() ? 'Création en cours...' : 'Soumission en cours...' }}</span>
         </button>
       </div>
     </div>
@@ -257,4 +271,123 @@
   </form>
   </ng-container>
 
+</div>
+
+<!-- ── Modale Prévisions Mensuelles ────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showMonthlyModal" (click)="closeMonthlyModal()">
+  <div class="monthly-modal" (click)="$event.stopPropagation()" (paste)="onPaste($event)">
+
+    <div class="monthly-modal-header">
+      <div>
+        <h2>📅 Prévisions mensuelles</h2>
+        <p>{{ monthlyRows.length }} mois · de {{ monthlyRows[0]?.label }} à {{ monthlyRows[monthlyRows.length-1]?.label }}</p>
+      </div>
+      <button class="btn-close-modal" (click)="closeMonthlyModal()">✕</button>
+    </div>
+
+    <!-- Sélecteur de mode collage -->
+    <div class="paste-mode-bar">
+      <span class="pmode-label">Mode de collage :</span>
+      <button type="button" class="btn-pmode" [class.active]="pasteMode==='column'" (click)="pasteMode='column'">
+        ⬇ Par colonne
+      </button>
+      <button type="button" class="btn-pmode" [class.active]="pasteMode==='row'" (click)="pasteMode='row'">
+        ➡ Par ligne
+      </button>
+      <span class="pmode-hint" *ngIf="pasteMode==='column'">
+        Copiez 2 colonnes (Revenue | Cost), une ligne par mois
+      </span>
+      <span class="pmode-hint" *ngIf="pasteMode==='row'">
+        Copiez chaque ligne séparément et collez-la dans la zone correspondante
+      </span>
+    </div>
+
+    <!-- Mode colonne : astuce collage global -->
+    <div class="paste-tip" [class.paste-success]="pasteApplied" *ngIf="pasteMode==='column'">
+      <ng-container *ngIf="!pasteApplied">
+        📋 Appuyez sur <kbd>Ctrl+V</kbd> n'importe où dans cette fenêtre pour coller
+      </ng-container>
+      <ng-container *ngIf="pasteApplied">
+        ✅ Données collées avec succès !
+      </ng-container>
+    </div>
+
+    <!-- Mode ligne : 2 zones de collage dédiées -->
+    <div class="row-paste-zones" *ngIf="pasteMode==='row'">
+      <div class="rpz" [class.pasted]="revPasted" tabindex="0" (paste)="onPasteRow($event, 'revenue')">
+        <div class="rpz-icon">📊</div>
+        <div class="rpz-body">
+          <b>Revenue (€)</b>
+          <small>Cliquez ici, puis Ctrl+V pour coller la ligne Revenue</small>
+        </div>
+        <div class="rpz-badge" [class.hint]="!revPasted">
+          {{ revPasted ? '✅ Collé !' : 'Ctrl+V' }}
+        </div>
+      </div>
+      <div class="rpz" [class.pasted]="costPasted" tabindex="0" (paste)="onPasteRow($event, 'cost')">
+        <div class="rpz-icon">💰</div>
+        <div class="rpz-body">
+          <b>Cost (€)</b>
+          <small>Cliquez ici, puis Ctrl+V pour coller la ligne Cost</small>
+        </div>
+        <div class="rpz-badge" [class.hint]="!costPasted">
+          {{ costPasted ? '✅ Collé !' : 'Ctrl+V' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau des mois -->
+    <div class="monthly-table-wrap">
+      <table class="monthly-table">
+        <thead>
+          <tr>
+            <th>Mois</th>
+            <th>Revenue (€)</th>
+            <th>Cost (€)</th>
+            <th>Marge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of monthlyRows">
+            <td class="month-label">{{ row.label }}</td>
+            <td>
+              <input type="number" class="cell-input" [(ngModel)]="row.revenue"
+                     placeholder="0" min="0">
+            </td>
+            <td>
+              <input type="number" class="cell-input" [(ngModel)]="row.cost"
+                     placeholder="0" min="0">
+            </td>
+            <td class="margin-cell"
+                [class.marge-high]="(row.revenue || 0) > 0 && (((row.revenue||0)-(row.cost||0))/(row.revenue||1))*100 >= 25"
+                [class.marge-mid]="(row.revenue || 0) > 0 && (((row.revenue||0)-(row.cost||0))/(row.revenue||1))*100 >= 10 && (((row.revenue||0)-(row.cost||0))/(row.revenue||1))*100 < 25"
+                [class.marge-low]="(row.revenue || 0) > 0 && (((row.revenue||0)-(row.cost||0))/(row.revenue||1))*100 < 10">
+              <ng-container *ngIf="(row.revenue || 0) > 0">
+                {{ (((row.revenue||0)-(row.cost||0))/(row.revenue||1)*100) | number:'1.0-0' }}%
+              </ng-container>
+              <ng-container *ngIf="!(row.revenue || 0)">—</ng-container>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td>TOTAL</td>
+            <td>{{ totalRevenue | number:'1.0-0' }} €</td>
+            <td>{{ totalCost | number:'1.0-0' }} €</td>
+            <td [class.marge-high]="totalMargin>=25" [class.marge-mid]="totalMargin>=10&&totalMargin<25" [class.marge-low]="totalMargin<10&&totalRevenue>0">
+              {{ totalRevenue > 0 ? (totalMargin | number:'1.0-0') + '%' : '—' }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="monthly-modal-footer">
+      <button type="button" class="btn-annuler" (click)="closeMonthlyModal()">Annuler</button>
+      <button type="button" class="btn-confirm-monthly" (click)="confirmMonthly()">
+        ✓ Confirmer et appliquer les totaux
+      </button>
+    </div>
+
+  </div>
 </div>

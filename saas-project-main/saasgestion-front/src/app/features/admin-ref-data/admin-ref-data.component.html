@@ -1,0 +1,165 @@
+<div class="admin-layout">
+
+  <app-admin-sidebar></app-admin-sidebar>
+
+  <div class="admin-main">
+
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-left">
+        <h1>Données de référence</h1>
+        <span class="header-sub">Gérez les listes déroulantes du formulaire projet</span>
+      </div>
+      <button class="btn-new" (click)="openAdd()">+ Ajouter</button>
+    </header>
+
+    <!-- Onglets -->
+    <div class="tabs-bar">
+      <button
+        *ngFor="let t of tabs"
+        class="tab-btn"
+        [class.active]="activeTab === t.key"
+        (click)="selectTab(t.key)">
+        <span class="tab-icon">{{ t.icon }}</span>
+        {{ t.label }}
+      </button>
+    </div>
+
+    <!-- Contenu -->
+    <div class="table-card">
+
+      <div class="table-loading" *ngIf="loading">
+        <div class="spinner"></div>
+        <span>Chargement...</span>
+      </div>
+
+      <table class="ref-table" *ngIf="!loading">
+        <thead>
+          <tr>
+            <th *ngFor="let col of columns">{{ colLabels[col] }}</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items" [class.row-inactive]="!item.isActive">
+            <td *ngFor="let col of columns">
+              <span *ngIf="col === 'trigram' || col === 'engagementType' || col === 'code'" class="code-badge">
+                {{ item[col] || '—' }}
+              </span>
+              <span *ngIf="col !== 'trigram' && col !== 'engagementType' && col !== 'code'">
+                {{ item[col] || '—' }}
+              </span>
+            </td>
+            <td>
+              <span class="status-dot" [class.active]="item.isActive">
+                {{ item.isActive ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-action btn-edit" title="Modifier" (click)="openEdit(item)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="btn-action"
+                        [class.btn-toggle-off]="item.isActive"
+                        [class.btn-toggle-on]="!item.isActive"
+                        [title]="item.isActive ? 'Désactiver' : 'Activer'"
+                        (click)="toggle(item)">
+                  <svg *ngIf="item.isActive" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/>
+                    <line x1="2" y1="2" x2="22" y2="22"/>
+                  </svg>
+                  <svg *ngIf="!item.isActive" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="items.length === 0">
+            <td [attr.colspan]="columns.length + 2" class="empty-row">Aucune entrée</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale ajout / modification ────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>{{ modalTitle }}</h2>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="form" class="ref-form">
+
+        <!-- BU : ID (seulement en création) -->
+        <div class="form-group" *ngIf="showField('id')">
+          <label>Identifiant BU <span class="req">*</span></label>
+          <input class="fi" formControlName="id" placeholder="Ex: I52704"
+                 [class.invalid]="form.get('id')?.invalid && form.get('id')?.touched">
+          <span class="err" *ngIf="form.get('id')?.invalid && form.get('id')?.touched">Champ requis</span>
+        </div>
+
+        <!-- Nom -->
+        <div class="form-group" *ngIf="showField('name')">
+          <label>Nom <span class="req">*</span></label>
+          <input class="fi" formControlName="name" placeholder="Nom complet"
+                 [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched">
+          <span class="err" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">Champ requis</span>
+        </div>
+
+        <!-- Trigramme -->
+        <div class="form-group" *ngIf="showField('trigram')">
+          <label>Trigramme <span class="req">*</span></label>
+          <input class="fi" formControlName="trigram" placeholder="Ex: MIS, ALP..."
+                 [class.invalid]="form.get('trigram')?.invalid && form.get('trigram')?.touched"
+                 style="text-transform:uppercase">
+          <span class="err" *ngIf="form.get('trigram')?.invalid && form.get('trigram')?.touched">Champ requis</span>
+        </div>
+
+        <!-- BU Manager -->
+        <div class="form-group" *ngIf="showField('bumName')">
+          <label>BU Manager <span class="req">*</span></label>
+          <input class="fi" formControlName="bumName" placeholder="Nom du BU Manager"
+                 [class.invalid]="form.get('bumName')?.invalid && form.get('bumName')?.touched">
+          <span class="err" *ngIf="form.get('bumName')?.invalid && form.get('bumName')?.touched">Champ requis</span>
+        </div>
+
+        <!-- Groupe client -->
+        <div class="form-group" *ngIf="showField('customerGroup')">
+          <label>Groupe client</label>
+          <input class="fi" formControlName="customerGroup" placeholder="Ex: EDF Group (optionnel)">
+        </div>
+
+        <!-- Type d'engagement -->
+        <div class="form-group" *ngIf="showField('engagementType')">
+          <label>Type d'engagement <span class="req">*</span></label>
+          <input class="fi" formControlName="engagementType" placeholder="Ex: T&M, FF..."
+                 [class.invalid]="form.get('engagementType')?.invalid && form.get('engagementType')?.touched"
+                 style="text-transform:uppercase">
+          <span class="err" *ngIf="form.get('engagementType')?.invalid && form.get('engagementType')?.touched">Champ requis</span>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()" [disabled]="saving">Annuler</button>
+      <button class="btn-primary-blue" (click)="save()" [disabled]="saving">
+        <span *ngIf="!saving">{{ editTarget ? 'Enregistrer' : 'Ajouter' }}</span>
+        <span *ngIf="saving">Enregistrement...</span>
+      </button>
+    </div>
+
+  </div>
+</div>

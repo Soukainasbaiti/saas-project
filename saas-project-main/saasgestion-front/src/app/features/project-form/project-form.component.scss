@@ -78,6 +78,149 @@
   &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,102,204,0.4); }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
+/* ── Bouton prévisions mensuelles ───────────────────────────── */
+.monthly-trigger {
+  margin-top: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.btn-monthly {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1d4ed8;
+  padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+  &:hover { background: #dbeafe; border-color: #93c5fd; }
+}
+.monthly-badge {
+  background: #1d4ed8; color: #fff; border-radius: 12px;
+  padding: 1px 8px; font-size: 11px; font-weight: 700;
+}
+.monthly-hint { font-size: 12px; color: #64748b; }
+
+/* ── Modale overlay ─────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 16px;
+}
+.monthly-modal {
+  background: #fff; border-radius: 16px; width: 100%; max-width: 860px;
+  max-height: 90vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.monthly-modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 24px 28px 16px; border-bottom: 1px solid #e2e8f0;
+  h2 { font-size: 18px; font-weight: 700; color: #0f1e35; margin: 0 0 4px; }
+  p  { font-size: 12px; color: #64748b; margin: 0; }
+}
+.btn-close-modal {
+  background: none; border: none; font-size: 18px; color: #94a3b8;
+  cursor: pointer; padding: 4px; line-height: 1;
+  &:hover { color: #374151; }
+}
+
+/* ── Sélecteur mode collage ─────────────────────────────────── */
+.paste-mode-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 28px; border-bottom: 1px solid #f1f5f9; background: #fafcff;
+}
+.pmode-label {
+  font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;
+}
+.btn-pmode {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  background: #fff; color: #374151; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+  &:hover { border-color: #0066cc; color: #0066cc; background: #f0f7ff; }
+  &.active { border-color: #0066cc; background: #eff6ff; color: #0066cc; }
+}
+.pmode-hint {
+  font-size: 11px; color: #94a3b8; font-style: italic; flex: 1;
+}
+
+/* ── Astuce collage (mode colonne) ──────────────────────────── */
+.paste-tip {
+  padding: 8px 28px; font-size: 12px; color: #64748b;
+  border-bottom: 1px solid #f1f5f9; background: #fafcff;
+  kbd {
+    background: #e2e8f0; border-radius: 4px;
+    padding: 2px 6px; font-size: 11px; font-family: monospace;
+  }
+  &.paste-success { background: #f0fdf4; color: #16a34a; border-bottom-color: #bbf7d0; }
+}
+
+/* ── Zones collage par ligne ─────────────────────────────────── */
+.row-paste-zones {
+  display: flex; gap: 12px; padding: 12px 28px;
+  border-bottom: 1px solid #f1f5f9; background: #fafcff;
+}
+.rpz {
+  flex: 1; display: flex; align-items: center; gap: 12px;
+  border: 2px dashed #bfdbfe; border-radius: 10px; padding: 12px 16px;
+  cursor: pointer; transition: all 0.2s; outline: none; background: #fff;
+  &:focus, &:hover { border-color: #0066cc; background: #f0f7ff; }
+  &.pasted { border-color: #16a34a; border-style: solid; background: #f0fdf4; }
+}
+.rpz-icon { font-size: 22px; flex-shrink: 0; }
+.rpz-body {
+  flex: 1;
+  b { display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+  small { font-size: 11px; color: #94a3b8; }
+}
+.rpz-badge {
+  font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px;
+  flex-shrink: 0; color: #16a34a; background: #dcfce7;
+  &.hint { background: #f1f5f9; color: #64748b; font-family: monospace; color: #64748b; }
+}
+
+/* ── Tableau mensuel ────────────────────────────────────────── */
+.monthly-table-wrap {
+  flex: 1; overflow-y: auto; padding: 0 28px 8px;
+}
+.monthly-table {
+  width: 100%; border-collapse: collapse; margin-top: 12px;
+  th {
+    font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;
+    letter-spacing: 0.4px; padding: 8px 10px; text-align: left;
+    border-bottom: 2px solid #e2e8f0; background: #f8fafc;
+  }
+  td {
+    padding: 6px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+  }
+  tr:hover td { background: #f8fbff; }
+}
+.month-label { font-size: 13px; font-weight: 600; color: #374151; white-space: nowrap; }
+.cell-input {
+  width: 100%; min-width: 130px; border: 1px solid #e2e8f0; border-radius: 6px;
+  padding: 6px 10px; font-size: 13px; font-family: 'Inter', sans-serif;
+  text-align: right; outline: none; font-variant-numeric: tabular-nums;
+  &:focus { border-color: #0066cc; box-shadow: 0 0 0 2px rgba(0,102,204,0.08); }
+}
+.margin-cell {
+  font-size: 13px; font-weight: 700; text-align: center;
+  &.marge-high { color: #16a34a; }
+  &.marge-mid  { color: #f97316; }
+  &.marge-low  { color: #dc2626; }
+}
+.total-row td {
+  font-size: 13px; font-weight: 800; color: #0f1e35;
+  border-top: 2px solid #e2e8f0; padding: 10px 8px;
+  background: #f8fafc;
+}
+
+/* ── Footer modale ──────────────────────────────────────────── */
+.monthly-modal-footer {
+  display: flex; justify-content: flex-end; gap: 12px;
+  padding: 16px 28px; border-top: 1px solid #e2e8f0;
+}
+.btn-confirm-monthly {
+  background: linear-gradient(135deg, #0066cc, #0044aa); color: #fff; border: none;
+  padding: 0 24px; height: 40px; border-radius: 8px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,102,204,0.3);
+  &:hover { transform: translateY(-1px); }
+}
+
 /* ── Écran confirmation soumission ─────────────────────────── */
 .submitted-shell {
   min-height: 100vh;

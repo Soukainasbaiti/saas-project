@@ -49,7 +49,8 @@ export class LoginComponent {
         if (res.forceChange) {
           this.router.navigate(['/change-password']);
         } else {
-          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl')
+            || (res.role === 'ADMIN' ? '/admin' : '/');
           this.router.navigate([returnUrl]);
         }
       },

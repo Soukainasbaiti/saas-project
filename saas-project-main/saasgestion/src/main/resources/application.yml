@@ -36,7 +36,7 @@ app:
   mail:
     from: adamadrissa.07@gmail.com
   brevo:
-    api-key: REMPLACE_PAR_TA_CLE_API_BREVO
+    api-key: ${BREVO_API_KEY}
 
 logging:
   level:
