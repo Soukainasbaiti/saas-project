@@ -34,6 +34,12 @@
   cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
   &:hover { background: rgba(255,255,255,0.3); }
 }
+.btn-d-manage {
+  background: rgba(59,130,246,0.18); color: #93c5fd; border: 1px solid rgba(59,130,246,0.35);
+  padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+  &:hover { background: rgba(59,130,246,0.32); }
+}
 .btn-d-arch {
   background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3);
   padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 600;
@@ -97,13 +103,8 @@
 }
 .month-name { font-weight: 600; color: #374151; white-space: nowrap; }
 .num-cell {
-  text-align: right; font-variant-numeric: tabular-nums;
-  &.rev  { color: #16a34a; font-weight: 600; }
-  &.cost { color: #f97316; font-weight: 600; }
+  text-align: right; font-variant-numeric: tabular-nums; color: #1e293b; font-weight: 600;
 }
-.marge-high { color: #16a34a; font-weight: 700; }
-.marge-mid  { color: #f97316; font-weight: 700; }
-.marge-low  { color: #dc2626; font-weight: 700; }
 .forecast-total td {
   font-weight: 800; font-size: 13px; color: #0f1e35;
   border-top: 2px solid #e2e8f0; background: #f8fafc; padding: 10px 12px;

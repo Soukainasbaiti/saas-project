@@ -58,7 +58,7 @@
       <div class="kpi-card">
         <div class="kpi-left">
           <div class="kpi-label">Revenu Total</div>
-          <div class="kpi-value">{{ fmt(stats.totalRevenue) }}</div>
+          <div class="kpi-value">{{ fmtCompact(stats.totalRevenue) }}</div>
           <div class="kpi-trend up">↗ CA Budget {{ selectedYear }}</div>
         </div>
         <div class="kpi-icon green">💰</div>
@@ -66,7 +66,7 @@
       <div class="kpi-card">
         <div class="kpi-left">
           <div class="kpi-label">Coût Total</div>
-          <div class="kpi-value">{{ fmt(stats.totalCost) }}</div>
+          <div class="kpi-value">{{ fmtCompact(stats.totalCost) }}</div>
           <div class="kpi-trend down">↘ Coûts cumulés</div>
         </div>
         <div class="kpi-icon orange">💸</div>
@@ -74,7 +74,7 @@
       <div class="kpi-card">
         <div class="kpi-left">
           <div class="kpi-label">Marge Totale</div>
-          <div class="kpi-value">{{ fmt(stats.totalMargin) }}</div>
+          <div class="kpi-value">{{ fmtCompact(stats.totalMargin) }}</div>
           <div class="kpi-trend purple">↗ {{ fmtPct(stats.avgMarginRate) }} avg</div>
         </div>
         <div class="kpi-icon purple">📈</div>
@@ -169,21 +169,21 @@
           <ng-container matColumnDef="revenueBudget">
             <th mat-header-cell *matHeaderCellDef class="num">Revenu</th>
             <td mat-cell *matCellDef="let p" class="num">
-              <span class="rev-val">{{ fmt(p.revenueBudget) }}</span>
+              <span class="rev-val">{{ fmtCompact(p.revenueBudget) }}</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="costBudget">
             <th mat-header-cell *matHeaderCellDef class="num">Coût</th>
             <td mat-cell *matCellDef="let p" class="num">
-              <span class="cost-val">{{ fmt(p.costBudget) }}</span>
+              <span class="cost-val">{{ fmtCompact(p.costBudget) }}</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="marginBudget">
             <th mat-header-cell *matHeaderCellDef class="num">Marge €</th>
             <td mat-cell *matCellDef="let p" class="num">
-              <span class="marge-eur">{{ fmt(p.marginBudget) }}</span>
+              <span class="marge-eur">{{ fmtCompact(p.marginBudget) }}</span>
             </td>
           </ng-container>
 
@@ -342,10 +342,10 @@
             <tbody>
               <tr *ngFor="let f of selectedProject.monthlyForecasts">
                 <td class="month-cell">{{ monthLabel(f.month) }}</td>
-                <td class="num rev">{{ fmt(f.revenue) }}</td>
-                <td class="num cost">{{ fmt(f.cost) }}</td>
+                <td class="num">{{ fmt(f.revenue) }}</td>
+                <td class="num">{{ fmt(f.cost) }}</td>
                 <td class="num">{{ fmt(f.revenue - f.cost) }}</td>
-                <td class="num" [ngClass]="monthMarginClass(f.revenue, f.cost)">
+                <td class="num">
                   {{ monthMarginPct(f.revenue, f.cost) }}
                 </td>
               </tr>
@@ -353,10 +353,10 @@
             <tfoot>
               <tr class="f-total">
                 <td>TOTAL</td>
-                <td class="num rev">{{ fmt(forecastTotalRevenue) }}</td>
-                <td class="num cost">{{ fmt(forecastTotalCost) }}</td>
+                <td class="num">{{ fmt(forecastTotalRevenue) }}</td>
+                <td class="num">{{ fmt(forecastTotalCost) }}</td>
                 <td class="num">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
-                <td class="num" [ngClass]="monthMarginClass(forecastTotalRevenue, forecastTotalCost)">
+                <td class="num">
                   {{ monthMarginPct(forecastTotalRevenue, forecastTotalCost) }}
                 </td>
               </tr>
@@ -369,6 +369,9 @@
 
     <div class="modal-footer">
       <button class="btn-annuler" (click)="closeModal()">Fermer</button>
+      <button class="btn-gestion" [routerLink]="['/projects', selectedProject?.id, 'management']" (click)="closeModal()">
+        📊 Gestion de Projet
+      </button>
     </div>
 
   </div>

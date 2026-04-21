@@ -271,6 +271,25 @@ export class AdminDashboardComponent implements OnInit {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
   }
 
+  fmtCompact(v: number | null): string {
+    if (v == null) return '—';
+    const abs = Math.abs(v);
+    const sign = v < 0 ? '-' : '';
+    const units: { value: number; suffix: string }[] = [
+      { value: 1_000_000_000, suffix: 'B' },
+      { value: 1_000_000,     suffix: 'M' },
+      { value: 1_000,         suffix: 'K' },
+    ];
+    let result = '';
+    let remainder = abs;
+    for (const { value, suffix } of units) {
+      const part = Math.floor(remainder / value);
+      if (part > 0) { result += part + suffix; remainder %= value; }
+    }
+    if (!result) result = String(Math.round(abs));
+    return sign + result + ' €';
+  }
+
   monthLabel(month: string): string {
     const M = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
     const [y, m] = month.split('-').map(Number);

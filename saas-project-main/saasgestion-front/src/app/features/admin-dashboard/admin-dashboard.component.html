@@ -44,11 +44,11 @@
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Revenue Total</span>
-        <span class="kpi-value kpi-green">{{ fmt(totalRevenue) }}</span>
+        <span class="kpi-value kpi-green">{{ fmtCompact(totalRevenue) }}</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Marge Totale</span>
-        <span class="kpi-value kpi-purple">{{ fmt(totalMargin) }}</span>
+        <span class="kpi-value kpi-purple">{{ fmtCompact(totalMargin) }}</span>
       </div>
     </div>
 
@@ -83,9 +83,9 @@
             <td>{{ p.customerName }}</td>
             <td>{{ p.frontFinancier }}</td>
             <td><span class="badge" [class]="statusClass(p.status)">{{ p.status }}</span></td>
-            <td class="val-money">{{ fmt(p.revenueBudget) }}</td>
+            <td class="val-money">{{ fmtCompact(p.revenueBudget) }}</td>
             <td class="val-money" [class.neg]="(p.revenueBudget - p.costBudget) < 0">
-              {{ fmt(p.revenueBudget - p.costBudget) }}
+              {{ fmtCompact(p.revenueBudget - p.costBudget) }}
             </td>
             <td>
               <div class="action-btns">

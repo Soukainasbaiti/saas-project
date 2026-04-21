@@ -260,13 +260,7 @@ table { width: 100%; }
   tr:hover td { background: #f0f6ff; }
 }
 .month-cell { font-weight: 600; color: #374151; white-space: nowrap; }
-.num { text-align: right; font-variant-numeric: tabular-nums;
-  &.rev  { color: #16a34a; font-weight: 600; }
-  &.cost { color: #f97316; font-weight: 600; }
-}
-.marge-high { color: #16a34a; font-weight: 700; }
-.marge-mid  { color: #f97316; font-weight: 700; }
-.marge-low  { color: #dc2626; font-weight: 700; }
+.num { text-align: right; font-variant-numeric: tabular-nums; color: #1e293b; font-weight: 600; }
 .f-total td {
   font-weight: 800; font-size: 13px; border-top: 2px solid #e2e8f0;
   background: #f8fafc; padding: 9px 10px;
@@ -274,7 +268,13 @@ table { width: 100%; }
 
 .modal-footer {
   padding: 16px 24px; border-top: 1px solid #e5e7eb;
-  display: flex; justify-content: flex-end;
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+.btn-gestion {
+  background: #1565c0; border: none; color: #fff;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  &:hover { background: #0d47a1; }
 }
 .btn-annuler {
   background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b;

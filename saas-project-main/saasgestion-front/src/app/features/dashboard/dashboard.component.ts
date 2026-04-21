@@ -151,6 +151,25 @@ export class DashboardComponent implements OnInit {
     }).format(v);
   }
 
+  fmtCompact(v: number): string {
+    if (v == null) return '—';
+    const abs = Math.abs(v);
+    const sign = v < 0 ? '-' : '';
+    const units: { value: number; suffix: string }[] = [
+      { value: 1_000_000_000, suffix: 'B' },
+      { value: 1_000_000,     suffix: 'M' },
+      { value: 1_000,         suffix: 'K' },
+    ];
+    let result = '';
+    let remainder = abs;
+    for (const { value, suffix } of units) {
+      const part = Math.floor(remainder / value);
+      if (part > 0) { result += part + suffix; remainder %= value; }
+    }
+    if (!result) result = String(Math.round(abs));
+    return sign + result + ' €';
+  }
+
   fmtPct(v: number): string { return v == null ? '—' : (v * 100).toFixed(1) + '%'; }
 
   marginClass(v: number): string {

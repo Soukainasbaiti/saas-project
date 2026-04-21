@@ -26,6 +26,7 @@
       </div>
       <div class="detail-hero-actions">
         <button class="btn-d-back" routerLink="/">← Retour Dashboard</button>
+        <button class="btn-d-manage" [routerLink]="['/projects', project.id, 'management']">📊 Gestion de Projet</button>
         <button class="btn-d-arch" (click)="archive()">🗂 Archiver</button>
       </div>
     </div>
@@ -129,10 +130,10 @@
           <tbody>
             <tr *ngFor="let f of project.monthlyForecasts">
               <td class="month-name">{{ monthLabel(f.month) }}</td>
-              <td class="num-cell rev">{{ fmt(f.revenue) }}</td>
-              <td class="num-cell cost">{{ fmt(f.cost) }}</td>
+              <td class="num-cell">{{ fmt(f.revenue) }}</td>
+              <td class="num-cell">{{ fmt(f.cost) }}</td>
               <td class="num-cell">{{ fmt(f.revenue - f.cost) }}</td>
-              <td class="num-cell" [ngClass]="monthMarginClass(f.revenue, f.cost)">
+              <td class="num-cell">
                 {{ monthMargin(f.revenue, f.cost) }}
               </td>
             </tr>
@@ -140,10 +141,10 @@
           <tfoot>
             <tr class="forecast-total">
               <td>TOTAL</td>
-              <td class="num-cell rev">{{ fmt(forecastTotalRevenue) }}</td>
-              <td class="num-cell cost">{{ fmt(forecastTotalCost) }}</td>
+              <td class="num-cell">{{ fmt(forecastTotalRevenue) }}</td>
+              <td class="num-cell">{{ fmt(forecastTotalCost) }}</td>
               <td class="num-cell">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
-              <td class="num-cell" [ngClass]="monthMarginClass(forecastTotalRevenue, forecastTotalCost)">
+              <td class="num-cell">
                 {{ monthMargin(forecastTotalRevenue, forecastTotalCost) }}
               </td>
             </tr>

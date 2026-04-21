@@ -110,4 +110,36 @@ export class ApiService {
   }
   getFrontFinanciers(): Observable<ReferenceDto[]> { return this.http.get<ReferenceDto[]>(`${this.base}/ref/front-financiers`); }
   getPMs():             Observable<ReferenceDto[]> { return this.http.get<ReferenceDto[]>(`${this.base}/ref/pms`); }
+
+  // ── Project Management ────────────────────────────────────────
+  getProjectManagement(projectId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/projects/${projectId}/management`);
+  }
+  addResource(req: { projectId: number; matricule: string; personName: string; contractType: string }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/resource`, req);
+  }
+  deleteResource(resourceId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/management/resource/${resourceId}`);
+  }
+  updateResourceContractType(resourceId: number, contractType: string): Observable<void> {
+    return this.http.patch<void>(`${this.base}/projects/management/resource/${resourceId}/contract`, { contractType });
+  }
+  saveResourceEntry(req: { resourceId: number; month: string; dailyCost?: number; workedDays?: number; billedDays?: number; dailyRate?: number }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/entry`, req);
+  }
+  saveOtherCost(req: { projectId: number; category: string; month: string; amount: number; isRebill?: boolean }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/cost`, req);
+  }
+  addOtherCostCategory(req: { projectId: number; category: string }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/cost/category`, req);
+  }
+  deleteOtherCostCategory(req: { projectId: number; category: string }): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/management/cost/category`, { body: req });
+  }
+  setCategoryRebill(req: { projectId: number; category: string; isRebill: boolean }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/cost/rebill`, req);
+  }
+  setGranularity(projectId: number, granularity: string, currency: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/management/granularity`, { granularity, currency });
+  }
 }

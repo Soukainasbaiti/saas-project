@@ -9,6 +9,7 @@ import { ProjectEditComponent } from './features/project-edit/project-edit.compo
 import { AdminDashboardComponent } from './features/admin-dashboard/admin-dashboard.component';
 import { AdminUsersComponent } from './features/admin-users/admin-users.component';
 import { AdminRefDataComponent } from './features/admin-ref-data/admin-ref-data.component';
+import { ProjectManagementComponent } from './features/project-management/project-management.component';
 import { authGuard, adminGuard, loginGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -26,7 +27,8 @@ export const routes: Routes = [
   // ── Routes protégées ──────────────────────────────────────────
   { path: '',                component: DashboardComponent,      canActivate: [authGuard] },
   { path: 'projects/new',    component: ProjectFormComponent,    canActivate: [authGuard] },
-  { path: 'projects/:id',    component: ProjectDetailComponent,  canActivate: [authGuard] },
+  { path: 'projects/:id',            component: ProjectDetailComponent,    canActivate: [authGuard] },
+  { path: 'projects/:id/management', component: ProjectManagementComponent, canActivate: [authGuard] },
 
   // ── Admin approbation (public — le token email fait office d'autorisation) ──
   { path: 'admin/approve/:token',  component: AdminApproveComponent },
