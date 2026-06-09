@@ -14,7 +14,7 @@ export interface ProjectSubmitResponse {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
 
-  private readonly base = 'http://localhost:8080/api';
+  private readonly base = '/api';
 
   constructor(private http: HttpClient) {}
 
@@ -91,6 +91,14 @@ export class ApiService {
     return this.http.post<ProjectDetailDto>(`${this.base}/admin/projects/direct`, req);
   }
 
+  getAdminModuleStats(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/admin/module-stats`);
+  }
+
+  getAdminWipGlobal(): Observable<any> {
+    return this.http.get<any>(`${this.base}/admin/wip-global`);
+  }
+
   getDashboardStats(year?: number): Observable<DashboardStats> {
     let params = new HttpParams();
     if (year) params = params.set('year', year);
@@ -141,5 +149,180 @@ export class ApiService {
   }
   setGranularity(projectId: number, granularity: string, currency: string): Observable<any> {
     return this.http.post<any>(`${this.base}/projects/${projectId}/management/granularity`, { granularity, currency });
+  }
+
+  // ── Validation workflow ────────────────────────────────────────
+  submitForValidation(projectId: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/${projectId}/management/submit`, {});
+  }
+  validateProject(projectId: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/${projectId}/management/validate`, {});
+  }
+  rejectProject(projectId: number, comment: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/${projectId}/management/reject`, { comment });
+  }
+  getBumPending(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/management/bum/pending`);
+  }
+  getPmRejected(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/management/pm/rejected`);
+  }
+  getBumHistory(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/management/bum/history`);
+  }
+
+  // ── SDH Import ─────────────────────────────────────────────────
+  importSdhFile(projectId: number, file: File): Observable<any> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<any>(`${this.base}/projects/${projectId}/management/import-sdh`, form);
+  }
+
+  // ── Work Package — Deliverables ──────────────────────────────────
+  getDeliverables(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/deliverables`);
+  }
+
+  createDeliverable(projectId: number, req: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/deliverables`, req);
+  }
+
+  updateDeliverable(projectId: number, delivId: number, req: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/deliverables/${delivId}`, req);
+  }
+
+  deleteDeliverable(projectId: number, delivId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/deliverables/${delivId}`);
+  }
+
+  // ── Risk Register ───────────────────────────────────────────────
+  getRisks(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/risks`);
+  }
+  createRisk(projectId: number, req: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/risks`, req);
+  }
+  updateRisk(projectId: number, riskId: number, req: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/risks/${riskId}`, req);
+  }
+  deleteRisk(projectId: number, riskId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/risks/${riskId}`);
+  }
+
+  // ── MIP Register ─────────────────────────────────────────────────
+  getMips(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/mips`);
+  }
+  createMip(projectId: number, req: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/mips`, req);
+  }
+  updateMip(projectId: number, mipId: number, req: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/mips/${mipId}`, req);
+  }
+  deleteMip(projectId: number, mipId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/mips/${mipId}`);
+  }
+
+  // ── Opportunity Register ─────────────────────────────────────────
+  getOpportunities(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/opportunities`);
+  }
+  createOpportunity(projectId: number, req: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/opportunities`, req);
+  }
+  updateOpportunity(projectId: number, oppId: number, req: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/opportunities/${oppId}`, req);
+  }
+  deleteOpportunity(projectId: number, oppId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/opportunities/${oppId}`);
+  }
+
+  // ── Issue Register ───────────────────────────────────────────────
+  getIssues(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/issues`);
+  }
+  createIssue(projectId: number, req: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/issues`, req);
+  }
+  updateIssue(projectId: number, issueId: number, req: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/issues/${issueId}`, req);
+  }
+  deleteIssue(projectId: number, issueId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/issues/${issueId}`);
+  }
+
+  changeEngagement(projectId: number, engagementType: string): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/engagement`, { engagementType });
+  }
+
+  // ── Unit of Work — Work Types ────────────────────────────────────
+  getWorkTypes(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/work-types`);
+  }
+  createWorkType(projectId: number, req: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/work-types`, req);
+  }
+  deleteWorkType(projectId: number, typeId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/work-types/${typeId}`);
+  }
+
+  // ── Unit of Work — Tickets ───────────────────────────────────────
+  getWorkTickets(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/work-tickets`);
+  }
+  createWorkTicket(projectId: number, req: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/work-tickets`, req);
+  }
+  updateWorkTicket(projectId: number, ticketId: number, req: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/work-tickets/${ticketId}`, req);
+  }
+  deleteWorkTicket(projectId: number, ticketId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/work-tickets/${ticketId}`);
+  }
+
+  // ── WIP — Nouvelle API (tableau mensuel + documents) ─────────────
+  getWipTable(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/wip/table`);
+  }
+  uploadWipDocument(projectId: number, year: number, month: number, type: string, file: File): Observable<any> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<any>(
+      `${this.base}/projects/${projectId}/wip/months/${year}/${month}/upload?type=${type}`, form);
+  }
+  confirmWipDocumentAmount(projectId: number, docId: number, confirmedAmount: number): Observable<any> {
+    return this.http.put<any>(
+      `${this.base}/projects/${projectId}/wip/documents/${docId}/confirm`,
+      { confirmedAmount });
+  }
+  deleteWipDocument(projectId: number, docId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/wip/documents/${docId}`);
+  }
+  downloadWipDocument(projectId: number, docId: number): Observable<Blob> {
+    return this.http.get(
+      `${this.base}/projects/${projectId}/wip/documents/${docId}/download`,
+      { responseType: 'blob' });
+  }
+
+  // ── WIP — Ancienne API (conservée) ───────────────────────────────
+  getWips(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/wip`);
+  }
+  parseBlPdf(projectId: number, file: File): Observable<any[]> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<any[]>(`${this.base}/projects/${projectId}/wip/parse`, form);
+  }
+  saveAllWip(projectId: number, dtos: any[]): Observable<any[]> {
+    return this.http.post<any[]>(`${this.base}/projects/${projectId}/wip/save-all`, dtos);
+  }
+  createWip(projectId: number, dto: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/wip`, dto);
+  }
+  updateWip(projectId: number, id: number, dto: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/projects/${projectId}/wip/${id}`, dto);
+  }
+  deleteWip(projectId: number, id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/wip/${id}`);
   }
 }

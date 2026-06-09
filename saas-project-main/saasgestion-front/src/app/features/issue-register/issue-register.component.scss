@@ -1,0 +1,278 @@
+// ── Variables ─────────────────────────────────────────────────────
+$navy:   #1E3A5F;
+$red:    #dc2626;
+$gray-50:  #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-400: #94a3b8;
+$gray-600: #475569;
+$gray-800: #1e293b;
+
+// ── Wrapper ───────────────────────────────────────────────────────
+.ir-wrapper { padding: 0; position: relative; min-height: 400px; }
+
+// ── KPI Bar ───────────────────────────────────────────────────────
+.ir-kpi-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 16px 28px; border-bottom: 1px solid $gray-200; background: white; flex-wrap: wrap;
+}
+.ir-kpi {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 20px; border-right: 1px solid $gray-200; min-width: 90px;
+  &:last-of-type { border-right: none; }
+}
+.ir-kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: $gray-400; }
+.ir-kpi-value { font-size: 22px; font-weight: 800; color: $gray-800;
+  &.open     { color: #dc2626; }
+  &.critical { color: #dc2626; }
+  &.closed   { color: #16a34a; }
+}
+.ir-add-btn {
+  margin-left: auto; padding: 9px 22px; background: $navy; color: white;
+  border: none; border-radius: 9px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: opacity .15s;
+  &:hover { opacity: .85; }
+}
+
+// ── Severity badges ───────────────────────────────────────────────
+.ir-sev-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 700; color: white;
+  &.sev-high   { background: #dc2626; }
+  &.sev-medium { background: #d97706; }
+  &.sev-low    { background: #16a34a; }
+}
+
+// ── Impact badges ─────────────────────────────────────────────────
+.ir-impact-dot {
+  font-size: 12px; margin-right: 4px;
+  &.impact-critical  { color: #dc2626; }
+  &.impact-high      { color: #ea580c; }
+  &.impact-medium    { color: #d97706; }
+  &.impact-low       { color: #16a34a; }
+  &.impact-negligible{ color: #8b5cf6; }
+}
+.ir-impact-label { font-size: 12px; color: $gray-600; }
+
+.ir-impact-badge {
+  display: inline-flex; align-items: center; padding: 4px 12px;
+  border-radius: 6px; font-size: 11px; font-weight: 700; color: white;
+  &.impact-critical   { background: #dc2626; }
+  &.impact-high       { background: #ea580c; }
+  &.impact-medium     { background: #d97706; }
+  &.impact-low        { background: #16a34a; }
+  &.impact-negligible { background: #8b5cf6; }
+  &.sm { font-size: 11px; padding: 3px 10px; }
+}
+
+// ── Status badges ─────────────────────────────────────────────────
+.ir-status-badge {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 700;
+  &.status-open     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  &.status-closed   { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+  &.status-reopened { background: #fef3c7; color: #78350f; border: 1px solid #fcd34d; }
+}
+
+// ── Table ─────────────────────────────────────────────────────────
+.ir-table-wrap { overflow-x: auto; }
+.ir-loading { padding: 40px; text-align: center; color: $gray-400; }
+.ir-empty   { padding: 40px; text-align: center; color: $gray-400; font-size: 13px; }
+
+.ir-table {
+  width: 100%; border-collapse: collapse; min-width: 1100px;
+  thead th {
+    background: var(--pm-accent); color: white; font-size: 11px; font-weight: 700;
+    padding: 10px 12px; text-align: left; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  tbody tr { border-bottom: 1px solid $gray-100; }
+  .ir-row {
+    cursor: pointer; transition: background .12s;
+    &:hover { background: #faf5ff; }
+    td { padding: 10px 12px; font-size: 12px; color: $gray-800; vertical-align: middle; }
+  }
+}
+.ir-col-id    { font-size: 11px; font-weight: 700; color: $gray-400; font-family: 'Courier New', monospace; white-space: nowrap; }
+.ir-col-issue { max-width: 300px; color: $gray-600; line-height: 1.4; }
+.ir-col-date  { white-space: nowrap; font-size: 11px; &.overdue { color: $red; font-weight: 700; } }
+.ir-col-prio  { white-space: nowrap; font-size: 11px; }
+.ir-col-owner { font-size: 11px; }
+.ir-col-res   { text-align: center; font-size: 11px; font-weight: 600; color: #16a34a; }
+.ir-col-action{ display: flex; gap: 4px; align-items: center; }
+
+.ir-view-btn {
+  background: none; border: none; color: $gray-400; cursor: pointer;
+  padding: 4px; border-radius: 4px; transition: all .15s;
+  &:hover { color: var(--pm-accent); background: var(--pm-accent-muted); }
+}
+.ir-delete-btn {
+  background: none; border: none; color: $gray-400; cursor: pointer;
+  padding: 4px; border-radius: 4px; transition: all .15s;
+  &:hover { color: $red; background: #fee2e2; }
+}
+
+// ── Backdrop ──────────────────────────────────────────────────────
+.ir-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .6); backdrop-filter: blur(4px);
+  z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+
+// ── Modal détail ──────────────────────────────────────────────────
+.ir-detail-modal {
+  background: white; border-radius: 16px;
+  width: min(960px, 96vw); max-height: 92vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,.3);
+  animation: irIn .2s ease;
+}
+@keyframes irIn {
+  from { opacity: 0; transform: scale(.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.ir-detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 28px;
+  background: var(--pm-accent);
+  border-radius: 16px 16px 0 0; flex-shrink: 0;
+}
+.ir-detail-title { display: flex; align-items: center; gap: 12px; }
+.ir-id-badge {
+  font-size: 18px; font-weight: 800; color: white;
+  font-family: 'Courier New', monospace; letter-spacing: 1px;
+}
+.ir-detail-actions { display: flex; align-items: center; gap: 10px; }
+.ir-save-btn {
+  padding: 9px 22px; background: white; color: var(--pm-accent); border: none;
+  border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all .15s; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  &:hover:not(:disabled) { background: #f5f3ff; transform: translateY(-1px); }
+  &:disabled { opacity: .5; cursor: default; transform: none; }
+}
+.ir-close-btn {
+  background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.3);
+  color: white; padding: 7px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 15px; font-family: inherit; transition: all .15s;
+  &:hover { background: rgba(255,255,255,.25); }
+}
+.ir-view-badge {
+  font-size: 11px; color: white; background: rgba(255,255,255,.2);
+  padding: 6px 14px; border-radius: 20px; font-weight: 600;
+  border: 1px solid rgba(255,255,255,.3);
+}
+
+.ir-detail-body {
+  flex: 1; overflow-y: auto; padding: 24px 28px 32px;
+  display: flex; flex-direction: column; gap: 0; background: $gray-50;
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: $gray-200; border-radius: 3px; }
+}
+
+// ── Sections ──────────────────────────────────────────────────────
+.ir-section {
+  margin-bottom: 18px; background: white;
+  border: 1px solid $gray-200; border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+.ir-section-title {
+  padding: 12px 20px; background: white;
+  border-bottom: 2px solid $gray-100; border-radius: 12px 12px 0 0;
+  font-size: 11px; font-weight: 800; color: var(--pm-accent);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.ir-section:nth-child(1) .ir-section-title { border-left: 4px solid var(--pm-accent); padding-left: 16px; }
+.ir-section:nth-child(2) .ir-section-title { border-left: 4px solid #2563eb; padding-left: 16px; }
+.ir-section:nth-child(3) .ir-section-title { border-left: 4px solid #0891b2; padding-left: 16px; }
+.ir-section:nth-child(4) .ir-section-title { border-left: 4px solid #dc2626; padding-left: 16px; }
+
+.ir-form-grid { padding: 18px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+
+.ir-field {
+  display: flex; flex-direction: column; gap: 5px;
+  label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: $gray-400; }
+  input, select, textarea {
+    border: 1.5px solid $gray-200; border-radius: 9px; padding: 9px 12px;
+    font-size: 13px; color: $gray-800; font-family: inherit; outline: none;
+    transition: all .15s; width: 100%; box-sizing: border-box; min-height: 38px; background: white;
+    &:focus { border-color: var(--pm-accent); box-shadow: 0 0 0 3px var(--pm-accent-muted); }
+  }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+}
+.ir-field-full    { flex: 0 0 100%; width: 100%; }
+.ir-field-half    { flex: 0 0 calc(50% - 7px); min-width: 0; }
+.ir-field-third   { flex: 0 0 calc(33.33% - 10px); min-width: 0; }
+.ir-field-quarter { flex: 0 0 calc(25% - 11px); min-width: 0; }
+
+.ir-auto-val {
+  border: 1.5px solid $gray-100; border-radius: 9px; padding: 9px 12px;
+  font-size: 13px; font-weight: 700; color: $navy;
+  background: linear-gradient(135deg, #f5f3ff, $gray-50);
+  min-height: 38px; display: flex; align-items: center; gap: 8px;
+}
+.ir-res-time { color: #059669; font-size: 15px; font-weight: 800; }
+.ir-auto-tag {
+  background: var(--pm-accent-muted); color: var(--pm-accent);
+  font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 8px; text-transform: uppercase;
+}
+.ir-hint { font-size: 9px; color: $gray-400; font-weight: 400; text-transform: none; }
+
+// Mode lecture seule
+.ir-view-mode {
+  input, select, textarea {
+    background: $gray-50 !important; color: $gray-600 !important;
+    cursor: default !important; pointer-events: none; border-color: $gray-100 !important;
+  }
+}
+
+.ir-impacts-preview {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: $gray-50; border-radius: 8px; font-size: 13px; color: $gray-600; font-weight: 600;
+}
+
+// ── Modal création ─────────────────────────────────────────────────
+.ir-create-modal {
+  background: white; border-radius: 14px; width: min(540px, 94vw);
+  box-shadow: 0 24px 60px rgba(0,0,0,.25); display: flex; flex-direction: column; max-height: 90vh;
+}
+.ir-create-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px; border-bottom: 1px solid $gray-200;
+  background: var(--pm-accent); border-radius: 14px 14px 0 0;
+  h3 { margin: 0; font-size: 16px; font-weight: 700; color: white; }
+}
+.ir-create-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+.ir-create-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 24px; border-top: 1px solid $gray-200; }
+
+.ir-cancel-btn {
+  padding: 8px 18px; border: 1.5px solid $gray-200; background: white;
+  border-radius: 8px; font-size: 13px; color: $gray-600; cursor: pointer; font-family: inherit;
+  &:hover { background: $gray-50; }
+}
+.ir-confirm-btn {
+  padding: 8px 20px; background: var(--pm-accent); color: white; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  &:disabled { opacity: .45; cursor: default; }
+  &:hover:not(:disabled) { opacity: .85; }
+}
+
+// ── Modal suppression ──────────────────────────────────────────────
+.ir-delete-modal {
+  background: white; border-radius: 14px; width: min(400px, 94vw);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25); padding: 28px 28px 24px;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  h3 { margin: 0; font-size: 17px; font-weight: 700; color: $gray-800; }
+  p { margin: 0; font-size: 13px; color: $gray-600; line-height: 1.5;
+    strong { color: $gray-800; } }
+}
+.ir-delete-icon {
+  svg { color: $red; width: 48px; height: 48px; background: #fee2e2; border-radius: 50%; padding: 10px; }
+}
+.ir-delete-warning { font-size: 11px !important; color: $red !important; font-weight: 600 !important; }
+.ir-delete-actions { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+.ir-delete-confirm-btn {
+  padding: 9px 24px; background: $red; color: white; border: none;
+  border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  &:hover { background: #b91c1c; }
+}

@@ -1,0 +1,351 @@
+// ── Variables ─────────────────────────────────────────────────────
+$navy:   #1E3A5F;
+$green:  #1a6b3c;
+$red:    #dc2626;
+$orange: #ea580c;
+$yellow: #d97706;
+$gray-50:  #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-400: #94a3b8;
+$gray-600: #475569;
+$gray-800: #1e293b;
+
+// ── Wrapper ───────────────────────────────────────────────────────
+.rr-wrapper { padding: 0; position: relative; min-height: 400px; }
+
+// ── KPI Bar ───────────────────────────────────────────────────────
+.rr-kpi-bar {
+  display: flex; align-items: center; gap: 0;
+  padding: 16px 28px; border-bottom: 1px solid $gray-200;
+  background: white; flex-wrap: wrap; gap: 8px;
+}
+.rr-kpi {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 20px; border-right: 1px solid $gray-200; min-width: 100px;
+  &:last-of-type { border-right: none; }
+}
+.rr-kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: $gray-400; }
+.rr-kpi-value { font-size: 22px; font-weight: 800; color: $gray-800; }
+.rr-add-btn {
+  margin-left: auto; padding: 8px 20px;
+  background: var(--pm-accent); color: white; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: opacity .15s;
+  &:hover { opacity: .85; }
+}
+
+// ── Rating badges ─────────────────────────────────────────────────
+.rr-rating-badge {
+  display: inline-flex; align-items: center; padding: 4px 12px;
+  border-radius: 6px; font-size: 11px; font-weight: 800;
+  color: white; letter-spacing: .3px; text-transform: uppercase;
+  &.rating-critical { background: linear-gradient(135deg,#dc2626,#b91c1c); box-shadow: 0 2px 8px rgba(220,38,38,.35); }
+  &.rating-high     { background: linear-gradient(135deg,#ea580c,#c2410c); box-shadow: 0 2px 8px rgba(234,88,12,.35); }
+  &.rating-medium   { background: linear-gradient(135deg,#d97706,#b45309); box-shadow: 0 2px 8px rgba(217,119,6,.35); }
+  &.rating-low      { background: linear-gradient(135deg,#16a34a,#15803d); box-shadow: 0 2px 8px rgba(22,163,74,.35); }
+}
+.rr-kpi-value.rating-critical { color: #dc2626; }
+.rr-kpi-value.rating-high     { color: #ea580c; }
+
+// ── Status badges ─────────────────────────────────────────────────
+.rr-status-badge {
+  display: inline-flex; align-items: center; padding: 4px 12px;
+  border-radius: 20px; font-size: 11px; font-weight: 700;
+  &.status-identified   { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+  &.status-mitigation   { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  &.status-issue        { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  &.status-closed       { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+}
+
+// ── Table ─────────────────────────────────────────────────────────
+.rr-table-wrap { overflow-x: auto; }
+.rr-loading { padding: 40px; text-align: center; color: $gray-400; font-size: 13px; }
+.rr-empty { padding: 40px; text-align: center; color: $gray-400; font-size: 13px; }
+
+.rr-table {
+  width: 100%; border-collapse: collapse; min-width: 1100px;
+
+  thead th {
+    background: var(--pm-accent); color: white; font-size: 11px; font-weight: 700;
+    padding: 10px 12px; text-align: left; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+
+  tbody tr { border-bottom: 1px solid $gray-100; }
+  .rr-row {
+    cursor: pointer; transition: background .12s;
+    &:hover { background: #f0f4f8; }
+    td { padding: 10px 12px; font-size: 12px; color: $gray-800; vertical-align: middle; }
+  }
+}
+
+.rr-col-id     { font-size: 11px; font-weight: 700; color: $gray-400; font-family: 'Courier New', monospace; white-space: nowrap; }
+.rr-col-risk   { max-width: 300px; font-size: 12px; color: $gray-600; line-height: 1.4; }
+.rr-col-cat    { white-space: nowrap; }
+.rr-category-badge {
+  background: $gray-100; color: $gray-600; padding: 2px 8px;
+  border-radius: 10px; font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.rr-dash { color: $gray-400; }
+.rr-view-btn {
+  background: none; border: none; color: $gray-400; cursor: pointer;
+  padding: 4px; border-radius: 4px; transition: all .15s;
+  &:hover { color: #1d4ed8; background: #dbeafe; }
+}
+.rr-delete-btn {
+  background: none; border: none; color: $gray-400; cursor: pointer;
+  padding: 4px; border-radius: 4px; transition: all .15s;
+  &:hover { color: $red; background: #fee2e2; }
+}
+
+// Mode lecture seule
+.rr-view-mode {
+  input, select, textarea {
+    background: $gray-50 !important; color: $gray-600 !important;
+    cursor: default !important; pointer-events: none;
+    border-color: $gray-100 !important;
+  }
+}
+.rr-view-badge {
+  font-size: 11px; color: #1d4ed8; background: #dbeafe;
+  padding: 5px 12px; border-radius: 20px; font-weight: 600;
+}
+
+// ── Modal centré (détail risk) ─────────────────────────────────────
+// ── Backdrop ──────────────────────────────────────────────────────
+.rr-drawer-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+
+// ── Modal détail Risk ─────────────────────────────────────────────
+.rr-detail-modal {
+  background: white;
+  border-radius: 16px;
+  width: min(960px, 96vw);
+  max-height: 92vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.05);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+// Header du modal
+.rr-detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 28px;
+  background: var(--pm-accent);
+  border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+}
+.rr-detail-title {
+  display: flex; align-items: center; gap: 12px;
+  .rr-drawer-id {
+    font-size: 18px; font-weight: 800; color: white;
+    font-family: 'Courier New', monospace; letter-spacing: 1px;
+  }
+}
+.rr-detail-actions { display: flex; align-items: center; gap: 10px; }
+
+.rr-save-btn {
+  padding: 9px 22px; background: white; color: var(--pm-accent); border: none;
+  border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  &:hover:not(:disabled) { background: #f0f4ff; transform: translateY(-1px); }
+  &:disabled { opacity: .5; cursor: default; transform: none; }
+}
+.rr-close-btn {
+  background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.3);
+  color: white; padding: 7px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 15px; font-family: inherit; transition: all .15s;
+  &:hover { background: rgba(255,255,255,.25); }
+}
+.rr-view-badge {
+  font-size: 11px; color: white; background: rgba(255,255,255,.2);
+  padding: 6px 14px; border-radius: 20px; font-weight: 600;
+  border: 1px solid rgba(255,255,255,.3);
+}
+
+// Body scrollable
+.rr-detail-body {
+  flex: 1; overflow-y: auto; padding: 28px 32px 36px;
+  display: flex; flex-direction: column; gap: 0;
+  background: #f8fafc;
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: $gray-200; border-radius: 3px; }
+}
+
+// ── Sections avec accent coloré par type ──────────────────────────
+.rr-section {
+  margin-bottom: 18px;
+  background: white;
+  border: 1px solid $gray-200;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  overflow: visible;
+}
+.rr-section-title {
+  padding: 12px 20px;
+  background: white;
+  border-bottom: 2px solid $gray-100;
+  border-radius: 12px 12px 0 0;
+  font-size: 11px; font-weight: 800; color: $navy;
+  text-transform: uppercase; letter-spacing: .08em;
+  display: flex; align-items: center; gap: 8px;
+}
+
+// Accent couleur par section
+.rr-section:nth-child(1) .rr-section-title { border-left: 4px solid #3b82f6; padding-left: 16px; }
+.rr-section:nth-child(2) .rr-section-title { border-left: 4px solid #f59e0b; padding-left: 16px; }
+.rr-section:nth-child(3) .rr-section-title { border-left: 4px solid #10b981; padding-left: 16px; }
+.rr-section:nth-child(4) .rr-section-title { border-left: 4px solid #8b5cf6; padding-left: 16px; }
+
+.rr-form-grid {
+  padding: 20px;
+  display: flex; flex-wrap: wrap; gap: 16px;
+  align-items: flex-start;
+}
+
+.rr-field {
+  display: flex; flex-direction: column; gap: 6px;
+  label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: $gray-400;
+    display: flex; align-items: center; gap: 5px;
+  }
+  input, select, textarea {
+    border: 1.5px solid $gray-200; border-radius: 9px;
+    padding: 10px 13px; font-size: 13px; color: $gray-800;
+    font-family: inherit; outline: none;
+    transition: all .15s; width: 100%; box-sizing: border-box; min-height: 40px;
+    background: white;
+    &:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+    &:hover:not(:focus):not(:disabled) { border-color: $gray-200; }
+  }
+  textarea { resize: vertical; min-height: 82px; line-height: 1.5; }
+  select { cursor: pointer; }
+}
+.rr-field-full  { flex: 0 0 100%; width: 100%; }
+.rr-field-half  { flex: 0 0 calc(50% - 8px); min-width: 0; }
+.rr-field-third { flex: 0 0 calc(33.33% - 11px); min-width: 0; }
+
+// Champs auto-calculés
+.rr-auto-val {
+  border: 1.5px solid $gray-100; border-radius: 9px; padding: 10px 13px;
+  font-size: 13px; font-weight: 700; color: $navy;
+  background: linear-gradient(135deg, #f0f4ff, #f8fafc);
+  min-height: 40px; display: flex; align-items: center; gap: 8px;
+}
+.rr-net { color: #059669; font-size: 15px; }
+.rr-rating-preview-val { min-height: 44px; }
+.rr-rating-badge.lg { font-size: 13px; padding: 6px 18px; letter-spacing: .3px; }
+
+// Tags
+.rr-auto-tag {
+  background: #dbeafe; color: #1d4ed8;
+  font-size: 8px; font-weight: 700; padding: 2px 6px;
+  border-radius: 8px; text-transform: uppercase; letter-spacing: .04em;
+}
+.rr-hint { font-size: 9px; color: $gray-400; font-weight: 400; text-transform: none; }
+
+// Mode lecture seule
+.rr-view-mode {
+  input, select, textarea {
+    background: #f8fafc !important; color: $gray-600 !important;
+    cursor: default !important; pointer-events: none;
+    border-color: $gray-100 !important; box-shadow: none !important;
+  }
+}
+
+// Badge rating large
+// (déjà défini plus haut en .rr-rating-badge.lg)
+.rr-auto-tag {
+  background: #dbeafe; color: #1e40af; font-size: 8px; font-weight: 700;
+  padding: 1px 5px; border-radius: 8px; text-transform: uppercase;
+}
+.rr-hint { font-size: 9px; color: $gray-400; font-weight: 400; text-transform: none; }
+.rr-net { color: #16a34a; font-size: 15px; }
+
+// ── Modal ─────────────────────────────────────────────────────────
+.rr-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center; z-index: 300;
+}
+.rr-modal {
+  background: white; border-radius: 14px; width: min(520px, 94vw);
+  box-shadow: 0 20px 60px rgba(0,0,0,.2); overflow: hidden; max-height: 90vh;
+  display: flex; flex-direction: column;
+}
+.rr-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid $gray-200;
+  h3 { margin: 0; font-size: 16px; font-weight: 700; color: $gray-800; }
+}
+.rr-modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+.rr-modal-footer {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 14px 24px; border-top: 1px solid $gray-200;
+}
+.rr-cancel-btn {
+  padding: 8px 18px; border: 1.5px solid $gray-200; background: white;
+  border-radius: 8px; font-size: 13px; color: $gray-600; cursor: pointer; font-family: inherit;
+  &:hover { background: $gray-50; }
+}
+.rr-confirm-btn {
+  padding: 8px 20px; background: $navy; color: white; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  &:disabled { opacity: .45; cursor: default; }
+  &:hover:not(:disabled) { opacity: .85; }
+}
+.rr-rating-preview {
+  display: flex; align-items: center; gap: 8px; padding: 10px;
+  background: $gray-50; border-radius: 8px; font-size: 13px; color: $gray-600; font-weight: 600;
+}
+
+// ── Modal suppression Risk ─────────────────────────────────────────
+.rr-delete-modal {
+  background: white; border-radius: 14px;
+  width: min(420px, 94vw);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: modalIn .18s ease;
+}
+
+.rr-delete-modal-icon {
+  display: flex; align-items: center; justify-content: center;
+  padding: 28px 24px 0;
+  svg { color: $red; width: 48px; height: 48px;
+    background: #fee2e2; border-radius: 50%; padding: 10px; }
+}
+
+.rr-delete-modal-content {
+  padding: 16px 28px 8px; text-align: center;
+  h3 { margin: 0 0 10px; font-size: 17px; font-weight: 700; color: $gray-800; }
+  p { margin: 0 0 6px; font-size: 13px; color: $gray-600; line-height: 1.5;
+    strong { color: $gray-800; font-weight: 700; }
+  }
+}
+
+.rr-delete-warning {
+  font-size: 11px !important; color: $red !important; font-weight: 600 !important;
+}
+
+.rr-delete-modal-actions {
+  display: flex; gap: 10px; padding: 16px 24px 24px; justify-content: center;
+}
+
+.rr-delete-confirm-btn {
+  padding: 9px 24px; background: $red; color: white; border: none;
+  border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+  &:hover { background: #b91c1c; transform: translateY(-1px); }
+}

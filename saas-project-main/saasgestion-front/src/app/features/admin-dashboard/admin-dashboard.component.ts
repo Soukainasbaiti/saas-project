@@ -26,6 +26,7 @@ export class AdminDashboardComponent implements OnInit {
   loading = true;
   searchTerm = '';
   filterStatus = '';
+  filterBu = '';
 
   // Détail modal
   selectedProject: ProjectDetailDto | null = null;
@@ -50,6 +51,10 @@ export class AdminDashboardComponent implements OnInit {
   engagements: ReferenceDto[] = [];
   pms:        ReferenceDto[] = [];
 
+  // Stats modules
+  moduleStats: Map<number, any> = new Map();
+  wipGlobalAmount = 0;
+
   // ── Export ──────────────────────────────────────────────────
   showExportModal = false;
   exportFormat: 'excel' | 'pdf' = 'excel';
@@ -73,6 +78,7 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadProjects();
     this.loadRefData();
+    this.loadModuleStats();
     this.initEditForm();
   }
 
@@ -120,6 +126,25 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  loadModuleStats(): void {
+    this.api.getAdminModuleStats().subscribe({
+      next: stats => {
+        this.moduleStats = new Map(stats.map(s => [s.projectId, s]));
+        this.cdr.markForCheck();
+      }
+    });
+    this.api.getAdminWipGlobal().subscribe({
+      next: data => {
+        this.wipGlobalAmount = data.totalWipAmount ?? 0;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  getStats(projectId: number): any {
+    return this.moduleStats.get(projectId) ?? { riskCount: 0, openIssueCount: 0, openOpportunityCount: 0, mipCount: 0, wipTotalAmount: 0, wipEntryCount: 0 };
+  }
+
   loadRefData(): void {
     this.api.getBus().subscribe(d => { this.bus = d; this.cdr.markForCheck(); });
     this.api.getCustomers().subscribe(d => { this.customers = d; this.cdr.markForCheck(); });
@@ -136,8 +161,13 @@ export class AdminDashboardComponent implements OnInit {
         p.activity?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         p.customerName?.toLowerCase().includes(this.searchTerm.toLowerCase());
       const matchStatus = !this.filterStatus || p.status === this.filterStatus;
-      return matchSearch && matchStatus;
+      const matchBu = !this.filterBu || p.buTrigram === this.filterBu;
+      return matchSearch && matchStatus && matchBu;
     });
+  }
+
+  get uniqueBus(): string[] {
+    return [...new Set(this.projects.map(p => p.buTrigram).filter(Boolean))].sort();
   }
 
   get onGoingCount(): number {
@@ -276,18 +306,17 @@ export class AdminDashboardComponent implements OnInit {
     const abs = Math.abs(v);
     const sign = v < 0 ? '-' : '';
     const units: { value: number; suffix: string }[] = [
-      { value: 1_000_000_000, suffix: 'B' },
-      { value: 1_000_000,     suffix: 'M' },
-      { value: 1_000,         suffix: 'K' },
+      { value: 1_000_000_000_000, suffix: 'T' },
+      { value: 1_000_000_000,     suffix: 'B' },
+      { value: 1_000_000,         suffix: 'M' },
+      { value: 1_000,             suffix: 'K' },
     ];
-    let result = '';
-    let remainder = abs;
     for (const { value, suffix } of units) {
-      const part = Math.floor(remainder / value);
-      if (part > 0) { result += part + suffix; remainder %= value; }
+      if (abs >= value) {
+        return `${sign}${(abs / value).toFixed(1)}${suffix} €`;
+      }
     }
-    if (!result) result = String(Math.round(abs));
-    return sign + result + ' €';
+    return `${sign}${Math.round(abs)} €`;
   }
 
   monthLabel(month: string): string {

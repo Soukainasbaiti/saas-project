@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -61,4 +62,13 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "JOIN FETCH p.engagement " +
            "WHERE p.id = :id")
     Optional<Project> findByIdWithAllRelations(@Param("id") Long id);
+
+    @Query("SELECT p.id, COALESCE(p.projectName, p.activity), " +
+           "cfg.validatedBy, cfg.rejectionComment, cfg.validatedAt " +
+           "FROM Project p " +
+           "JOIN ProjectManagementConfig cfg ON cfg.projectId = p.id " +
+           "WHERE p.deletedAt IS NULL " +
+           "AND p.createdById = :userId " +
+           "AND cfg.validationStatus = 'REJECTED'")
+    List<Object[]> findRejectedByPmId(@Param("userId") Long userId);
 }

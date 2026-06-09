@@ -52,6 +52,23 @@ mat-paginator {
   .mat-mdc-select-value { color: #374151 !important; }
 }
 
+/* ── Thème global (appliqué par AdminSidebar sur body) ──────── */
+body {
+  --pm-accent:        #C4337A;
+  --pm-accent-muted:  rgba(196, 51, 122, 0.06);
+  --pm-accent-border: rgba(196, 51, 122, 0.20);
+}
+body.theme-blue {
+  --pm-accent:        #1B9ED4;
+  --pm-accent-muted:  rgba(27, 158, 212, 0.06);
+  --pm-accent-border: rgba(27, 158, 212, 0.20);
+}
+body.theme-navy {
+  --pm-accent:        #2D2359;
+  --pm-accent-muted:  rgba(45, 35, 89, 0.06);
+  --pm-accent-border: rgba(45, 35, 89, 0.20);
+}
+
 /* ── Scrollbar ────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }

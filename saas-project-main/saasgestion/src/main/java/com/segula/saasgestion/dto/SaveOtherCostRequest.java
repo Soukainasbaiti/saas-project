@@ -1,5 +1,6 @@
 package com.segula.saasgestion.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.math.BigDecimal;
 
@@ -9,5 +10,6 @@ public class SaveOtherCostRequest {
     private String category;
     private String month;
     private BigDecimal amount;
+    @JsonProperty("isRebill")
     private boolean isRebill;
 }

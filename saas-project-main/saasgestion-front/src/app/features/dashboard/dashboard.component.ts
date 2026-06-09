@@ -12,6 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { I18nService } from '../../core/services/i18n.service';
 import { ProjectListDto, ProjectDetailDto, DashboardStats, ReferenceDto } from '../../core/models/project.model';
 
 @Component({
@@ -47,6 +48,32 @@ export class DashboardComponent implements OnInit {
   // ── Propriétés simples initialisées dans ngOnInit ─────────────
   currentUser: { fullName: string; role: string; email: string } | null = null;
   isAdmin = false;
+  bumPending: any[] = [];
+  bumPendingLoading = false;
+  showNotifDropdown = false;
+
+  pmRejected: any[] = [];
+  pmRejectedLoading = false;
+  showPmNotifDropdown = false;
+
+  // ── Historique BUM ─────────────────────────────────────────
+  bumHistory: any[] = [];
+  bumHistoryLoading = false;
+  showHistoryModal = false;
+  bumHistoryFilter: 'ALL' | 'SUBMITTED' | 'VALIDATED' | 'REJECTED' = 'ALL';
+
+  get filteredBumHistory(): any[] {
+    if (this.bumHistoryFilter === 'ALL') return this.bumHistory;
+    return this.bumHistory.filter(h => h.action === this.bumHistoryFilter);
+  }
+
+  get isBum(): boolean {
+    return this.auth.currentUser()?.role === 'BUM';
+  }
+
+  get isPm(): boolean {
+    return this.auth.currentUser()?.role === 'PM';
+  }
 
   displayedColumns = [
     'projectName', 'frontFinancier', 'bu', 'customer',
@@ -57,6 +84,7 @@ export class DashboardComponent implements OnInit {
   constructor(
     private api: ApiService,
     private auth: AuthService,
+    public i18n: I18nService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {
@@ -77,6 +105,8 @@ export class DashboardComponent implements OnInit {
     this.loadRefData();
     this.loadStats();
     this.loadProjects();
+    if (this.isBum) { this.loadBumPendingProjects(); this.loadBumHistory(); }
+    if (this.isPm)  { this.loadPmRejectedProjects(); }
     this.filterForm.valueChanges.subscribe(() => this.loadProjects());
   }
 
@@ -167,6 +197,7 @@ export class DashboardComponent implements OnInit {
       if (part > 0) { result += part + suffix; remainder %= value; }
     }
     if (!result) result = String(Math.round(abs));
+    else if (remainder > 0) result += Math.round(remainder);
     return sign + result + ' €';
   }
 
@@ -210,11 +241,63 @@ export class DashboardComponent implements OnInit {
     return 'marge-low';
   }
 
+  toggleNotifDropdown(): void {
+    this.showNotifDropdown = !this.showNotifDropdown;
+    if (this.showNotifDropdown) { this.loadBumPendingProjects(); }
+    this.cdr.detectChanges();
+  }
+
+  loadBumPendingProjects(): void {
+    this.bumPendingLoading = true;
+    this.api.getBumPending().subscribe({
+      next: data => { this.bumPending = data; this.bumPendingLoading = false; this.cdr.detectChanges(); },
+      error: ()   => { this.bumPendingLoading = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  loadBumHistory(): void {
+    this.bumHistoryLoading = true;
+    this.api.getBumHistory().subscribe({
+      next: data => { this.bumHistory = data; this.bumHistoryLoading = false; this.cdr.detectChanges(); },
+      error: ()   => { this.bumHistoryLoading = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  togglePmNotifDropdown(): void {
+    this.showPmNotifDropdown = !this.showPmNotifDropdown;
+    if (this.showPmNotifDropdown) { this.loadPmRejectedProjects(); }
+    this.cdr.detectChanges();
+  }
+
+  loadPmRejectedProjects(): void {
+    this.pmRejectedLoading = true;
+    this.api.getPmRejected().subscribe({
+      next: data => { this.pmRejected = data; this.pmRejectedLoading = false; this.cdr.detectChanges(); },
+      error: ()   => { this.pmRejectedLoading = false; this.cdr.detectChanges(); }
+    });
+  }
+
   get forecastTotalRevenue(): number {
     return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.revenue || 0), 0);
   }
 
   get forecastTotalCost(): number {
     return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.cost || 0), 0);
+  }
+
+  // ── Chart BU ─────────────────────────────────────────────────
+  get buChartData(): { bu: string; revenue: number; count: number; pct: number }[] {
+    const map = new Map<string, { revenue: number; count: number }>();
+    for (const p of this.projects) {
+      const bu = p.buTrigram || 'Autre';
+      const curr = map.get(bu) ?? { revenue: 0, count: 0 };
+      map.set(bu, { revenue: curr.revenue + (p.revenueBudget ?? 0), count: curr.count + 1 });
+    }
+    const items = [...map.entries()].map(([bu, d]) => ({ bu, revenue: d.revenue, count: d.count, pct: 0 }));
+    const maxRev = Math.max(...items.map(i => i.revenue), 1);
+    return items
+      .map(i => ({ ...i, pct: (i.revenue / maxRev) * 100 }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 8);
   }
 }

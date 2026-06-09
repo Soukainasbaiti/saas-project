@@ -19,8 +19,8 @@ public class ProjectOtherCost {
     @Column(name = "category", length = 200, nullable = false)
     private String category;
 
-    @Column(name = "month", length = 7, nullable = false)
-    private String month; // YYYY-MM
+    @Column(name = "month", length = 10, nullable = false)
+    private String month; // YYYY-MM | YYYY-WXX | YYYY-MM-DD
 
     @Builder.Default
     @Column(name = "amount", precision = 12, scale = 2)

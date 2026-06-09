@@ -1,5 +1,6 @@
 package com.segula.saasgestion.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.math.BigDecimal;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map;
 public class ProjectOtherCostDto {
     private Long id;
     private String category;
+    @JsonProperty("isRebill")
     private boolean isRebill;
     // month -> amount
     private Map<String, BigDecimal> amounts;

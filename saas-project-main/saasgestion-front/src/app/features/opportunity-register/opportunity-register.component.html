@@ -1,0 +1,274 @@
+<div class="or-wrapper">
+
+  <!-- KPI Bar -->
+  <div class="or-kpi-bar">
+    <div class="or-kpi"><span class="or-kpi-label">{{ i18n.t('or.kpi.total') }}</span><span class="or-kpi-value">{{ totalOpps }}</span></div>
+    <div class="or-kpi"><span class="or-kpi-label">{{ i18n.t('or.kpi.benefit') }}</span><span class="or-kpi-value benefit">{{ fmt(totalBenefit) }}</span></div>
+    <div class="or-kpi"><span class="or-kpi-label">{{ i18n.t('or.kpi.won') }}</span><span class="or-kpi-value won">{{ wonCount }}</span></div>
+    <div class="or-kpi"><span class="or-kpi-label">{{ i18n.t('or.kpi.overdue') }}</span><span class="or-kpi-value overdue">{{ overdueCount }}</span></div>
+    <button class="or-add-btn" (click)="openCreate()">{{ i18n.t('or.add') }}</button>
+  </div>
+
+  <!-- Table -->
+  <div class="or-table-wrap">
+    <div *ngIf="loading" class="or-loading">{{ i18n.t('loading') }}</div>
+    <table *ngIf="!loading" class="or-table">
+      <thead>
+        <tr>
+          <th>O-ID</th>
+          <th>{{ i18n.t('or.col.desc') }}</th>
+          <th>{{ i18n.t('or.col.category') }}</th>
+          <th>{{ i18n.t('or.col.benefit') }}</th>
+          <th>{{ i18n.t('or.col.pct') }}</th>
+          <th>{{ i18n.t('or.col.status') }}</th>
+          <th>{{ i18n.t('or.col.copil') }}</th>
+          <th>{{ i18n.t('or.col.deadline') }}</th>
+          <th>{{ i18n.t('or.col.overdue') }}</th>
+          <th>{{ i18n.t('or.col.onhold') }}</th>
+          <th>{{ i18n.t('or.col.owner') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="!opportunities.length">
+          <td colspan="12" class="or-empty">{{ i18n.t('or.empty') }} — <strong>{{ i18n.t('or.add') }}</strong></td>
+        </tr>
+        <tr *ngFor="let o of opportunities" class="or-row" (click)="openEdit(o)">
+          <td class="or-col-id">{{ o.oId }}</td>
+          <td class="or-col-desc">{{ truncate(o.opportunityDescription) }}</td>
+          <td><span class="or-cat-badge">{{ o.category || '—' }}</span></td>
+          <td class="or-col-benefit">{{ fmt(o.estimatedBenefit) }}</td>
+          <td class="or-col-pct">{{ o.percentNewPm != null ? o.percentNewPm + '%' : '—' }}</td>
+          <td><span *ngIf="o.status" class="or-status-badge" [class]="statusClass(o.status)">{{ o.status }}</span></td>
+          <td><span *ngIf="o.copilValidation" class="or-copil-badge" [class]="copilClass(o.copilValidation)">{{ o.copilValidation }}</span></td>
+          <td class="or-col-date">{{ o.deadline || '—' }}</td>
+          <td class="or-col-bool" [class.overdue-yes]="o.overdue">{{ o.overdue ? 'Yes' : 'No' }}</td>
+          <td class="or-col-bool" [class.onhold-yes]="o.onHold">{{ o.onHold ? 'Yes' : 'No' }}</td>
+          <td class="or-col-owner">{{ o.owner || '—' }}</td>
+          <td class="or-col-action" (click)="$event.stopPropagation()">
+            <button class="or-view-btn" (click)="openView(o)" title="Voir détails">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="or-delete-btn" (click)="openDelete(o, $event)" title="Supprimer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── MODAL DÉTAIL / EDIT ── -->
+  <div class="or-backdrop" *ngIf="showModal && selectedOpp" (click)="closeModal()">
+    <div class="or-detail-modal" (click)="$event.stopPropagation()">
+
+      <div class="or-detail-header">
+        <div class="or-detail-title">
+          <span class="or-id-badge">{{ selectedOpp.oId }}</span>
+          <span *ngIf="selectedOpp.status" class="or-status-badge" [class]="statusClass(selectedOpp.status)">{{ selectedOpp.status }}</span>
+          <span *ngIf="selectedOpp.copilValidation" class="or-copil-badge" [class]="copilClass(selectedOpp.copilValidation)">{{ selectedOpp.copilValidation }}</span>
+        </div>
+        <div class="or-detail-actions">
+          <span *ngIf="isViewMode" class="or-view-badge">{{ i18n.t('common.view_only') }}</span>
+          <button *ngIf="!isViewMode" class="or-save-btn" (click)="saveModal()" [disabled]="saving">
+            {{ saving ? i18n.t('common.saving') : i18n.t('common.save') }}
+          </button>
+          <button class="or-close-btn" (click)="closeModal()">✕</button>
+        </div>
+      </div>
+
+      <div class="or-detail-body" [class.or-view-mode]="isViewMode">
+
+        <!-- Section 1 : Identification -->
+        <div class="or-section">
+          <div class="or-section-title">{{ i18n.t('or.sec.ident') }}</div>
+          <div class="or-form-grid">
+            <div class="or-field or-field-quarter">
+              <label>O-ID <span class="or-auto-tag">auto</span></label>
+              <div class="or-auto-val">{{ selectedOpp.oId }}</div>
+            </div>
+            <div class="or-field or-field-quarter">
+              <label>Date d'identification</label>
+              <input type="date" [(ngModel)]="selectedOpp.identificationDate" />
+            </div>
+            <div class="or-field or-field-quarter">
+              <label>Deadline *</label>
+              <input type="date" [(ngModel)]="selectedOpp.deadline" />
+            </div>
+            <div class="or-field or-field-quarter">
+              <label>Catégorie</label>
+              <select [(ngModel)]="selectedOpp.category">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="or-field or-field-full">
+              <label>Opportunity Description * <span class="or-hint">(SI... Alors... Avec...)</span></label>
+              <textarea [(ngModel)]="selectedOpp.opportunityDescription" rows="4"
+                placeholder="SI [condition]&#10;ALORS [opportunité]&#10;AVEC [bénéfice estimé]"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2 : Financier -->
+        <div class="or-section">
+          <div class="or-section-title">{{ i18n.t('or.sec.financial') }}</div>
+          <div class="or-form-grid">
+            <div class="or-field or-field-third">
+              <label>COSTS (€)</label>
+              <input type="number" [(ngModel)]="selectedOpp.costs" min="0" placeholder="0" />
+            </div>
+            <div class="or-field or-field-third">
+              <label>PRICE (€)</label>
+              <input type="number" [(ngModel)]="selectedOpp.price" min="0" placeholder="0" />
+            </div>
+            <div class="or-field or-field-third">
+              <label>Estimated Benefit <span class="or-auto-tag">auto</span></label>
+              <div class="or-auto-val or-benefit">
+                {{ computeBenefit(selectedOpp.price, selectedOpp.costs) != null
+                  ? fmt(computeBenefit(selectedOpp.price, selectedOpp.costs)) : '—' }}
+              </div>
+            </div>
+            <div class="or-field or-field-half">
+              <label>% New PM</label>
+              <input type="number" [(ngModel)]="selectedOpp.percentNewPm" min="0" max="100" placeholder="0" />
+            </div>
+            <div class="or-field or-field-half">
+              <label>Owner</label>
+              <input type="text" [(ngModel)]="selectedOpp.owner" placeholder="Responsable..." />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3 : Action -->
+        <div class="or-section">
+          <div class="or-section-title">{{ i18n.t('or.sec.action') }}</div>
+          <div class="or-form-grid">
+            <div class="or-field or-field-full">
+              <label>Action to be taken</label>
+              <textarea [(ngModel)]="selectedOpp.actionToBeTaken" rows="3" placeholder="Actions à mener..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4 : Suivi -->
+        <div class="or-section">
+          <div class="or-section-title">{{ i18n.t('or.sec.tracking') }}</div>
+          <div class="or-form-grid">
+            <div class="or-field or-field-third">
+              <label>Status</label>
+              <select [(ngModel)]="selectedOpp.status">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="or-field or-field-third">
+              <label>COPIL Validation</label>
+              <select [(ngModel)]="selectedOpp.copilValidation">
+                <option *ngFor="let c of copilOpts" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="or-field or-field-third">
+              <label>On Hold ? <span class="or-hint">(No par défaut)</span></label>
+              <select [(ngModel)]="selectedOpp.onHold">
+                <option [ngValue]="false">No</option>
+                <option [ngValue]="true">Yes</option>
+              </select>
+            </div>
+            <div class="or-field or-field-half">
+              <label>Overdue <span class="or-auto-tag">auto</span></label>
+              <div class="or-auto-val" [class.or-overdue]="selectedOpp.overdue">
+                {{ selectedOpp.overdue ? '⚠️ Yes' : '✅ No' }}
+              </div>
+            </div>
+            <div class="or-field or-field-full">
+              <label>Comments</label>
+              <textarea [(ngModel)]="selectedOpp.comments" rows="2" placeholder="Commentaires..."></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL CRÉATION ── -->
+  <div class="or-backdrop" *ngIf="showCreateModal" (click)="showCreateModal=false">
+    <div class="or-create-modal" (click)="$event.stopPropagation()">
+      <div class="or-create-header">
+        <h3>{{ i18n.t('or.modal.new') }}</h3>
+        <button class="or-close-btn" (click)="showCreateModal=false">✕</button>
+      </div>
+      <div class="or-create-body">
+        <div class="or-field">
+          <label>Description * <span class="or-hint">(SI... Alors... Avec...)</span></label>
+          <textarea [(ngModel)]="newOpp.opportunityDescription" rows="5"
+            placeholder="SI [condition]&#10;ALORS [opportunité]&#10;AVEC [bénéfice estimé]"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="or-field">
+            <label>Date d'identification</label>
+            <input type="date" [(ngModel)]="newOpp.identificationDate" />
+          </div>
+          <div class="or-field">
+            <label>Deadline *</label>
+            <input type="date" [(ngModel)]="newOpp.deadline" />
+          </div>
+        </div>
+        <div class="or-field">
+          <label>Catégorie</label>
+          <select [(ngModel)]="newOpp.category">
+            <option value="">— Sélectionner —</option>
+            <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="or-field">
+            <label>COSTS (€)</label>
+            <input type="number" [(ngModel)]="newOpp.costs" min="0" placeholder="0" />
+          </div>
+          <div class="or-field">
+            <label>PRICE (€)</label>
+            <input type="number" [(ngModel)]="newOpp.price" min="0" placeholder="0" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="or-field">
+            <label>Owner</label>
+            <input type="text" [(ngModel)]="newOpp.owner" placeholder="Responsable..." />
+          </div>
+          <div class="or-field">
+            <label>% New PM</label>
+            <input type="number" [(ngModel)]="newOpp.percentNewPm" min="0" max="100" placeholder="0" />
+          </div>
+        </div>
+      </div>
+      <div class="or-create-footer">
+        <button class="or-cancel-btn" (click)="showCreateModal=false">Annuler</button>
+        <button class="or-confirm-btn" (click)="confirmCreate()"
+          [disabled]="!newOpp.opportunityDescription?.trim() || !newOpp.deadline || saving">
+          {{ saving ? 'Création...' : 'Créer l\'Opportunité' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL SUPPRESSION ── -->
+  <div class="or-backdrop" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+    <div class="or-delete-modal" (click)="$event.stopPropagation()">
+      <div class="or-delete-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </div>
+      <h3>Supprimer l'opportunité</h3>
+      <p>Supprimer <strong>{{ pendingDelete?.oId }}</strong> ?</p>
+      <p class="or-delete-warning">Cette action est irréversible.</p>
+      <div class="or-delete-actions">
+        <button class="or-cancel-btn" (click)="cancelDelete()">Annuler</button>
+        <button class="or-delete-confirm-btn" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

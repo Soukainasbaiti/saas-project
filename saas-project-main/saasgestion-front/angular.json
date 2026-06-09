@@ -66,6 +66,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io", "localhost"]
+          },
           "configurations": {
             "production": {
               "buildTarget": "saasgestion-front:build:production"

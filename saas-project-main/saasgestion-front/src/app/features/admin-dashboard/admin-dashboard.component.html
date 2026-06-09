@@ -12,6 +12,10 @@
       </div>
       <div class="header-right">
         <input class="search-input" [(ngModel)]="searchTerm" placeholder="🔍 Rechercher...">
+        <select class="filter-select" [(ngModel)]="filterBu">
+          <option value="">Toutes les BU</option>
+          <option *ngFor="let bu of uniqueBus" [value]="bu">{{ bu }}</option>
+        </select>
         <select class="filter-select" [(ngModel)]="filterStatus">
           <option value="">Tous les statuts</option>
           <option value="On Going">On Going</option>
@@ -43,12 +47,17 @@
         <span class="kpi-value kpi-blue">{{ onGoingCount }}</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-label">Revenue Total</span>
+        <span class="kpi-label">Revenus Totaux</span>
         <span class="kpi-value kpi-green">{{ fmtCompact(totalRevenue) }}</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Marge Totale</span>
         <span class="kpi-value kpi-purple">{{ fmtCompact(totalMargin) }}</span>
+      </div>
+      <div class="kpi-card kpi-card-wip" [class.wip-positive]="wipGlobalAmount > 0" [class.wip-negative]="wipGlobalAmount < 0">
+        <span class="kpi-label">WIP Global (Open)</span>
+        <span class="kpi-value kpi-wip">{{ wipGlobalAmount > 0 ? '+' : '' }}{{ fmtCompact(wipGlobalAmount) }} €</span>
+        <span class="kpi-sub">Jours facturés non livrés</span>
       </div>
     </div>
 
@@ -66,10 +75,14 @@
             <th>Projet</th>
             <th>BU</th>
             <th>Client</th>
-            <th>Front Financier</th>
             <th>Statut</th>
-            <th>Revenue</th>
+            <th>Revenu</th>
             <th>Marge</th>
+            <th class="th-modules" title="Risques">⚠ Risk</th>
+            <th class="th-modules" title="Issues">🔴 Issues</th>
+            <th class="th-modules" title="Opportunités">💡 Opp.</th>
+            <th class="th-modules" title="MIP">📋 MIP</th>
+            <th class="th-modules" title="WIP — Work In Progress">💰 WIP</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -81,16 +94,49 @@
             </td>
             <td><span class="bu-badge">{{ p.buTrigram }}</span></td>
             <td>{{ p.customerName }}</td>
-            <td>{{ p.frontFinancier }}</td>
             <td><span class="badge" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td class="val-money">{{ fmtCompact(p.revenueBudget) }}</td>
             <td class="val-money" [class.neg]="(p.revenueBudget - p.costBudget) < 0">
               {{ fmtCompact(p.revenueBudget - p.costBudget) }}
             </td>
+            <!-- Risk -->
+            <td class="td-module">
+              <span class="module-badge badge-risk" *ngIf="getStats(p.id).riskCount > 0">{{ getStats(p.id).riskCount }}</span>
+              <span class="module-none" *ngIf="getStats(p.id).riskCount === 0">—</span>
+            </td>
+            <!-- Issues -->
+            <td class="td-module">
+              <span class="module-badge badge-issue" *ngIf="getStats(p.id).openIssueCount > 0">{{ getStats(p.id).openIssueCount }}</span>
+              <span class="module-none" *ngIf="getStats(p.id).openIssueCount === 0">—</span>
+            </td>
+            <!-- Opportunités -->
+            <td class="td-module">
+              <span class="module-badge badge-opp" *ngIf="getStats(p.id).openOpportunityCount > 0">{{ getStats(p.id).openOpportunityCount }}</span>
+              <span class="module-none" *ngIf="getStats(p.id).openOpportunityCount === 0">—</span>
+            </td>
+            <!-- MIP -->
+            <td class="td-module">
+              <span class="module-badge badge-mip" *ngIf="getStats(p.id).mipCount > 0">{{ getStats(p.id).mipCount }}</span>
+              <span class="module-none" *ngIf="getStats(p.id).mipCount === 0">—</span>
+            </td>
+            <!-- WIP avec montant visible -->
+            <td class="td-module td-wip">
+              <ng-container *ngIf="getStats(p.id).wipEntryCount > 0; else noWip">
+                <div class="wip-cell" [class.wip-cell-positive]="getStats(p.id).wipTotalAmount > 0"
+                     [class.wip-cell-negative]="getStats(p.id).wipTotalAmount < 0">
+                  <span class="wip-cell-count">{{ getStats(p.id).wipEntryCount }} BL</span>
+                  <span class="wip-cell-amount">{{ getStats(p.id).wipTotalAmount > 0 ? '+' : '' }}{{ fmtCompact(getStats(p.id).wipTotalAmount) }} €</span>
+                </div>
+              </ng-container>
+              <ng-template #noWip><span class="module-none">—</span></ng-template>
+            </td>
             <td>
               <div class="action-btns">
                 <button class="btn-action btn-view" title="Voir" (click)="openDetail(p)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="btn-action btn-manage" title="Gestion de Projet" [routerLink]="['/projects', p.id, 'management']">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                 </button>
                 <button class="btn-action btn-edit" title="Modifier" (click)="openEdit(p)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -102,7 +148,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredProjects.length === 0">
-            <td colspan="8" class="empty-row">Aucun projet trouvé</td>
+            <td colspan="11" class="empty-row">Aucun projet trouvé</td>
           </tr>
         </tbody>
       </table>
@@ -275,7 +321,7 @@
       <!-- Barre financière -->
       <div class="detail-fin-bar">
         <div class="fin-item">
-          <div class="fin-lbl">Revenue Budget</div>
+          <div class="fin-lbl">CA Budget</div>
           <div class="fin-val c-green">{{ fmt(selectedProject.revenueBudget) }}</div>
         </div>
         <div class="fin-sep"></div>
@@ -352,7 +398,7 @@
             <thead>
               <tr>
                 <th>Mois</th>
-                <th>Revenue</th>
+                <th>Revenu</th>
                 <th>Coût</th>
                 <th>Marge €</th>
                 <th>Marge %</th>
@@ -490,7 +536,7 @@
         </div>
 
         <div class="form-group">
-          <label>Revenue Budget (€) *</label>
+          <label>CA Budget (€) *</label>
           <input class="fi" type="number" formControlName="revenueBudget">
         </div>
 

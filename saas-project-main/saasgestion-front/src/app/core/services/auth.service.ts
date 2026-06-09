@@ -27,7 +27,7 @@ export interface TokenPayload {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  private readonly BASE = 'http://localhost:8080/api';
+  private readonly BASE = '/api';
   private readonly ACCESS_KEY  = 'access_token';
   private readonly REFRESH_KEY = 'refresh_token';
   private readonly USER_KEY    = 'user_info';

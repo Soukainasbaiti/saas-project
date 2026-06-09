@@ -1,0 +1,319 @@
+<div class="ir-wrapper">
+
+  <!-- KPI Bar -->
+  <div class="ir-kpi-bar">
+    <div class="ir-kpi"><span class="ir-kpi-label">{{ i18n.t('ir.kpi.total') }}</span><span class="ir-kpi-value">{{ totalIssues }}</span></div>
+    <div class="ir-kpi"><span class="ir-kpi-label">{{ i18n.t('ir.kpi.open') }}</span><span class="ir-kpi-value open">{{ openCount }}</span></div>
+    <div class="ir-kpi"><span class="ir-kpi-label">{{ i18n.t('ir.kpi.critical') }}</span><span class="ir-kpi-value critical">{{ criticalCount }}</span></div>
+    <div class="ir-kpi"><span class="ir-kpi-label">{{ i18n.t('ir.kpi.closed') }}</span><span class="ir-kpi-value closed">{{ closedCount }}</span></div>
+    <button class="ir-add-btn" (click)="openCreate()">{{ i18n.t('ir.add') }}</button>
+  </div>
+
+  <!-- Table -->
+  <div class="ir-table-wrap">
+    <div *ngIf="loading" class="ir-loading">{{ i18n.t('loading') }}</div>
+    <table *ngIf="!loading" class="ir-table">
+      <thead>
+        <tr>
+          <th>I-ID</th>
+          <th>{{ i18n.t('ir.col.issue') }}</th>
+          <th>{{ i18n.t('ir.col.severity') }}</th>
+          <th>{{ i18n.t('ir.col.priority') }}</th>
+          <th>{{ i18n.t('ir.col.impacts') }}</th>
+          <th>{{ i18n.t('ir.col.status') }}</th>
+          <th>{{ i18n.t('ir.col.dte') }}</th>
+          <th>{{ i18n.t('ir.col.deadline') }}</th>
+          <th>{{ i18n.t('ir.col.owner') }}</th>
+          <th>{{ i18n.t('ir.col.res_time') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="!issues.length">
+          <td colspan="11" class="ir-empty">{{ i18n.t('ir.empty') }} — <strong>{{ i18n.t('ir.add') }}</strong></td>
+        </tr>
+        <tr *ngFor="let i of issues" class="ir-row" (click)="openEdit(i)">
+          <td class="ir-col-id">{{ i.iId }}</td>
+          <td class="ir-col-issue">{{ truncate(i.issue) }}</td>
+          <td><span class="ir-sev-badge" [class]="severityClass(i.severity)">{{ i.severity || '—' }}</span></td>
+          <td class="ir-col-prio">{{ i.priority || '—' }}</td>
+          <td>
+            <span *ngIf="i.impacts" class="ir-impact-dot" [class]="impactClass(i.impacts)">●</span>
+            <span class="ir-impact-label">{{ i.impacts || '—' }}</span>
+          </td>
+          <td><span *ngIf="i.status" class="ir-status-badge" [class]="statusClass(i.status)">{{ i.status }}</span></td>
+          <td class="ir-col-date">{{ i.dte || '—' }}</td>
+          <td class="ir-col-date" [class.overdue]="isOverdue(i)">{{ i.deadline || '—' }}</td>
+          <td class="ir-col-owner">{{ i.owner || '—' }}</td>
+          <td class="ir-col-res">{{ i.resolutionTime != null ? i.resolutionTime + 'j' : '—' }}</td>
+          <td class="ir-col-action" (click)="$event.stopPropagation()">
+            <button class="ir-view-btn" (click)="openView(i)" title="Voir détails">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="ir-delete-btn" (click)="openDeleteConfirm(i, $event)" title="Supprimer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── MODAL DÉTAIL / EDIT ── -->
+  <div class="ir-backdrop" *ngIf="showModal && selectedIssue" (click)="closeModal()">
+    <div class="ir-detail-modal" (click)="$event.stopPropagation()">
+
+      <div class="ir-detail-header">
+        <div class="ir-detail-title">
+          <span class="ir-id-badge">{{ selectedIssue.iId }}</span>
+          <span *ngIf="selectedIssue.impacts" class="ir-impact-badge" [class]="impactClass(selectedIssue.impacts)">{{ selectedIssue.impacts }}</span>
+          <span *ngIf="selectedIssue.status" class="ir-status-badge" [class]="statusClass(selectedIssue.status)">{{ selectedIssue.status }}</span>
+        </div>
+        <div class="ir-detail-actions">
+          <span *ngIf="isViewMode" class="ir-view-badge">{{ i18n.t('ir.modal.view') }}</span>
+          <button *ngIf="!isViewMode" class="ir-save-btn" (click)="saveModal()" [disabled]="saving">
+            {{ saving ? i18n.t('common.saving') : i18n.t('common.save') }}
+          </button>
+          <button class="ir-close-btn" (click)="closeModal()">✕</button>
+        </div>
+      </div>
+
+      <div class="ir-detail-body" [class.ir-view-mode]="isViewMode">
+
+        <!-- Section 1 : Identification -->
+        <div class="ir-section">
+          <div class="ir-section-title">{{ i18n.t('ir.sec.ident') }}</div>
+          <div class="ir-form-grid">
+            <div class="ir-field ir-field-quarter">
+              <label>I-ID <span class="ir-auto-tag">auto</span></label>
+              <div class="ir-auto-val">{{ selectedIssue.iId }}</div>
+            </div>
+            <div class="ir-field ir-field-quarter">
+              <label>Severity</label>
+              <select [(ngModel)]="selectedIssue.severity">
+                <option value="">—</option>
+                <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="ir-field ir-field-quarter">
+              <label>Priority</label>
+              <select [(ngModel)]="selectedIssue.priority">
+                <option value="">—</option>
+                <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+              </select>
+            </div>
+            <div class="ir-field ir-field-quarter">
+              <label>Impacts <span class="ir-auto-tag">auto</span></label>
+              <div class="ir-auto-val">
+                <span *ngIf="selectedIssue.severity && selectedIssue.priority"
+                  class="ir-impact-badge sm" [class]="impactClass(computeImpacts(selectedIssue.severity, selectedIssue.priority))">
+                  {{ computeImpacts(selectedIssue.severity, selectedIssue.priority) }}
+                </span>
+                <span *ngIf="!selectedIssue.severity || !selectedIssue.priority" style="color:#94a3b8;font-size:12px">—</span>
+              </div>
+            </div>
+            <div class="ir-field ir-field-full">
+              <label>Issue * <span class="ir-hint">(FAIT... IMPACT... CONSÉQUENCE...)</span></label>
+              <textarea [(ngModel)]="selectedIssue.issue" rows="4"
+                placeholder="FAIT : ...&#10;IMPACT : ...&#10;CONSÉQUENCE : ..."></textarea>
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>DTE <span class="ir-hint">(date informé)</span></label>
+              <input type="date" [(ngModel)]="selectedIssue.dte" />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>DTA <span class="ir-hint">(date acknowled.)</span></label>
+              <input type="date" [(ngModel)]="selectedIssue.dta" />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>ETA / Deadline *</label>
+              <input type="date" [(ngModel)]="selectedIssue.deadline" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2 : Resolution Plan -->
+        <div class="ir-section">
+          <div class="ir-section-title">{{ i18n.t('ir.sec.resolution') }}</div>
+          <div class="ir-form-grid">
+            <div class="ir-field ir-field-half">
+              <label>Lockdown</label>
+              <textarea [(ngModel)]="selectedIssue.lockdown" rows="3" placeholder="Action immédiate de blocage..."></textarea>
+            </div>
+            <div class="ir-field ir-field-half">
+              <label>Investigation</label>
+              <textarea [(ngModel)]="selectedIssue.investigation" rows="3" placeholder="Analyse de la cause..."></textarea>
+            </div>
+            <div class="ir-field ir-field-half">
+              <label>Sustainable Resolution</label>
+              <textarea [(ngModel)]="selectedIssue.sustainableResolution" rows="3" placeholder="Solution durable..."></textarea>
+            </div>
+            <div class="ir-field ir-field-half">
+              <label>Exit Criteria</label>
+              <textarea [(ngModel)]="selectedIssue.exitCriteria" rows="3" placeholder="Critères de clôture..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3 : Owner & Communication -->
+        <div class="ir-section">
+          <div class="ir-section-title">{{ i18n.t('ir.sec.owner') }}</div>
+          <div class="ir-form-grid">
+            <div class="ir-field ir-field-third">
+              <label>Owner</label>
+              <input type="text" [(ngModel)]="selectedIssue.owner" placeholder="Responsable..." />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>Quality Leader</label>
+              <input type="text" [(ngModel)]="selectedIssue.qualityLeader" placeholder="Responsable qualité..." />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>ETA / Deadlines</label>
+              <input type="date" [(ngModel)]="selectedIssue.deadline" />
+            </div>
+            <div class="ir-field ir-field-full">
+              <label>Communication</label>
+              <textarea [(ngModel)]="selectedIssue.communication" rows="2" placeholder="Notes de communication..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4 : Escalade & Clôture -->
+        <div class="ir-section">
+          <div class="ir-section-title">{{ i18n.t('ir.sec.escalade') }}</div>
+          <div class="ir-form-grid">
+            <div class="ir-field ir-field-third">
+              <label>Escalade Level</label>
+              <input type="text" [(ngModel)]="selectedIssue.escaladeLevel" placeholder="L1 / L2 / L3..." />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>Escalade Date</label>
+              <input type="date" [(ngModel)]="selectedIssue.escaladeDate" />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>Decision</label>
+              <input type="text" [(ngModel)]="selectedIssue.escaladeDecision" placeholder="Décision prise..." />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>Link <span class="ir-hint">(N/A ou R_ID)</span></label>
+              <select [(ngModel)]="selectedIssue.link">
+                <option value="">— Sélectionner —</option>
+                <option value="N/A">N/A</option>
+                <option *ngFor="let r of projectRisks" [value]="r.rId">{{ r.rId }}</option>
+              </select>
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>Status</label>
+              <select [(ngModel)]="selectedIssue.status">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>DTR <span class="ir-hint">(Date résolution)</span></label>
+              <input type="date" [(ngModel)]="selectedIssue.dtr" />
+            </div>
+            <div class="ir-field ir-field-third">
+              <label>Resolution Time <span class="ir-auto-tag">auto</span></label>
+              <div class="ir-auto-val ir-res-time">
+                {{ computeResolutionTime(selectedIssue.dta, selectedIssue.dtr) != null
+                  ? computeResolutionTime(selectedIssue.dta, selectedIssue.dtr) + ' jours' : '—' }}
+              </div>
+            </div>
+            <div class="ir-field ir-field-full">
+              <label>Remarks</label>
+              <textarea [(ngModel)]="selectedIssue.remarks" rows="2" placeholder="Remarques..."></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL CRÉATION ── -->
+  <div class="ir-backdrop" *ngIf="showCreateModal" (click)="showCreateModal=false">
+    <div class="ir-create-modal" (click)="$event.stopPropagation()">
+      <div class="ir-create-header">
+        <h3>{{ i18n.t('ir.modal.new') }}</h3>
+        <button class="ir-close-btn" (click)="showCreateModal=false">✕</button>
+      </div>
+      <div class="ir-create-body">
+        <div class="ir-field">
+          <label>Issue * <span class="ir-hint">(FAIT / IMPACT / CONSÉQUENCE)</span></label>
+          <textarea [(ngModel)]="newIssue.issue" rows="5"
+            placeholder="FAIT : ...&#10;IMPACT : ...&#10;CONSÉQUENCE : ..."></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="ir-field">
+            <label>Severity</label>
+            <select [(ngModel)]="newIssue.severity">
+              <option value="">— Sélectionner —</option>
+              <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+          <div class="ir-field">
+            <label>Priority</label>
+            <select [(ngModel)]="newIssue.priority">
+              <option value="">— Sélectionner —</option>
+              <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+        </div>
+        <!-- Preview Impacts -->
+        <div class="ir-impacts-preview" *ngIf="newIssue.severity && newIssue.priority">
+          Impacts prévu :
+          <span class="ir-impact-badge sm" [class]="impactClass(computeImpacts(newIssue.severity, newIssue.priority))">
+            {{ computeImpacts(newIssue.severity, newIssue.priority) }}
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="ir-field">
+            <label>DTE <span class="ir-hint">(date informé)</span></label>
+            <input type="date" [(ngModel)]="newIssue.dte" />
+          </div>
+          <div class="ir-field">
+            <label>ETA / Deadline *</label>
+            <input type="date" [(ngModel)]="newIssue.deadline" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="ir-field">
+            <label>Owner</label>
+            <input type="text" [(ngModel)]="newIssue.owner" placeholder="Responsable..." />
+          </div>
+          <div class="ir-field">
+            <label>Quality Leader</label>
+            <input type="text" [(ngModel)]="newIssue.qualityLeader" placeholder="Responsable qualité..." />
+          </div>
+        </div>
+      </div>
+      <div class="ir-create-footer">
+        <button class="ir-cancel-btn" (click)="showCreateModal=false">Annuler</button>
+        <button class="ir-confirm-btn" (click)="confirmCreate()"
+          [disabled]="!newIssue.issue?.trim() || !newIssue.deadline || saving">
+          {{ saving ? 'Création...' : 'Créer l\'Issue' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL SUPPRESSION ── -->
+  <div class="ir-backdrop" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+    <div class="ir-delete-modal" (click)="$event.stopPropagation()">
+      <div class="ir-delete-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </div>
+      <h3>Supprimer l'issue</h3>
+      <p>Êtes-vous sûr de vouloir supprimer <strong>{{ pendingDeleteIssue?.iId }}</strong> ?</p>
+      <p class="ir-delete-warning">Cette action est irréversible.</p>
+      <div class="ir-delete-actions">
+        <button class="ir-cancel-btn" (click)="cancelDelete()">Annuler</button>
+        <button class="ir-delete-confirm-btn" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

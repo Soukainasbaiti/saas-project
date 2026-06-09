@@ -59,7 +59,7 @@
 /* ── KPI Cards ───────────────────────────────────────────────── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   padding: 24px 28px 0;
 }
@@ -73,9 +73,59 @@
 
   .kpi-label { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   .kpi-value { font-size: 24px; font-weight: 700; color: #0f1e35; }
+  .kpi-sub   { font-size: 11px; color: #94a3b8; }
   .kpi-blue   { color: #2563eb; }
   .kpi-green  { color: #16a34a; }
   .kpi-purple { color: #7c3aed; }
+  .kpi-wip    { color: #d97706; }
+
+  &.kpi-card-wip {
+    border-left: 3px solid #fbbf24;
+    background: #fffbeb;
+    &.wip-negative { border-color: #34d399; background: #ecfdf5; .kpi-wip { color: #059669; } }
+  }
+}
+
+/* ── Colonnes modules (Risk / Issues / WIP) ──────────────────── */
+.th-modules {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.td-module { text-align: center; }
+
+.module-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.badge-risk  { background: #fee2e2; color: #dc2626; }
+  &.badge-issue { background: #fef3c7; color: #d97706; }
+  &.badge-opp   { background: #ecfdf5; color: #059669; }
+  &.badge-mip   { background: #f3e8ff; color: #7c3aed; }
+  &.badge-wip   { background: #eff6ff; color: #2563eb; }
+}
+
+.module-none { color: #cbd5e1; font-size: 12px; }
+
+.td-wip { min-width: 90px; }
+
+.wip-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+
+  .wip-cell-count  { font-size: 10px; color: #94a3b8; font-weight: 500; }
+  .wip-cell-amount { font-size: 12px; font-weight: 700; }
+
+  &.wip-cell-positive .wip-cell-amount { color: #d97706; }
+  &.wip-cell-negative .wip-cell-amount { color: #059669; }
 }
 
 /* ── Table Card ──────────────────────────────────────────────── */
@@ -158,9 +208,10 @@
   border: none; border-radius: 6px; padding: 6px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all 0.15s;
-  &.btn-view   { background: #eff6ff; color: #2563eb; &:hover { background: #dbeafe; } }
-  &.btn-edit   { background: #f0fdf4; color: #16a34a; &:hover { background: #dcfce7; } }
-  &.btn-delete { background: #fff5f5; color: #dc2626; &:hover { background: #fee2e2; } }
+  &.btn-view   { background: #eff6ff; color: #2563eb;  &:hover { background: #dbeafe; } }
+  &.btn-manage { background: #f5f3ff; color: #7c3aed; &:hover { background: #ede9fe; } }
+  &.btn-edit   { background: #f0fdf4; color: #16a34a;  &:hover { background: #dcfce7; } }
+  &.btn-delete { background: #fff5f5; color: #dc2626;  &:hover { background: #fee2e2; } }
 }
 
 /* ── Modales ─────────────────────────────────────────────────── */

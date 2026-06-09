@@ -1,0 +1,237 @@
+<div class="mr-wrapper">
+
+  <!-- KPI Bar -->
+  <div class="mr-kpi-bar">
+    <div class="mr-kpi"><span class="mr-kpi-label">{{ i18n.t('mr.kpi.total') }}</span><span class="mr-kpi-value">{{ totalMips }}</span></div>
+    <div class="mr-kpi"><span class="mr-kpi-label">{{ i18n.t('mr.kpi.completed') }}</span><span class="mr-kpi-value completed">{{ completedCount }}</span></div>
+    <div class="mr-kpi"><span class="mr-kpi-label">{{ i18n.t('mr.kpi.planned') }}</span><span class="mr-kpi-value gain">{{ fmt(totalPlanned) }}</span></div>
+    <div class="mr-kpi"><span class="mr-kpi-label">{{ i18n.t('mr.kpi.realized') }}</span><span class="mr-kpi-value realized">{{ fmt(totalRealized) }}</span></div>
+    <button class="mr-add-btn" (click)="openCreate()">{{ i18n.t('mr.add') }}</button>
+  </div>
+
+  <!-- Table -->
+  <div class="mr-table-wrap">
+    <div *ngIf="loading" class="mr-empty">{{ i18n.t('loading') }}</div>
+    <table *ngIf="!loading" class="mr-table">
+      <thead>
+        <tr>
+          <th>MIP-ID</th>
+          <th>{{ i18n.t('mr.col.lever') }}</th>
+          <th>{{ i18n.t('mr.col.action') }}</th>
+          <th>{{ i18n.t('mr.col.accountable') }}</th>
+          <th>{{ i18n.t('mr.col.client_impact') }}</th>
+          <th>{{ i18n.t('mr.col.due_date') }}</th>
+          <th>{{ i18n.t('mr.col.priority') }}</th>
+          <th>{{ i18n.t('mr.col.planned') }}</th>
+          <th>{{ i18n.t('mr.col.realized') }}</th>
+          <th>{{ i18n.t('mr.col.status') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="!mips.length">
+          <td colspan="11" class="mr-empty">{{ i18n.t('mr.empty') }} — <strong>{{ i18n.t('mr.add') }}</strong></td>
+        </tr>
+        <tr *ngFor="let m of mips" class="mr-row" (click)="openEdit(m)">
+          <td class="mr-col-id">{{ m.mipId }}</td>
+          <td><span *ngIf="m.lever" class="mr-lever-badge" [class]="leverClass(m.lever)">{{ m.lever }}</span></td>
+          <td class="mr-col-action">{{ truncate(m.actionDescription) }}</td>
+          <td class="mr-col-owner">{{ m.accountable || '—' }}</td>
+          <td><span *ngIf="m.clientImpact" class="mr-ci-badge" [class]="clientImpactClass(m.clientImpact)">{{ m.clientImpact }}</span></td>
+          <td class="mr-col-date">{{ m.dueDate || '—' }}</td>
+          <td><span *ngIf="m.priority" class="mr-prio-badge" [class]="priorityClass(m.priority)">{{ m.priority }}</span></td>
+          <td class="mr-col-gain">{{ fmt(m.plannedGain) }}</td>
+          <td class="mr-col-realized">{{ fmt(m.realizedGain) }}</td>
+          <td><span *ngIf="m.status" class="mr-status-badge" [class]="statusClass(m.status)">{{ m.status }}</span></td>
+          <td class="mr-col-action-btns" (click)="$event.stopPropagation()">
+            <button class="mr-view-btn" (click)="openView(m)" title="Voir">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="mr-delete-btn" (click)="openDelete(m, $event)" title="Supprimer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── MODAL DÉTAIL ── -->
+  <div class="mr-backdrop" *ngIf="showModal && selectedMip" (click)="closeModal()">
+    <div class="mr-detail-modal" (click)="$event.stopPropagation()">
+      <div class="mr-detail-header">
+        <div class="mr-detail-title">
+          <span class="mr-id-badge">{{ selectedMip.mipId }}</span>
+          <span *ngIf="selectedMip.lever" class="mr-lever-badge" [class]="leverClass(selectedMip.lever)">{{ selectedMip.lever }}</span>
+          <span *ngIf="selectedMip.status" class="mr-status-badge" [class]="statusClass(selectedMip.status)">{{ selectedMip.status }}</span>
+        </div>
+        <div class="mr-detail-actions">
+          <span *ngIf="isViewMode" class="mr-view-badge">{{ i18n.t('common.view_only') }}</span>
+          <button *ngIf="!isViewMode" class="mr-save-btn" (click)="saveModal()" [disabled]="saving">{{ saving ? i18n.t('common.saving') : i18n.t('common.save') }}</button>
+          <button class="mr-close-btn" (click)="closeModal()">✕</button>
+        </div>
+      </div>
+
+      <div class="mr-detail-body" [class.mr-view-mode]="isViewMode">
+
+        <!-- Section 1 : Identification -->
+        <div class="mr-section">
+          <div class="mr-section-title">{{ i18n.t('mr.sec.ident') }}</div>
+          <div class="mr-form-grid">
+            <div class="mr-field mr-field-quarter">
+              <label>MIP-ID <span class="mr-auto-tag">auto</span></label>
+              <div class="mr-auto-val">{{ selectedMip.mipId }}</div>
+            </div>
+            <div class="mr-field mr-field-quarter">
+              <label>Date d'identification</label>
+              <input type="date" [(ngModel)]="selectedMip.identificationDate" />
+            </div>
+            <div class="mr-field mr-field-quarter">
+              <label>Lever</label>
+              <select [(ngModel)]="selectedMip.lever">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let l of levers" [value]="l">{{ l }}</option>
+              </select>
+            </div>
+            <div class="mr-field mr-field-quarter">
+              <label>Accountable</label>
+              <input type="text" [(ngModel)]="selectedMip.accountable" placeholder="Responsable..." />
+            </div>
+            <div class="mr-field mr-field-full">
+              <label>Action * <span class="mr-hint">(Verbe d'action + action précise + objectif mesurable)</span></label>
+              <textarea [(ngModel)]="selectedMip.actionDescription" rows="4" placeholder="Ex: Renégocier les contrats avec les fournisseurs afin de réduire les coûts de 8%..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2 : Évaluation -->
+        <div class="mr-section">
+          <div class="mr-section-title">{{ i18n.t('mr.sec.eval') }}</div>
+          <div class="mr-form-grid">
+            <div class="mr-field mr-field-third">
+              <label>Client Impact</label>
+              <select [(ngModel)]="selectedMip.clientImpact">
+                <option *ngFor="let c of clientImpacts" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="mr-field mr-field-third">
+              <label>Due Date <span class="mr-bum-tag">BUM</span></label>
+              <input type="date" [(ngModel)]="selectedMip.dueDate" />
+            </div>
+            <div class="mr-field mr-field-third">
+              <label>Priority <span class="mr-bum-tag">BUM</span></label>
+              <select [(ngModel)]="selectedMip.priority">
+                <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+              </select>
+            </div>
+            <div class="mr-field mr-field-full">
+              <label>Risques / Prérequis</label>
+              <textarea [(ngModel)]="selectedMip.risquesPrerequis" rows="2" placeholder="Risques identifiés et prérequis nécessaires..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3 : Gains -->
+        <div class="mr-section">
+          <div class="mr-section-title">{{ i18n.t('mr.sec.gains') }}</div>
+          <div class="mr-form-grid">
+            <div class="mr-field mr-field-third">
+              <label>Planned Gain (€)</label>
+              <input type="number" [(ngModel)]="selectedMip.plannedGain" min="0" placeholder="0" />
+            </div>
+            <div class="mr-field mr-field-third">
+              <label>Realized Gain (€)</label>
+              <input type="number" [(ngModel)]="selectedMip.realizedGain" min="0" placeholder="0" />
+            </div>
+            <div class="mr-field mr-field-third">
+              <label>Status</label>
+              <select [(ngModel)]="selectedMip.status">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL CRÉATION ── -->
+  <div class="mr-backdrop" *ngIf="showCreateModal" (click)="showCreateModal=false">
+    <div class="mr-create-modal" (click)="$event.stopPropagation()">
+      <div class="mr-create-header">
+        <h3>{{ i18n.t('mr.modal.new') }}</h3>
+        <button class="mr-close-btn" (click)="showCreateModal=false">✕</button>
+      </div>
+      <div class="mr-create-body">
+        <div class="mr-field">
+          <label>Action * <span class="mr-hint">(Verbe d'action + action précise + objectif mesurable)</span></label>
+          <textarea [(ngModel)]="newMip.actionDescription" rows="5" placeholder="Ex: Renégocier les contrats avec les fournisseurs afin de réduire les coûts de 8%..."></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mr-field">
+            <label>Date d'identification</label>
+            <input type="date" [(ngModel)]="newMip.identificationDate" />
+          </div>
+          <div class="mr-field">
+            <label>Lever</label>
+            <select [(ngModel)]="newMip.lever">
+              <option value="">— Sélectionner —</option>
+              <option *ngFor="let l of levers" [value]="l">{{ l }}</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mr-field">
+            <label>Accountable</label>
+            <input type="text" [(ngModel)]="newMip.accountable" placeholder="Responsable..." />
+          </div>
+          <div class="mr-field">
+            <label>Client Impact</label>
+            <select [(ngModel)]="newMip.clientImpact">
+              <option *ngFor="let c of clientImpacts" [value]="c">{{ c }}</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mr-field">
+            <label>Planned Gain (€)</label>
+            <input type="number" [(ngModel)]="newMip.plannedGain" min="0" placeholder="0" />
+          </div>
+          <div class="mr-field">
+            <label>Priority</label>
+            <select [(ngModel)]="newMip.priority">
+              <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="mr-create-footer">
+        <button class="mr-cancel-btn" (click)="showCreateModal=false">Annuler</button>
+        <button class="mr-confirm-btn" (click)="confirmCreate()" [disabled]="!newMip.actionDescription?.trim() || saving">
+          {{ saving ? 'Création...' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL SUPPRESSION ── -->
+  <div class="mr-backdrop" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+    <div class="mr-delete-modal" (click)="$event.stopPropagation()">
+      <div class="mr-delete-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </div>
+      <h3>Supprimer le MIP</h3>
+      <p>Supprimer <strong>{{ pendingDelete?.mipId }}</strong> ?</p>
+      <p class="mr-delete-warning">Cette action est irréversible.</p>
+      <div class="mr-delete-actions">
+        <button class="mr-cancel-btn" (click)="cancelDelete()">Annuler</button>
+        <button class="mr-delete-confirm-btn" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

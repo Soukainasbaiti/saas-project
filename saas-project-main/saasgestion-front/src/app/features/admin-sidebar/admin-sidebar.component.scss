@@ -70,8 +70,61 @@
   padding: 16px 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+// ── Thème ─────────────────────────────────────────────────────────
+.theme-row {
+  display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.theme-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  padding: 0;
+
+  &:hover { transform: scale(1.15); }
+  &.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+  }
+}
+
+// ── Langue ────────────────────────────────────────────────────────
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.07);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.15s;
+  width: 100%;
+
+  &:hover { background: rgba(255,255,255,0.12); color: #e2e8f0; }
+  .lang-flag { font-size: 14px; }
+  .lang-label { flex: 1; text-align: left; font-weight: 500; }
 }
 
 .user-card {

@@ -13,6 +13,73 @@
       </div>
     </div>
     <div class="topbar-actions">
+
+      <!-- Cloche notifications BUM -->
+      <div class="notif-bell-wrapper" *ngIf="isBum" (click)="toggleNotifDropdown()" [class.open]="showNotifDropdown">
+        <button class="notif-bell-btn" [class.has-notif]="bumPending.length > 0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" *ngIf="bumPending.length > 0">{{ bumPending.length }}</span>
+        </button>
+        <div class="notif-dropdown" (click)="$event.stopPropagation()">
+          <div class="notif-dd-header">
+            <span>{{ i18n.t('notif.bum.title') }}</span>
+            <span class="notif-dd-count" *ngIf="bumPending.length > 0">{{ bumPending.length }}</span>
+          </div>
+          <div class="notif-dd-loading" *ngIf="bumPendingLoading">{{ i18n.t('loading') }}</div>
+          <div class="notif-dd-empty" *ngIf="!bumPendingLoading && bumPending.length === 0">
+            {{ i18n.t('notif.bum.empty') }}
+          </div>
+          <a *ngFor="let p of bumPending"
+             [routerLink]="['/projects', p.projectId, 'management']"
+             class="notif-dd-item"
+             (click)="showNotifDropdown = false">
+            <div class="notif-dd-name">{{ p.projectName }}</div>
+            <div class="notif-dd-meta">BU {{ p.buName }} · {{ i18n.t('notif.bum.pending') }}</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Cloche notifications PM (projets rejetés) -->
+      <div class="notif-bell-wrapper pm-notif" *ngIf="isPm" (click)="togglePmNotifDropdown()" [class.open]="showPmNotifDropdown">
+        <button class="notif-bell-btn" [class.has-notif]="pmRejected.length > 0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge badge-reject" *ngIf="pmRejected.length > 0">{{ pmRejected.length }}</span>
+        </button>
+        <div class="notif-dropdown notif-dropdown-left" (click)="$event.stopPropagation()">
+          <div class="notif-dd-header reject-header">
+            <span>{{ i18n.t('notif.pm.title') }}</span>
+            <span class="notif-dd-count reject-count" *ngIf="pmRejected.length > 0">{{ pmRejected.length }}</span>
+          </div>
+          <div class="notif-dd-loading" *ngIf="pmRejectedLoading">{{ i18n.t('loading') }}</div>
+          <div class="notif-dd-empty" *ngIf="!pmRejectedLoading && pmRejected.length === 0">
+            {{ i18n.t('notif.pm.empty') }}
+          </div>
+          <a *ngFor="let p of pmRejected"
+             [routerLink]="['/projects', p.projectId, 'management']"
+             class="notif-dd-item reject-item"
+             (click)="showPmNotifDropdown = false">
+            <div class="notif-dd-name">{{ p.projectName }}</div>
+            <div class="notif-dd-meta reject-meta">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              {{ i18n.t('notif.pm.rejectedby') }} {{ p.bumName }}
+            </div>
+            <div class="notif-dd-reason" *ngIf="p.rejectionComment">
+              « {{ p.rejectionComment }} »
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Icône historique BUM -->
+      <button class="history-icon-btn" *ngIf="isBum" (click)="showHistoryModal=true" [title]="i18n.lang()==='fr' ? 'Historique des validations' : 'Validation history'">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
+
+      <!-- Language toggle -->
+      <button class="lang-toggle-btn" (click)="i18n.toggle()" [title]="i18n.lang() === 'fr' ? 'Switch to English' : 'Passer en français'">
+        <span class="lang-label">{{ i18n.lang() === 'fr' ? 'FR' : 'EN' }}</span>
+      </button>
+
       <div class="topbar-user" *ngIf="currentUser">
         <span class="user-name">{{ currentUser?.fullName }}</span>
         <span class="user-role">{{ currentUser?.role }}</span>
@@ -23,7 +90,7 @@
           <polyline points="16 17 21 12 16 7"/>
           <line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
-        Log Out
+        {{ i18n.t('btn.logout') }}
       </button>
     </div>
   </header>
@@ -35,12 +102,12 @@
     <div class="page-hero">
       <div class="page-hero-row">
         <div>
-          <h1>Portfolio de Projets</h1>
-          <p *ngIf="stats">{{ stats.totalProjects }} projet(s) · Marge moyenne: {{ fmtPct(stats.avgMarginRate) }}</p>
-          <p *ngIf="!stats">Chargement des statistiques...</p>
+          <h1>{{ i18n.t('dash.hero.title') }}</h1>
+          <p *ngIf="stats">{{ stats.totalProjects }} {{ i18n.t('dash.hero.sub') }} {{ fmtPct(stats.avgMarginRate) }}</p>
+          <p *ngIf="!stats">{{ i18n.t('dash.hero.loading') }}</p>
         </div>
         <button class="btn-new-proj" routerLink="/projects/new">
-          + Nouveau Projet
+          {{ i18n.t('dash.hero.new') }}
         </button>
       </div>
     </div>
@@ -49,31 +116,31 @@
     <div class="kpi-grid" *ngIf="stats">
       <div class="kpi-card">
         <div class="kpi-left">
-          <div class="kpi-label">Total Projets</div>
+          <div class="kpi-label">{{ i18n.t('kpi.total_projects') }}</div>
           <div class="kpi-value">{{ stats.totalProjects }}</div>
-          <div class="kpi-trend neutral">↗ {{ stats.activeProjects }} Actifs</div>
+          <div class="kpi-trend neutral">↗ {{ stats.activeProjects }} {{ i18n.t('kpi.active') }}</div>
         </div>
         <div class="kpi-icon blue">🎯</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-left">
-          <div class="kpi-label">Revenu Total</div>
+          <div class="kpi-label">{{ i18n.t('kpi.total_revenue') }}</div>
           <div class="kpi-value">{{ fmtCompact(stats.totalRevenue) }}</div>
-          <div class="kpi-trend up">↗ CA Budget {{ selectedYear }}</div>
+          <div class="kpi-trend up">↗ {{ i18n.t('kpi.revenue_budget') }} {{ selectedYear }}</div>
         </div>
         <div class="kpi-icon green">💰</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-left">
-          <div class="kpi-label">Coût Total</div>
+          <div class="kpi-label">{{ i18n.t('kpi.total_cost') }}</div>
           <div class="kpi-value">{{ fmtCompact(stats.totalCost) }}</div>
-          <div class="kpi-trend down">↘ Coûts cumulés</div>
+          <div class="kpi-trend down">↘ {{ i18n.t('kpi.cumul_cost') }}</div>
         </div>
         <div class="kpi-icon orange">💸</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-left">
-          <div class="kpi-label">Marge Totale</div>
+          <div class="kpi-label">{{ i18n.t('kpi.total_margin') }}</div>
           <div class="kpi-value">{{ fmtCompact(stats.totalMargin) }}</div>
           <div class="kpi-trend purple">↗ {{ fmtPct(stats.avgMarginRate) }} avg</div>
         </div>
@@ -81,24 +148,45 @@
       </div>
     </div>
 
+    <!-- Chart: Répartition CA par BU -->
+    <div class="chart-card" *ngIf="projects.length > 0">
+      <div class="chart-header">
+        <div class="chart-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          {{ i18n.lang()==='fr' ? 'Répartition du CA par Business Unit' : 'Revenue by Business Unit' }}
+        </div>
+        <span class="chart-subtitle">{{ projects.length }} {{ i18n.lang()==='fr' ? 'projets' : 'projects' }}</span>
+      </div>
+      <div class="chart-bars">
+        <div class="chart-row" *ngFor="let item of buChartData">
+          <span class="chart-bu-label">{{ item.bu }}</span>
+          <div class="chart-bar-wrap">
+            <div class="chart-bar" [style.width.%]="item.pct"></div>
+          </div>
+          <span class="chart-value">{{ fmtCompact(item.revenue) }}</span>
+          <span class="chart-count">{{ item.count }} proj.</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Filters -->
     <div class="filters-card">
       <div class="filters-head">
         <div class="filter-icon">🔽</div>
-        <h3>Filtres Avancés</h3>
+        <h3>{{ i18n.t('filter.title') }}</h3>
       </div>
       <form [formGroup]="filterForm" class="filters-row">
         <div class="filter-group">
           <label>Business Unit</label>
-          <mat-select formControlName="buId" class="mat-filter-select" placeholder="Tous les BU">
-            <mat-option [value]="null">Tous les BU</mat-option>
+          <mat-select formControlName="buId" class="mat-filter-select" [placeholder]="i18n.t('filter.all_bu')">
+            <mat-option [value]="null">{{ i18n.t('filter.all_bu') }}</mat-option>
             <mat-option *ngFor="let b of bus" [value]="b.id">{{ b.id }} — {{ b.label }}</mat-option>
           </mat-select>
         </div>
         <div class="filter-group">
-          <label>Statut du Projet</label>
-          <mat-select formControlName="status" class="mat-filter-select" placeholder="Tous les statuts">
-            <mat-option [value]="null">Tous les statuts</mat-option>
+          <label>{{ i18n.t('filter.project_status') }}</label>
+          <mat-select formControlName="status" class="mat-filter-select" [placeholder]="i18n.t('filter.all_status')">
+            <mat-option [value]="null">{{ i18n.t('filter.all_status') }}</mat-option>
             <mat-option value="On Going">On Going</mat-option>
             <mat-option value="Closed">Closed</mat-option>
             <mat-option value="Planned">Planned</mat-option>
@@ -108,21 +196,49 @@
         </div>
         <div class="filter-group">
           <label>Customer</label>
-          <mat-select formControlName="customerId" class="mat-filter-select" placeholder="Tous les clients">
-            <mat-option [value]="null">Tous les clients</mat-option>
+          <mat-select formControlName="customerId" class="mat-filter-select" [placeholder]="i18n.t('filter.all_customers')">
+            <mat-option [value]="null">{{ i18n.t('filter.all_customers') }}</mat-option>
             <mat-option *ngFor="let c of customers" [value]="c.id">{{ c.label }}</mat-option>
           </mat-select>
         </div>
       </form>
     </div>
 
+    <!-- BUM: Projets en attente de validation -->
+    <div class="bum-pending-section" *ngIf="isBum && bumPending.length > 0">
+      <div class="bum-pending-header">
+        <div class="bum-pending-title">
+          <span class="bum-pending-dot"></span>
+          {{ i18n.lang()==='fr' ? 'Projets en attente de votre validation' : 'Projects waiting for your approval' }}
+        </div>
+        <span class="bum-pending-count">{{ bumPending.length }} {{ i18n.lang()==='fr' ? 'projet(s)' : 'project(s)' }}</span>
+      </div>
+      <div class="bum-pending-list">
+        <a *ngFor="let p of bumPending"
+           [routerLink]="['/projects', p.projectId, 'management']"
+           class="bum-pending-card">
+          <div class="bpc-left">
+            <div class="bpc-name">{{ p.projectName }}</div>
+            <div class="bpc-meta">
+              <span class="bpc-bu">{{ p.buName }}</span>
+              <span class="bpc-dot">·</span>
+              <span class="bpc-status">En attente de validation</span>
+            </div>
+          </div>
+          <div class="bpc-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </a>
+      </div>
+    </div>
+
     <!-- Table -->
     <div class="table-card">
       <div class="table-topbar">
-        <span class="table-title">Liste des Projets</span>
+        <span class="table-title">{{ i18n.t('table.title') }}</span>
         <div class="table-topbar-right">
           <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
-          <span class="table-count">{{ totalElements }} projets trouvés</span>
+          <span class="table-count">{{ totalElements }} {{ i18n.t('table.found') }}</span>
         </div>
       </div>
 
@@ -167,28 +283,28 @@
           </ng-container>
 
           <ng-container matColumnDef="revenueBudget">
-            <th mat-header-cell *matHeaderCellDef class="num">Revenu</th>
+            <th mat-header-cell *matHeaderCellDef class="num">{{ i18n.t('table.col.revenue') }}</th>
             <td mat-cell *matCellDef="let p" class="num">
               <span class="rev-val">{{ fmtCompact(p.revenueBudget) }}</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="costBudget">
-            <th mat-header-cell *matHeaderCellDef class="num">Coût</th>
+            <th mat-header-cell *matHeaderCellDef class="num">{{ i18n.t('table.col.cost') }}</th>
             <td mat-cell *matCellDef="let p" class="num">
               <span class="cost-val">{{ fmtCompact(p.costBudget) }}</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="marginBudget">
-            <th mat-header-cell *matHeaderCellDef class="num">Marge €</th>
+            <th mat-header-cell *matHeaderCellDef class="num">{{ i18n.t('table.col.margin_eur') }}</th>
             <td mat-cell *matCellDef="let p" class="num">
               <span class="marge-eur">{{ fmtCompact(p.marginBudget) }}</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="projectMargin">
-            <th mat-header-cell *matHeaderCellDef class="num">Marge %</th>
+            <th mat-header-cell *matHeaderCellDef class="num">{{ i18n.t('table.col.margin_pct') }}</th>
             <td mat-cell *matCellDef="let p" class="num">
               <span class="marge-pct" [class]="marginClass(p.projectMargin)">
                 {{ fmtPct(p.projectMargin) }}
@@ -209,7 +325,7 @@
             <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let p">
               <button class="btn-voir" (click)="openModal(p.id); $event.stopPropagation()">
-                👁 Voir
+                {{ i18n.t('table.action.view') }}
               </button>
             </td>
           </ng-container>
@@ -219,11 +335,106 @@
 
           <tr class="mat-row" *matNoDataRow>
             <td class="empty-state" [attr.colspan]="displayedColumns.length">
-              <div>📂</div><p>Aucun projet trouvé</p>
+              <div>📂</div><p>{{ i18n.t('table.empty') }}</p>
             </td>
           </tr>
         </table>
       </div>
+    </div>
+
+  </div>
+
+
+</div>
+
+<!-- MODAL HISTORIQUE BUM -->
+<div class="history-modal-overlay" *ngIf="showHistoryModal" (click)="showHistoryModal=false">
+  <div class="history-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="hm-header">
+      <div class="hm-title">
+        <div class="hm-title-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="hm-title-text">{{ i18n.lang()==='fr' ? 'Historique des validations' : 'Validation History' }}</div>
+          <div class="hm-title-sub">{{ i18n.lang()==='fr' ? 'Projets soumis à votre BU' : 'Projects submitted to your BU' }}</div>
+        </div>
+        <span class="hm-count">{{ filteredBumHistory.length }}</span>
+      </div>
+      <button class="hm-close" (click)="showHistoryModal=false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Filtres + Recherche -->
+    <div class="hm-toolbar">
+      <div class="hm-filters">
+        <button class="hm-fb"     [class.active]="bumHistoryFilter==='ALL'"       (click)="bumHistoryFilter='ALL'">{{ i18n.lang()==='fr' ? 'Tout' : 'All' }}</button>
+        <button class="hm-fb sub" [class.active]="bumHistoryFilter==='SUBMITTED'" (click)="bumHistoryFilter='SUBMITTED'">📤 {{ i18n.lang()==='fr' ? 'Soumis' : 'Submitted' }}</button>
+        <button class="hm-fb val" [class.active]="bumHistoryFilter==='VALIDATED'" (click)="bumHistoryFilter='VALIDATED'">✅ {{ i18n.lang()==='fr' ? 'Validés' : 'Validated' }}</button>
+        <button class="hm-fb rej" [class.active]="bumHistoryFilter==='REJECTED'"  (click)="bumHistoryFilter='REJECTED'">❌ {{ i18n.lang()==='fr' ? 'Rejetés' : 'Rejected' }}</button>
+      </div>
+      <button class="hm-refresh" (click)="loadBumHistory()" [title]="i18n.lang()==='fr' ? 'Actualiser' : 'Refresh'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        {{ i18n.lang()==='fr' ? 'Actualiser' : 'Refresh' }}
+      </button>
+    </div>
+
+    <!-- Contenu -->
+    <div class="hm-body">
+      <div class="hm-loading" *ngIf="bumHistoryLoading">
+        <div class="hm-spinner"></div>
+        <span>{{ i18n.lang()==='fr' ? 'Chargement...' : 'Loading...' }}</span>
+      </div>
+
+      <div class="hm-empty" *ngIf="!bumHistoryLoading && filteredBumHistory.length === 0">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        <p>{{ i18n.lang()==='fr' ? 'Aucun historique pour le moment' : 'No history yet' }}</p>
+        <span>{{ i18n.lang()==='fr' ? 'Les actions de validation apparaîtront ici.' : 'Validation actions will appear here.' }}</span>
+      </div>
+
+      <div class="hm-list" *ngIf="!bumHistoryLoading && filteredBumHistory.length > 0">
+        <div class="hm-item" *ngFor="let h of filteredBumHistory" [class]="'hm-item-' + h.action.toLowerCase()">
+          <div class="hm-item-icon">
+            <span *ngIf="h.action==='SUBMITTED'">📤</span>
+            <span *ngIf="h.action==='VALIDATED'">✅</span>
+            <span *ngIf="h.action==='REJECTED'">❌</span>
+          </div>
+          <div class="hm-item-content">
+            <div class="hm-item-row">
+              <span class="hm-item-name">{{ h.projectName }}</span>
+              <span class="hm-item-badge hm-badge-{{ h.action.toLowerCase() }}">
+                {{ h.action === 'SUBMITTED' ? (i18n.lang()==='fr' ? 'Soumis' : 'Submitted')
+                 : h.action === 'VALIDATED' ? (i18n.lang()==='fr' ? 'Validé' : 'Validated')
+                 : (i18n.lang()==='fr' ? 'Rejeté' : 'Rejected') }}
+              </span>
+              <span class="hm-item-date">{{ h.createdAt | date:'dd/MM/yyyy · HH:mm' }}</span>
+            </div>
+            <div class="hm-item-actor" *ngIf="h.actorName">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="hm-actor-label">
+                {{ h.action === 'SUBMITTED'
+                  ? (i18n.lang()==='fr' ? 'Soumis par' : 'Submitted by')
+                  : h.action === 'VALIDATED'
+                    ? (i18n.lang()==='fr' ? 'Validé par' : 'Validated by')
+                    : (i18n.lang()==='fr' ? 'Rejeté par' : 'Rejected by') }}
+              </span>
+              {{ h.actorName }}
+            </div>
+            <div class="hm-item-comment" *ngIf="h.comment">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              « {{ h.comment }} »
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="hm-footer">
+      <button class="hm-close-btn" (click)="showHistoryModal=false">{{ i18n.lang()==='fr' ? 'Fermer' : 'Close' }}</button>
     </div>
 
   </div>
@@ -234,11 +445,11 @@
   <div class="modal-box" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
-      <h2>Détail du Projet</h2>
+      <h2>{{ i18n.t('modal.detail.title') }}</h2>
       <button class="modal-close" (click)="closeModal()">✕</button>
     </div>
 
-    <div class="modal-loading" *ngIf="modalLoading">Chargement...</div>
+    <div class="modal-loading" *ngIf="modalLoading">{{ i18n.t('loading') }}</div>
 
     <div class="modal-body" *ngIf="!modalLoading && selectedProject">
 
@@ -246,7 +457,7 @@
         <span class="d-badge">{{ selectedProject.frontFinancier }}</span>
         <span class="d-badge">{{ selectedProject.buTrigram }}</span>
         <span class="d-badge" [class.d-badge-on]="selectedProject.status==='On Going'">{{ selectedProject.status }}</span>
-        <span class="d-badge d-badge-major" *ngIf="selectedProject.majorProject">Majeur</span>
+        <span class="d-badge d-badge-major" *ngIf="selectedProject.majorProject">{{ i18n.t('modal.detail.major') }}</span>
       </div>
 
       <div class="modal-title">{{ selectedProject.projectName }}</div>
@@ -254,15 +465,15 @@
 
       <div class="modal-fin-bar">
         <div class="fin-item">
-          <div class="fin-lbl">CA Budget</div>
+          <div class="fin-lbl">{{ i18n.t('modal.detail.ca') }}</div>
           <div class="fin-val rev">{{ fmt(selectedProject.revenueBudget) }}</div>
         </div>
         <div class="fin-item">
-          <div class="fin-lbl">Cout</div>
+          <div class="fin-lbl">{{ i18n.t('modal.detail.cost') }}</div>
           <div class="fin-val cost">{{ fmt(selectedProject.costBudget) }}</div>
         </div>
         <div class="fin-item">
-          <div class="fin-lbl">Marge</div>
+          <div class="fin-lbl">{{ i18n.t('table.col.margin_eur') }}</div>
           <div class="fin-val marg">{{ fmt(selectedProject.marginBudget) }}</div>
           <div class="fin-pct" [class]="marginClass(selectedProject.projectMargin)">{{ fmtPct(selectedProject.projectMargin) }}</div>
         </div>
@@ -271,54 +482,53 @@
       <div class="modal-grid">
 
         <div class="modal-card">
-          <div class="mc-title">Organisation</div>
+          <div class="mc-title">{{ i18n.t('modal.detail.org') }}</div>
           <table class="info-table">
             <tr><td>Project ID</td><td>{{ selectedProject.projectId }}</td></tr>
-            <tr><td>Année</td><td>{{ selectedProject.projectYear }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.year') }}</td><td>{{ selectedProject.projectYear }}</td></tr>
             <tr><td>Front Financier</td><td>{{ selectedProject.frontFinancier }} — {{ selectedProject.frontFinancierLabel }}</td></tr>
             <tr><td>BU ID</td><td>{{ selectedProject.buId }}</td></tr>
             <tr><td>Business Unit</td><td>{{ selectedProject.buTrigram }} — {{ selectedProject.buName }}</td></tr>
             <tr><td>BUM</td><td>{{ selectedProject.bumName }}</td></tr>
-            <tr><td>Projet Majeur</td><td>
-              <span *ngIf="selectedProject.majorProject" style="color:#d97706;font-weight:700;">Oui</span>
-              <span *ngIf="!selectedProject.majorProject" style="color:#94a3b8;">Non</span>
+            <tr><td>{{ i18n.t('modal.detail.major_project') }}</td><td>
+              <span *ngIf="selectedProject.majorProject" style="color:#d97706;font-weight:700;">{{ i18n.t('yes') }}</span>
+              <span *ngIf="!selectedProject.majorProject" style="color:#94a3b8;">{{ i18n.t('no') }}</span>
             </td></tr>
           </table>
         </div>
 
         <div class="modal-card">
-          <div class="mc-title">Client et Marché</div>
+          <div class="mc-title">{{ i18n.t('modal.detail.market') }}</div>
           <table class="info-table">
             <tr><td>Client</td><td>{{ selectedProject.customerName }}</td></tr>
-            <tr><td>Groupe Client</td><td>{{ selectedProject.customerGroup }}</td></tr>
-            <tr><td>Trigramme Client</td><td>{{ selectedProject.customerTrigram }}</td></tr>
-            <tr><td>Industrie</td><td>{{ selectedProject.industryName }}</td></tr>
-            <tr><td>Trigramme Industrie</td><td>{{ selectedProject.industryTrigram }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.client_group') }}</td><td>{{ selectedProject.customerGroup }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.client_tri') }}</td><td>{{ selectedProject.customerTrigram }}</td></tr>
+            <tr><td>Industry</td><td>{{ selectedProject.industryName }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.industry_tri') }}</td><td>{{ selectedProject.industryTrigram }}</td></tr>
             <tr><td>Engagement</td><td>{{ selectedProject.engagement }}</td></tr>
-            <tr><td>Type Engagement</td><td>{{ selectedProject.engagementType }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.engage_type') }}</td><td>{{ selectedProject.engagementType }}</td></tr>
           </table>
         </div>
 
         <div class="modal-card">
-          <div class="mc-title">Technique</div>
+          <div class="mc-title">{{ i18n.t('modal.detail.technical') }}</div>
           <table class="info-table">
             <tr><td>Discipline</td><td>{{ selectedProject.engineeringDiscipline }}</td></tr>
-            <tr><td>Fonction</td><td>{{ selectedProject.functionName }}</td></tr>
-            <tr><td>Activity</td><td>{{ selectedProject.activity }}</td></tr>
-            <tr><td>Chef de Projet</td><td>{{ selectedProject.projectManager }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.pm') }}</td><td>{{ selectedProject.projectManager }}</td></tr>
             <tr><td>Email PM</td><td>{{ selectedProject.pmEmail }}</td></tr>
-            <tr><td>Bureau Tech.</td><td>{{ selectedProject.technicalOffice }}</td></tr>
+            <tr><td>Activity</td><td>{{ selectedProject.activity }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.tech_office') }}</td><td>{{ selectedProject.technicalOffice }}</td></tr>
           </table>
         </div>
 
         <div class="modal-card">
-          <div class="mc-title">Planning</div>
+          <div class="mc-title">{{ i18n.t('modal.detail.planning') }}</div>
           <table class="info-table">
-            <tr><td>Date Début</td><td>{{ formatDate(selectedProject.startDate) }}</td></tr>
-            <tr><td>Date Fin</td><td>{{ formatDate(selectedProject.endDate) }}</td></tr>
-            <tr><td>Statut</td><td>{{ selectedProject.status }}</td></tr>
-            <tr><td>Créé le</td><td>{{ formatDate(selectedProject.createdAt) }}</td></tr>
-            <tr><td>Modifié le</td><td>{{ formatDate(selectedProject.updatedAt) }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.start') }}</td><td>{{ formatDate(selectedProject.startDate) }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.end') }}</td><td>{{ formatDate(selectedProject.endDate) }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.status') }}</td><td>{{ selectedProject.status }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.created') }}</td><td>{{ formatDate(selectedProject.createdAt) }}</td></tr>
+            <tr><td>{{ i18n.t('modal.detail.updated') }}</td><td>{{ formatDate(selectedProject.updatedAt) }}</td></tr>
           </table>
         </div>
 
@@ -327,16 +537,16 @@
       <!-- Prévisions mensuelles -->
       <div class="forecast-section"
            *ngIf="selectedProject.monthlyForecasts && selectedProject.monthlyForecasts.length > 0">
-        <div class="mc-title">📅 Prévisions Mensuelles</div>
+        <div class="mc-title">{{ i18n.t('modal.detail.forecasts') }}</div>
         <div class="forecast-scroll">
           <table class="forecast-tbl">
             <thead>
               <tr>
-                <th>Mois</th>
-                <th>Revenue</th>
-                <th>Coût</th>
-                <th>Marge €</th>
-                <th>Marge %</th>
+                <th>{{ i18n.t('modal.detail.month') }}</th>
+                <th>{{ i18n.t('table.col.revenue') }}</th>
+                <th>{{ i18n.t('modal.detail.cost') }}</th>
+                <th>{{ i18n.t('table.col.margin_eur') }}</th>
+                <th>{{ i18n.t('table.col.margin_pct') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -345,9 +555,7 @@
                 <td class="num">{{ fmt(f.revenue) }}</td>
                 <td class="num">{{ fmt(f.cost) }}</td>
                 <td class="num">{{ fmt(f.revenue - f.cost) }}</td>
-                <td class="num">
-                  {{ monthMarginPct(f.revenue, f.cost) }}
-                </td>
+                <td class="num">{{ monthMarginPct(f.revenue, f.cost) }}</td>
               </tr>
             </tbody>
             <tfoot>
@@ -356,9 +564,7 @@
                 <td class="num">{{ fmt(forecastTotalRevenue) }}</td>
                 <td class="num">{{ fmt(forecastTotalCost) }}</td>
                 <td class="num">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
-                <td class="num">
-                  {{ monthMarginPct(forecastTotalRevenue, forecastTotalCost) }}
-                </td>
+                <td class="num">{{ monthMarginPct(forecastTotalRevenue, forecastTotalCost) }}</td>
               </tr>
             </tfoot>
           </table>
@@ -368,9 +574,9 @@
     </div>
 
     <div class="modal-footer">
-      <button class="btn-annuler" (click)="closeModal()">Fermer</button>
+      <button class="btn-annuler" (click)="closeModal()">{{ i18n.t('btn.close') }}</button>
       <button class="btn-gestion" [routerLink]="['/projects', selectedProject?.id, 'management']" (click)="closeModal()">
-        📊 Gestion de Projet
+        {{ i18n.t('modal.detail.pm_action') }}
       </button>
     </div>
 

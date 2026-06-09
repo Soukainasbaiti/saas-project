@@ -1,51 +1,134 @@
-<div class="pm-wrapper">
+<div class="pm-wrapper" [ngClass]="currentThemeKey">
+
+  <!-- Bandeau Admin -->
+  <div class="admin-view-banner" *ngIf="isAdmin">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span>Vue Administrateur — Consultation du projet</span>
+    <a routerLink="/admin" class="admin-banner-back">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Retour Dashboard Admin
+    </a>
+  </div>
+
+  <!-- Toast erreur sauvegarde -->
+  <div class="save-error-toast" *ngIf="saveErrorMsg" (click)="saveErrorMsg=''">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    {{ saveErrorMsg }}
+    <span class="toast-hint">{{ i18n.lang()==='fr' ? '(clic pour fermer)' : '(click to close)' }}</span>
+  </div>
 
   <!-- Header -->
   <div class="pm-header">
     <div class="pm-header-left">
       <button class="btn-back" (click)="goBack()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        Retour
+        {{ i18n.t('btn.back') }}
       </button>
       <div class="pm-title-block">
+        <h1 class="pm-title">{{ projectName }}</h1>
         <div class="pm-title-row">
-          <span class="pm-badge">Gestion de Projet</span>
           <button class="granularity-badge"
                   [class.locked]="granularityLocked"
                   (click)="openGranularityModal()"
-                  [title]="granularityLocked ? 'Granularité verrouillée (données saisies)' : 'Changer la granularité'">
+                  [title]="granularityLocked ? 'Granularity locked' : 'Change granularity'">
             {{ granularityIcon }} {{ granularityLabel }}
             <span class="lock-icon" *ngIf="granularityLocked">🔒</span>
             <span class="edit-icon" *ngIf="!granularityLocked">✏️</span>
           </button>
+          <button class="currency-switch-btn" (click)="switchCurrency()" title="Switch display currency">
+            <span *ngFor="let c of currencyOptions" [class.active]="displayCurrency === c.value">{{ c.symbol }}</span>
+          </button>
+          <!-- Bouton changement engagement -->
+          <button class="engagement-switch-btn" *ngIf="projectEngagementType" (click)="openChangeEngagementModal()" title="Changer le type d'engagement">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            {{ projectEngagementType }}
+          </button>
+
+          <!-- Theme picker -->
+          <div class="theme-picker-wrap">
+            <button class="theme-picker-btn" (click)="showThemePicker=!showThemePicker" title="Thème couleur">
+              <span class="theme-dot" [style.background]="currentTheme.color"></span>
+              <span class="theme-label">{{ currentTheme.label }}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="theme-dropdown" *ngIf="showThemePicker">
+              <div class="theme-dropdown-header">Thème</div>
+              <button *ngFor="let t of themes" class="theme-option" [class.active]="t.key === currentThemeKey" (click)="setTheme(t.key)">
+                <span class="theme-dot" [style.background]="t.color"></span>
+                {{ t.label }}
+                <svg *ngIf="t.key === currentThemeKey" class="theme-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          </div>
+          <!-- backdrop to close theme picker -->
+          <div class="theme-backdrop" *ngIf="showThemePicker" (click)="showThemePicker=false"></div>
         </div>
-        <h1 class="pm-title">{{ projectName }}</h1>
       </div>
     </div>
     <div class="pm-header-kpis" *ngIf="!loading && months.length">
       <div class="header-kpi">
-        <div class="hk-label">Total Direct Cost ({{ currencySymbol }})</div>
-        <div class="hk-value cost">{{ fmt(totalDirectCost()) }}</div>
+        <div class="hk-label">{{ i18n.t('pm.kpi.revenue') }} ({{ currencySymbol }})</div>
+        <div class="hk-value rev">{{ cfmt(totalRevenue()) }} {{ currencySymbol }}</div>
       </div>
       <div class="header-kpi">
-        <div class="hk-label">Total Revenue ({{ currencySymbol }})</div>
-        <div class="hk-value rev">{{ fmt(totalRevenue()) }}</div>
+        <div class="hk-label">{{ i18n.t('pm.kpi.direct_cost') }} ({{ currencySymbol }})</div>
+        <div class="hk-value cost">{{ cfmt(totalDirectCost()) }} {{ currencySymbol }}</div>
       </div>
       <div class="header-kpi">
-        <div class="hk-label">Margin ({{ currencySymbol }})</div>
-        <div class="hk-value" [class]="marginClass(totalMarginPct())">{{ fmt(totalMargin()) }}</div>
+        <div class="hk-label">{{ i18n.t('pm.kpi.margin') }} ({{ currencySymbol }})</div>
+        <div class="hk-value" [class]="marginClass(totalMarginPct())">{{ cfmt(totalMargin()) }} {{ currencySymbol }}</div>
       </div>
       <div class="header-kpi">
-        <div class="hk-label">Margin %</div>
+        <div class="hk-label">{{ i18n.t('pm.kpi.margin_pct') }}</div>
         <div class="hk-value" [class]="marginClass(totalMarginPct())">{{ fmtPct(totalMarginPct()) }}</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Currency rates info bar -->
+  <div class="currency-rates-bar">
+    <span class="crb-icon">💱</span>
+    <span class="crb-text">{{ currencyRatesInfo }}</span>
+    <span class="crb-note">{{ i18n.lang() === 'fr' ? '(taux approximatifs)' : '(approximate rates)' }}</span>
+  </div>
+
+  <!-- Validation status bar -->
+  <div class="validation-bar" *ngIf="!loading && granularityLocked"
+       [class.bar-draft]="validationStatus==='DRAFT'"
+       [class.bar-submitted]="validationStatus==='SUBMITTED'"
+       [class.bar-validated]="validationStatus==='VALIDATED'"
+       [class.bar-rejected]="validationStatus==='REJECTED'">
+    <div class="vbar-left">
+      <span class="vbar-icon">
+        <ng-container *ngIf="validationStatus==='DRAFT'">📝</ng-container>
+        <ng-container *ngIf="validationStatus==='SUBMITTED'">⏳</ng-container>
+        <ng-container *ngIf="validationStatus==='VALIDATED'">✅</ng-container>
+        <ng-container *ngIf="validationStatus==='REJECTED'">❌</ng-container>
+      </span>
+      <span class="vbar-status">
+        <ng-container *ngIf="validationStatus==='DRAFT'">{{ i18n.t('pm.val.draft') }}</ng-container>
+        <ng-container *ngIf="validationStatus==='SUBMITTED'">{{ i18n.t('pm.val.submitted') }} ({{ bumName }})</ng-container>
+        <ng-container *ngIf="validationStatus==='VALIDATED'">{{ i18n.t('pm.val.validated') }} {{ validatedBy }}</ng-container>
+        <ng-container *ngIf="validationStatus==='REJECTED'">{{ i18n.t('pm.val.rejected') }} <em>{{ rejectionComment }}</em></ng-container>
+      </span>
+    </div>
+    <div class="vbar-actions">
+      <!-- PM: submit when DRAFT or REJECTED -->
+      <button *ngIf="isEditable && !isBum && !isAdmin" class="btn-submit-validation" (click)="submitForValidation()">
+        {{ i18n.t('pm.val.submit_btn') }}
+      </button>
+      <!-- BUM: validate / reject when SUBMITTED -->
+      <ng-container *ngIf="isBum && validationStatus==='SUBMITTED'">
+        <button class="btn-validate" (click)="validateProject()">✓ Validate</button>
+        <button class="btn-reject-val" (click)="openRejectModal()">✗ Reject</button>
+      </ng-container>
     </div>
   </div>
 
   <!-- Loading -->
   <div class="pm-loading" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Chargement...</span>
+    <span>{{ i18n.t('pm.loading') }}</span>
   </div>
 
   <ng-container *ngIf="!loading">
@@ -61,11 +144,37 @@
       <button class="pm-tab" [class.active]="activeTab==='otherCosts'" (click)="setTab('otherCosts')">
         <span class="tab-dot dot-blue"></span>Other Costs
       </button>
-      <button class="pm-tab" [class.active]="activeTab==='billedDays'" (click)="setTab('billedDays')">
+      <button class="pm-tab" [class.active]="activeTab==='rebillCosts'" (click)="setTab('rebillCosts')">
+        <span class="tab-dot dot-blue"></span>Rebilled
+      </button>
+      <!-- Billed Days + ADR + Revenus Moyens : visibles seulement pour Engagement Moyens (AT, T&M, TK) -->
+      <button class="pm-tab" *ngIf="!isResultatsEngagement" [class.active]="activeTab==='billedDays'" (click)="setTab('billedDays')">
         <span class="tab-dot dot-purple"></span>Billed Days
       </button>
-      <button class="pm-tab" [class.active]="activeTab==='dailyRate'" (click)="setTab('dailyRate')">
+      <button class="pm-tab" *ngIf="!isResultatsEngagement" [class.active]="activeTab==='dailyRate'" (click)="setTab('dailyRate')">
         <span class="tab-dot dot-purple"></span>Daily Rate (ADR)
+      </button>
+      <button class="pm-tab" *ngIf="!isResultatsEngagement" [class.active]="activeTab==='revenueMoyens'" (click)="setTab('revenueMoyens')">
+        <span class="tab-dot dot-emerald"></span>Revenus — Moyens
+      </button>
+      <!-- Revenus Résultats : visible seulement pour Engagement Résultats (UoW, WP) -->
+      <button class="pm-tab" *ngIf="!isMoyensEngagement" [class.active]="activeTab==='revenueResultats'" (click)="setTab('revenueResultats')">
+        <span class="tab-dot dot-emerald"></span>Revenus — Résultats
+      </button>
+      <button class="pm-tab" [class.active]="activeTab==='risks'" (click)="setTab('risks')">
+        <span class="tab-dot dot-purple"></span>Risks
+      </button>
+      <button class="pm-tab" [class.active]="activeTab==='issues'" (click)="setTab('issues')">
+        <span class="tab-dot dot-purple"></span>Issues
+      </button>
+      <button class="pm-tab" [class.active]="activeTab==='opportunities'" (click)="setTab('opportunities')">
+        <span class="tab-dot dot-emerald"></span>Opportunities
+      </button>
+      <button class="pm-tab" [class.active]="activeTab==='mip'" (click)="setTab('mip')">
+        <span class="tab-dot dot-blue-dark"></span>MIP
+      </button>
+      <button class="pm-tab" [class.active]="activeTab==='wip'" (click)="setTab('wip')">
+        <span class="tab-dot dot-orange"></span>WIP
       </button>
       <button class="pm-tab tab-synthese" [class.active]="activeTab==='synthese'" (click)="setTab('synthese')">
         <span class="tab-dot dot-gold"></span>Financial Summary
@@ -74,9 +183,9 @@
 
     <!-- Legend mois -->
     <div class="month-legend" *ngIf="activeTab !== 'synthese'">
-      <span class="legend-item past">■ Past period (read-only)</span>
-      <span class="legend-item current">■ Current period</span>
-      <span class="legend-item future">■ Future period</span>
+      <span class="legend-item past">{{ i18n.t('pm.legend.past') }}</span>
+      <span class="legend-item current">{{ i18n.t('pm.legend.current') }}</span>
+      <span class="legend-item future">{{ i18n.t('pm.legend.future') }}</span>
     </div>
 
     <!-- ═══ TAB: Daily Cost (average) ═══ -->
@@ -87,7 +196,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             Average Daily Cost ({{ currencySymbol }}/day)
           </div>
-          <button class="btn-add-resource" (click)="openAddModal()">
+          <button class="btn-add-resource" *ngIf="isEditable" (click)="openAddModal()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Consultant
           </button>
@@ -99,7 +208,7 @@
               <th class="col-type">Contract</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Avg.</th>
-              <th class="col-action"></th>
+              <th class="col-action" *ngIf="isEditable"></th>
             </tr></thead>
             <tbody>
               <tr *ngFor="let r of resources">
@@ -116,32 +225,27 @@
                     [class.cell-past]="isPastMonth(m)"
                     [class.cell-current]="isCurrentMonth(m)"
                     (click)="startEditResource(r.id, m, 'dailyCost', r.dailyCosts[m])">
-                  <ng-container *ngIf="isPastMonth(m)">
-                    <span class="locked-val" [class.has-value]="r.dailyCosts[m]>0">{{ r.dailyCosts[m]>0 ? fmt(r.dailyCosts[m]) : '—' }}</span>
+                  <ng-container *ngIf="!isEditingResource(r.id,m,'dailyCost'); else editTpl">
+                    <span [class.has-value]="r.dailyCosts[m]>0">{{ cfmt(r.dailyCosts[m]) }}</span>
                   </ng-container>
-                  <ng-container *ngIf="!isPastMonth(m)">
-                    <ng-container *ngIf="!isEditingResource(r.id,m,'dailyCost'); else editTpl">
-                      <span [class.has-value]="r.dailyCosts[m]>0">{{ fmt(r.dailyCosts[m]) }}</span>
-                    </ng-container>
-                    <ng-template #editTpl>
-                      <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
-                        (blur)="saveResourceEdit(r,m,'dailyCost')"
-                        (keydown.enter)="saveResourceEdit(r,m,'dailyCost')"
-                        (keydown.escape)="cancelEdit()" autofocus />
-                    </ng-template>
-                  </ng-container>
+                  <ng-template #editTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
+                      (blur)="saveResourceEdit(r,m,'dailyCost')"
+                      (keydown.enter)="saveResourceEdit(r,m,'dailyCost')"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
                 </td>
-                <td class="col-total total-cell">{{ fmt(resourceRowTotal(r,'dailyCosts')) }}</td>
-                <td class="col-action"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
+                <td class="col-total total-cell">{{ cfmt(resourceRowTotal(r,'dailyCosts')) }}</td>
+                <td class="col-action" *ngIf="isEditable"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
-              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">No consultant — click "Add Consultant"</td></tr>
+              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">{{ i18n.t('pm.no_consultant') }}</td></tr>
             </tbody>
             <tfoot><tr class="total-row">
               <td class="sticky-col">Avg.</td><td></td>
-              <td *ngFor="let m of months" class="total-cell">{{ fmt(resourceMonthlyAvg('dailyCosts',m)) }}</td>
-              <td class="total-cell grand">{{ fmt(grandTotal('dailyCosts')) }}</td><td></td>
+              <td *ngFor="let m of months" class="total-cell">{{ cfmt(resourceMonthlyAvg('dailyCosts',m)) }}</td>
+              <td class="total-cell grand">{{ cfmt(grandTotal('dailyCosts')) }}</td><td *ngIf="isEditable"></td>
             </tr></tfoot>
           </table>
         </div>
@@ -156,10 +260,12 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Working Days (Labor Days)
           </div>
-          <button class="btn-add-resource" (click)="openAddModal()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Consultant
-          </button>
+          <!-- SDH auto-fill (only when editable) -->
+          <label *ngIf="isEditable" class="btn-sdh-import" title="Import worked days from SDH file (CSV/Excel)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            {{ i18n.t('pm.sdh.btn') }}
+            <input type="file" accept=".csv,.xlsx,.xls" style="display:none" (change)="onSdhFileSelected($event)" />
+          </label>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
@@ -183,20 +289,15 @@
                 <td *ngFor="let m of months" class="data-cell"
                     [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
                     (click)="startEditResource(r.id,m,'workedDays',r.workedDays[m])">
-                  <ng-container *ngIf="isPastMonth(m)">
-                    <span class="locked-val" [class.has-value]="r.workedDays[m]>0">{{ r.workedDays[m]>0 ? fmt(r.workedDays[m],1) : '—' }}</span>
+                  <ng-container *ngIf="!isEditingResource(r.id,m,'workedDays'); else editTpl">
+                    <span [class.has-value]="r.workedDays[m]>0">{{ fmt(r.workedDays[m],1) }}</span>
                   </ng-container>
-                  <ng-container *ngIf="!isPastMonth(m)">
-                    <ng-container *ngIf="!isEditingResource(r.id,m,'workedDays'); else editTpl">
-                      <span [class.has-value]="r.workedDays[m]>0">{{ fmt(r.workedDays[m],1) }}</span>
-                    </ng-container>
-                    <ng-template #editTpl>
-                      <input type="number" class="cell-input" [(ngModel)]="editValue" min="0" step="0.5"
-                        (blur)="saveResourceEdit(r,m,'workedDays')"
-                        (keydown.enter)="saveResourceEdit(r,m,'workedDays')"
-                        (keydown.escape)="cancelEdit()" autofocus />
-                    </ng-template>
-                  </ng-container>
+                  <ng-template #editTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0" step="0.5"
+                      (blur)="saveResourceEdit(r,m,'workedDays')"
+                      (keydown.enter)="saveResourceEdit(r,m,'workedDays')"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ fmt(resourceRowTotal(r,'workedDays'),1) }}</td>
                 <td class="col-action"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
@@ -212,8 +313,8 @@
             </tr>
             <tr class="total-row labor-cost-row">
               <td class="sticky-col">Labor Cost ({{ currencySymbol }})</td><td></td>
-              <td *ngFor="let m of months" class="total-cell cost-val">{{ fmt(laborCostForMonth(m)) }}</td>
-              <td class="total-cell grand cost-val">{{ fmt(totalLaborCost()) }}</td><td></td>
+              <td *ngFor="let m of months" class="total-cell cost-val">{{ cfmt(laborCostForMonth(m)) }}</td>
+              <td class="total-cell grand cost-val">{{ cfmt(totalLaborCost()) }}</td><td></td>
             </tr></tfoot>
           </table>
         </div>
@@ -229,58 +330,41 @@
             Other Costs
           </div>
           <div class="panel-header-right">
-            <div class="rebill-legend">
-              <span class="rebill-badge active">R</span> = Rebilled to client
-            </div>
-            <button class="btn-add-resource" (click)="openAddCategoryModal()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add Category
+            <button class="btn-add-resource" (click)="openAddCategoryModal(false)">
+              + Add Category
             </button>
           </div>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead><tr>
-              <th class="col-name sticky-col">Category</th>
-              <th class="col-rebill" title="Rebill to client">Rebill</th>
+              <th class="col-name sticky-col">Catégorie</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Total</th>
               <th class="col-action"></th>
             </tr></thead>
             <tbody>
-              <tr *ngIf="otherCosts.length===0">
-                <td [attr.colspan]="months.length+4" class="empty-msg">
-                  No category — click "Add Category" to start
-                </td>
+              <tr *ngIf="nonRebillCosts.length===0">
+                <td [attr.colspan]="months.length+3" class="empty-msg">{{ i18n.t('pm.no_category') }}</td>
               </tr>
-              <tr *ngFor="let c of otherCosts" [class.row-rebill]="c.isRebill">
+              <tr *ngFor="let c of nonRebillCosts">
                 <td class="col-name sticky-col category-cell">{{ c.category }}</td>
-                <td class="col-rebill">
-                  <button class="rebill-toggle" [class.active]="c.isRebill" (click)="toggleRebill(c)" [title]="c.isRebill ? 'Disable rebill' : 'Mark as rebill'">
-                    R
-                  </button>
-                </td>
                 <td *ngFor="let m of months" class="data-cell"
                     [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
                     (click)="startEditCost(c.category,m,c.amounts[m])">
-                  <ng-container *ngIf="isPastMonth(m)">
-                    <span class="locked-val" [class.has-value]="c.amounts[m]>0">{{ c.amounts[m]>0 ? fmt(c.amounts[m]) : '—' }}</span>
+                  <ng-container *ngIf="!isEditingCost(c.category,m); else costTpl">
+                    <span [class.has-value]="c.amounts[m]>0">{{ cfmt(c.amounts[m]) }}</span>
                   </ng-container>
-                  <ng-container *ngIf="!isPastMonth(m)">
-                    <ng-container *ngIf="!isEditingCost(c.category,m); else costTpl">
-                      <span [class.has-value]="c.amounts[m]>0">{{ fmt(c.amounts[m]) }}</span>
-                    </ng-container>
-                    <ng-template #costTpl>
-                      <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
-                        (blur)="saveCostEdit(c,m)"
-                        (keydown.enter)="saveCostEdit(c,m)"
-                        (keydown.escape)="cancelEdit()" autofocus />
-                    </ng-template>
-                  </ng-container>
+                  <ng-template #costTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
+                      (blur)="saveCostEdit(c,m)"
+                      (keydown.enter)="saveCostEdit(c,m)"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
                 </td>
-                <td class="col-total total-cell" [class.rebill-total]="c.isRebill">{{ fmt(otherCostRowTotal(c)) }}</td>
+                <td class="col-total total-cell">{{ cfmt(otherCostRowTotal(c)) }}</td>
                 <td class="col-action">
-                  <button class="btn-delete-row" (click)="deleteCategory(c.category)" title="Delete this category">
+                  <button class="btn-delete-row" (click)="deleteCategory(c.category)" title="Supprimer">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                   </button>
                 </td>
@@ -288,17 +372,72 @@
             </tbody>
             <tfoot>
               <tr class="total-row">
-                <td class="sticky-col">Total Costs</td>
-                <td></td>
-                <td *ngFor="let m of months" class="total-cell">{{ fmt(otherCostForMonth(m)) }}</td>
-                <td class="total-cell grand">{{ fmt(otherCostGrandTotal()) }}</td>
+                <td class="sticky-col">Total Coûts</td>
+                <td *ngFor="let m of months" class="total-cell">{{ cfmt(nonRebillCostForMonth(m)) }}</td>
+                <td class="total-cell grand">{{ cfmt(nonRebillGrandTotal()) }}</td>
                 <td></td>
               </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: Rebill ═══ -->
+    <ng-container *ngIf="activeTab==='rebillCosts'">
+      <div class="pm-panel panel-blue">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Rebill — Coûts refacturés au client
+          </div>
+          <div class="panel-header-right">
+            <span class="rebill-legend"><span class="rebill-badge active">R</span> {{ i18n.t('pm.rebill_legend') }}</span>
+            <button class="btn-add-resource" (click)="openAddCategoryModal(true)">
+              + Add Rebill Category
+            </button>
+          </div>
+        </div>
+        <div class="matrix-scroll">
+          <table class="matrix-table">
+            <thead><tr>
+              <th class="col-name sticky-col">Catégorie</th>
+              <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
+              <th class="col-total">Total</th>
+              <th class="col-action"></th>
+            </tr></thead>
+            <tbody>
+              <tr *ngIf="rebillCostRows.length===0">
+                <td [attr.colspan]="months.length+3" class="empty-msg">Aucune catégorie rebill — cliquez sur "+ Add Rebill Category"</td>
+              </tr>
+              <tr *ngFor="let c of rebillCostRows" class="row-rebill">
+                <td class="col-name sticky-col category-cell">{{ c.category }}</td>
+                <td *ngFor="let m of months" class="data-cell"
+                    [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
+                    (click)="startEditCost(c.category,m,c.amounts[m])">
+                  <ng-container *ngIf="!isEditingCost(c.category,m); else rebillCostTpl">
+                    <span [class.has-value]="c.amounts[m]>0">{{ cfmt(c.amounts[m]) }}</span>
+                  </ng-container>
+                  <ng-template #rebillCostTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
+                      (blur)="saveCostEdit(c,m)"
+                      (keydown.enter)="saveCostEdit(c,m)"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
+                </td>
+                <td class="col-total total-cell rebill-total">{{ cfmt(otherCostRowTotal(c)) }}</td>
+                <td class="col-action">
+                  <button class="btn-delete-row" (click)="deleteCategory(c.category)" title="Supprimer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
               <tr class="total-row rebill-footer">
-                <td class="sticky-col">of which Rebill</td>
-                <td></td>
-                <td *ngFor="let m of months" class="total-cell">{{ rebillForMonth(m)>0 ? fmt(rebillForMonth(m)) : '—' }}</td>
-                <td class="total-cell grand">{{ fmt(totalRebill()) }}</td>
+                <td class="sticky-col">Total Rebill</td>
+                <td *ngFor="let m of months" class="total-cell">{{ rebillForMonth(m)>0 ? cfmt(rebillForMonth(m)) : '—' }}</td>
+                <td class="total-cell grand">{{ cfmt(rebillCostGrandTotal()) }}</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -315,9 +454,14 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Billed Days
           </div>
-          <button class="btn-add-resource" (click)="openAddModal()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Consultant
+          <button class="btn-generate-bl" (click)="openBlModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            Générer BL
           </button>
         </div>
         <div class="matrix-scroll">
@@ -341,27 +485,22 @@
                 <td *ngFor="let m of months" class="data-cell"
                     [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
                     (click)="startEditResource(r.id,m,'billedDays',r.billedDays[m])">
-                  <ng-container *ngIf="isPastMonth(m)">
-                    <span class="locked-val" [class.has-value]="r.billedDays[m]>0">{{ r.billedDays[m]>0 ? fmt(r.billedDays[m],1) : '—' }}</span>
+                  <ng-container *ngIf="!isEditingResource(r.id,m,'billedDays'); else bdEditTpl">
+                    <span [class.has-value]="r.billedDays[m]>0">{{ fmt(r.billedDays[m],1) }}</span>
                   </ng-container>
-                  <ng-container *ngIf="!isPastMonth(m)">
-                    <ng-container *ngIf="!isEditingResource(r.id,m,'billedDays'); else bdEditTpl">
-                      <span [class.has-value]="r.billedDays[m]>0">{{ fmt(r.billedDays[m],1) }}</span>
-                    </ng-container>
-                    <ng-template #bdEditTpl>
-                      <input type="number" class="cell-input" [(ngModel)]="editValue" min="0" step="0.5"
-                        (blur)="saveResourceEdit(r,m,'billedDays')"
-                        (keydown.enter)="saveResourceEdit(r,m,'billedDays')"
-                        (keydown.escape)="cancelEdit()" autofocus />
-                    </ng-template>
-                  </ng-container>
+                  <ng-template #bdEditTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0" step="0.5"
+                      (blur)="saveResourceEdit(r,m,'billedDays')"
+                      (keydown.enter)="saveResourceEdit(r,m,'billedDays')"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ fmt(resourceRowTotal(r,'billedDays'),1) }}</td>
                 <td class="col-action"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
-              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">No consultant.</td></tr>
+              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">{{ i18n.t('pm.no_consultant_short') }}</td></tr>
             </tbody>
             <tfoot><tr class="total-row">
               <td class="sticky-col">Total Days</td><td></td>
@@ -381,10 +520,6 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             Average Daily Rate — ADR ({{ currencySymbol }}/day)
           </div>
-          <button class="btn-add-resource" (click)="openAddModal()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Consultant
-          </button>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
@@ -407,22 +542,17 @@
                 <td *ngFor="let m of months" class="data-cell"
                     [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
                     (click)="startEditResource(r.id,m,'dailyRate',r.dailyRates[m])">
-                  <ng-container *ngIf="isPastMonth(m)">
-                    <span class="locked-val" [class.has-value]="r.dailyRates[m]>0">{{ r.dailyRates[m]>0 ? fmt(r.dailyRates[m]) : '—' }}</span>
+                  <ng-container *ngIf="!isEditingResource(r.id,m,'dailyRate'); else drEditTpl">
+                    <span [class.has-value]="r.dailyRates[m]>0">{{ cfmt(r.dailyRates[m]) }}</span>
                   </ng-container>
-                  <ng-container *ngIf="!isPastMonth(m)">
-                    <ng-container *ngIf="!isEditingResource(r.id,m,'dailyRate'); else drEditTpl">
-                      <span [class.has-value]="r.dailyRates[m]>0">{{ fmt(r.dailyRates[m]) }}</span>
-                    </ng-container>
-                    <ng-template #drEditTpl>
-                      <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
-                        (blur)="saveResourceEdit(r,m,'dailyRate')"
-                        (keydown.enter)="saveResourceEdit(r,m,'dailyRate')"
-                        (keydown.escape)="cancelEdit()" autofocus />
-                    </ng-template>
-                  </ng-container>
+                  <ng-template #drEditTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
+                      (blur)="saveResourceEdit(r,m,'dailyRate')"
+                      (keydown.enter)="saveResourceEdit(r,m,'dailyRate')"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
                 </td>
-                <td class="col-total total-cell">{{ fmt(resourceRowTotal(r,'dailyRates')) }}</td>
+                <td class="col-total total-cell">{{ cfmt(resourceRowTotal(r,'dailyRates')) }}</td>
                 <td class="col-action"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
@@ -430,12 +560,712 @@
               <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">No consultant.</td></tr>
             </tbody>
             <tfoot><tr class="total-row revenue-row">
-              <td class="sticky-col">Billing Revenue ({{ currencySymbol }})</td><td></td>
-              <td *ngFor="let m of months" class="total-cell rev-val">{{ fmt(revenueForMonth(m)) }}</td>
-              <td class="total-cell grand rev-val">{{ fmt(totalRevenue()) }}</td><td></td>
+              <td class="sticky-col">Facturation ({{ currencySymbol }})</td><td></td>
+              <td *ngFor="let m of months" class="total-cell rev-val">{{ cfmt(revenueForMonth(m)) }}</td>
+              <td class="total-cell grand rev-val">{{ cfmt(totalRevenue()) }}</td><td></td>
             </tr></tfoot>
           </table>
         </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: Revenue — Moyens ═══ -->
+    <ng-container *ngIf="activeTab==='revenueMoyens'">
+      <div class="pm-panel panel-emerald">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Revenus Moyens — ADR × Jours Facturés + Refacturés ({{ currencySymbol }})
+          </div>
+          <div class="panel-legend">
+            <span class="legend-chip chip-billing">ADR × Billed Days</span>
+            <span class="legend-chip chip-rebill">Rebilled</span>
+            <span class="legend-chip chip-total-rev">Revenu Total</span>
+          </div>
+        </div>
+
+        <div class="matrix-scroll">
+          <table class="matrix-table">
+            <thead><tr>
+              <th class="col-name sticky-col">Consultant</th>
+              <th class="col-type">Contract</th>
+              <th *ngFor="let m of months" class="col-month"
+                  [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">
+                {{ formatMonth(m) }}
+              </th>
+              <th class="col-total">Total</th>
+              <th class="col-action"></th>
+            </tr></thead>
+
+            <tbody>
+              <!-- Ligne par consultant : ADR × Billed Days -->
+              <tr *ngFor="let r of resources" class="rm-resource-row">
+                <td class="col-name sticky-col">
+                  <div class="person-cell">
+                    <div class="person-avatar">{{ r.personName.charAt(0) }}</div>
+                    <div>
+                      <div class="person-name">{{ r.personName }}</div>
+                      <div class="person-matric">{{ r.matricule }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="col-type">
+                  <span class="contract-badge">{{ r.contractType }}</span>
+                </td>
+                <td *ngFor="let m of months" class="data-cell rm-billing-cell"
+                    [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)">
+                  <span [class.has-value]="resourceMoyensForMonth(r,m)>0">
+                    {{ resourceMoyensForMonth(r,m) > 0 ? cfmt(resourceMoyensForMonth(r,m)) : '—' }}
+                  </span>
+                  <div class="rm-detail" *ngIf="resourceMoyensForMonth(r,m)>0">
+                    {{ fmt(r.dailyRates[m]||0,0) }}{{ currencySymbol }} × {{ fmt(r.billedDays[m]||0,1) }}j
+                  </div>
+                </td>
+                <td class="col-total total-cell">{{ cfmt(resourceMoyensRowTotal(r)) }}</td>
+                <td class="col-action"></td>
+              </tr>
+
+              <tr *ngIf="!resources.length">
+                <td [attr.colspan]="months.length+4" class="empty-msg">{{ i18n.t('pm.no_consultant_short') }}</td>
+              </tr>
+
+              <!-- Ligne Rebilled -->
+              <tr class="rm-rebill-row" *ngIf="hasRebillCosts">
+                <td class="col-name sticky-col rm-rebill-label">
+                  <div class="person-cell">
+                    <div class="person-avatar rm-avatar-rebill">↩</div>
+                    <div>
+                      <div class="person-name">Rebilled Costs</div>
+                      <div class="person-matric">{{ i18n.lang()==='fr' ? 'Coûts refacturés au client' : 'Costs recharged to client' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="col-type"></td>
+                <td *ngFor="let m of months" class="data-cell rm-rebill-cell"
+                    [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)">
+                  <span [class.has-value]="rebillForMonth(m)>0">
+                    {{ rebillForMonth(m) > 0 ? cfmt(rebillForMonth(m)) : '—' }}
+                  </span>
+                </td>
+                <td class="col-total total-cell">{{ cfmt(rebillRowTotal()) }}</td>
+                <td class="col-action"></td>
+              </tr>
+            </tbody>
+
+            <tfoot>
+              <!-- Total billing par mois -->
+              <tr class="rm-total-billing-row">
+                <td class="sticky-col">ADR × Billed Days</td><td></td>
+                <td *ngFor="let m of months" class="total-cell">
+                  {{ moyensBillingMonthTotal(m) > 0 ? cfmt(moyensBillingMonthTotal(m)) : '—' }}
+                </td>
+                <td class="total-cell grand">{{ cfmt(billingGrandTotal()) }}</td>
+                <td></td>
+              </tr>
+              <!-- Total Revenue Moyens -->
+              <tr class="rm-grand-total-row">
+                <td class="sticky-col rm-grand-label">Total Revenus Moyens</td><td></td>
+                <td *ngFor="let m of months" class="total-cell rm-grand-cell">
+                  {{ cfmt(revenueForMonth(m)) }}
+                </td>
+                <td class="total-cell grand rm-grand-cell">{{ cfmt(moyensGrandTotal()) }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="rm-summary-cards">
+          <div class="rm-card rm-card-billing">
+            <div class="rm-card-label">{{ i18n.lang()==='fr' ? 'Facturation consultants' : 'Consultant billing' }}</div>
+            <div class="rm-card-value">{{ cfmt(billingGrandTotal()) }}</div>
+            <div class="rm-card-sub">ADR × Billed Days</div>
+          </div>
+          <div class="rm-card rm-card-rebill">
+            <div class="rm-card-label">Rebilled</div>
+            <div class="rm-card-value">{{ cfmt(rebillRowTotal()) }}</div>
+            <div class="rm-card-sub">{{ i18n.lang()==='fr' ? 'Coûts refacturés' : 'Recharged costs' }}</div>
+          </div>
+          <div class="rm-card rm-card-total">
+            <div class="rm-card-label">Total Revenus Moyens</div>
+            <div class="rm-card-value">{{ cfmt(moyensGrandTotal()) }}</div>
+            <div class="rm-card-sub">= Billing + Rebilled</div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: Revenus — Résultats ═══ -->
+    <ng-container *ngIf="activeTab==='revenueResultats'">
+      <div class="pm-panel panel-blue">
+
+        <!-- ── ÉCRAN DE CONFIGURATION DES MODULES ── -->
+        <!-- Écran de config uniquement pour les projets sans engagement résultats auto-détecté -->
+        <ng-container *ngIf="(!hasAnyModule || showModuleConfig) && !isResultatsEngagement">
+          <div class="engagement-choice-wrapper">
+            <div class="engagement-choice-header">
+              <div class="ec-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div>
+                <h2 class="ec-title">Configurer les modules d'engagement</h2>
+                <p class="ec-subtitle">Activez un ou plusieurs modules selon le type de facturation de votre projet. Les deux peuvent être actifs simultanément.</p>
+              </div>
+            </div>
+
+            <div class="engagement-cards">
+
+              <!-- UNIT OF WORK toggle -->
+              <div class="engagement-card" [class.active]="engagementModules.unitOfWork" (click)="toggleModule('unitOfWork')">
+                <div class="ec-toggle-check" [class.checked]="engagementModules.unitOfWork">
+                  <svg *ngIf="engagementModules.unitOfWork" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="ec-card-icon uow">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </div>
+                <h3 class="ec-card-title">Unit of Work</h3>
+                <p class="ec-card-desc">Suivi par livrables unitaires — facturation par quantité produite.</p>
+                <div class="ec-card-badge uow-badge">Facturation à l'unité</div>
+              </div>
+
+              <!-- WORK PACKAGE toggle -->
+              <div class="engagement-card" [class.active]="engagementModules.workPackage" (click)="toggleModule('workPackage')">
+                <div class="ec-toggle-check" [class.checked]="engagementModules.workPackage">
+                  <svg *ngIf="engagementModules.workPackage" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="ec-card-icon wp">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                </div>
+                <h3 class="ec-card-title">Work Package</h3>
+                <p class="ec-card-desc">Suivi par lots de travaux — facturation au forfait ou périmètre défini.</p>
+                <div class="ec-card-badge wp-badge">Facturation au forfait</div>
+              </div>
+
+            </div>
+
+            <div class="ec-confirm-bar">
+              <span class="ec-hint" *ngIf="!hasAnyModule">Sélectionnez au moins un module</span>
+              <span class="ec-hint active" *ngIf="hasAnyModule">
+                {{ engagementModules.unitOfWork && engagementModules.workPackage ? 'Unit of Work + Work Package activés' : engagementModules.unitOfWork ? 'Unit of Work activé' : 'Work Package activé' }}
+              </span>
+              <button class="ec-confirm-btn" (click)="confirmModules()" [disabled]="!hasAnyModule">
+                Confirmer →
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ── MODULES ACTIFS — header + sous-onglets ── -->
+        <ng-container *ngIf="hasAnyModule && !showModuleConfig">
+          <div class="engagement-selected-header">
+            <div class="esh-left">
+              <div class="esh-badge uow-badge" *ngIf="engagementModules.unitOfWork">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
+                Unit of Work
+              </div>
+              <div class="esh-badge wp-badge" *ngIf="engagementModules.workPackage">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Work Package
+              </div>
+              <span class="esh-label">Revenus — Résultats</span>
+            </div>
+            <button class="esh-change-btn" (click)="openModuleConfig()" *ngIf="!isResultatsEngagement">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Configurer
+            </button>
+          </div>
+
+          <!-- Sous-onglets si les deux modules sont actifs -->
+          <div class="result-subtabs" *ngIf="bothModulesActive">
+            <button class="result-subtab" [class.active]="activeResultTab==='wp'" (click)="activeResultTab='wp'">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              Work Package
+            </button>
+            <button class="result-subtab" [class.active]="activeResultTab==='uow'" (click)="activeResultTab='uow'">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
+              Unit of Work
+            </button>
+          </div>
+
+          <!-- ══ WORK PACKAGE interface ══ -->
+          <ng-container *ngIf="engagementModules.workPackage && (!bothModulesActive || activeResultTab==='wp')">
+
+            <!-- KPI bar -->
+            <div class="wp-kpi-bar">
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Revenu Prévu</span>
+                <span class="wp-kpi-value">{{ cfmt(wpTotalPlanned()) }} {{ currencySymbol }}</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Revenu Réel (R/F)</span>
+                <span class="wp-kpi-value" [class.neg]="wpTotalGap()<0">{{ cfmt(wpTotalRf()) }} {{ currencySymbol }}</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Gap</span>
+                <span class="wp-kpi-value" [class.neg]="wpTotalGap()<0" [class.pos]="wpTotalGap()>0">
+                  {{ wpTotalGap() >= 0 ? '+' : '' }}{{ cfmt(wpTotalGap()) }} {{ currencySymbol }}
+                </span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Taux FTR</span>
+                <span class="wp-kpi-value ftr">{{ wpFtrRate() | number:'1.0-0' }}%</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Taux OTD</span>
+                <span class="wp-kpi-value otd">{{ wpOtdRate() | number:'1.0-0' }}%</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Livrables</span>
+                <span class="wp-kpi-value">{{ deliverables.length }}</span>
+              </div>
+              <button class="btn-add-resource wp-add-btn" (click)="openAddLotModal()">
+                + Lot
+              </button>
+            </div>
+
+            <!-- Sélecteur de lots — tabs -->
+            <div class="wp-lot-tabs">
+              <span class="wp-lot-tabs-label">Lots</span>
+              <div class="wp-lot-tabs-sep"></div>
+              <ng-container *ngIf="lots.length === 0">
+                <span class="wp-no-lots-hint">Aucun lot — créez votre premier lot avec "+ Lot"</span>
+              </ng-container>
+              <ng-container *ngFor="let lot of lots; let last = last">
+                <button class="wp-lot-tab" [class.active]="selectedLot === lot" (click)="selectedLot = lot">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  {{ lot }}
+                  <span class="wp-tab-close" (click)="$event.stopPropagation(); openDeleteLotModal(lot)" title="Supprimer">×</span>
+                </button>
+                <div class="wp-lot-tab-sep" *ngIf="!last"></div>
+              </ng-container>
+            </div>
+
+            <!-- État : aucun lot sélectionné -->
+            <div *ngIf="lots.length > 0 && !selectedLot" class="wp-select-lot-hint">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <p>Sélectionnez un lot pour voir et gérer ses livrables</p>
+            </div>
+
+            <!-- Tableau du lot sélectionné -->
+            <ng-container *ngIf="selectedLot">
+              <!-- Header du lot actif -->
+              <div class="wp-active-lot-header">
+                <div class="wp-active-lot-left">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <span class="wp-active-lot-name">{{ selectedLot }}</span>
+                </div>
+                <button class="wp-lot-add-livrable" (click)="openAddDeliverableModal(selectedLot)">
+                  + Livrable
+                </button>
+              </div>
+
+              <!-- Table des livrables du lot -->
+              <div class="matrix-scroll wp-scroll">
+                <table class="matrix-table wp-table">
+                  <thead>
+                    <tr>
+                      <th class="wp-col-id sticky-col">ID</th>
+                      <th class="wp-col-name">Deliverable Name</th>
+                      <th class="wp-col-disc">Discipline</th>
+                      <th class="wp-col-owner">Owner</th>
+                      <th class="wp-col-date">Planned Date</th>
+                      <th class="wp-col-date">Delivery Date</th>
+                      <th class="wp-col-status">Status</th>
+                      <th class="wp-col-rev">Planned Rev.</th>
+                      <th class="wp-col-rev">R/F Rev.</th>
+                      <th class="wp-col-gap">Gap</th>
+                      <th class="wp-col-ftr">First Pass</th>
+                      <th class="wp-col-otd">On Time</th>
+                      <th class="wp-col-prio">Priority</th>
+                      <th class="wp-col-comment">Comments</th>
+                      <th class="col-action"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="deliverablesForLot(selectedLot).length === 0">
+                      <td colspan="15" class="empty-msg">
+                        Aucun livrable dans ce lot — cliquez sur <strong>+ Livrable</strong> pour commencer.
+                      </td>
+                    </tr>
+                    <tr *ngFor="let d of deliverablesForLot(selectedLot)" class="wp-row">
+                      <td class="wp-col-id sticky-col wp-id-cell">{{ d.deliverableId }}</td>
+                      <td class="wp-col-name">
+                        <input class="wp-input" [(ngModel)]="d.deliverableName"
+                          (blur)="updateDeliverableField(d,'deliverableName',d.deliverableName)" />
+                      </td>
+                      <td class="wp-col-disc">
+                        <input class="wp-input" [(ngModel)]="d.discipline"
+                          (blur)="updateDeliverableField(d,'discipline',d.discipline)" />
+                      </td>
+                      <td class="wp-col-owner">
+                        <select class="wp-select" [(ngModel)]="d.owner"
+                          (change)="updateDeliverableField(d,'owner',d.owner)">
+                          <option value="">—</option>
+                          <option *ngFor="let r of resources" [value]="r.personName">{{ r.personName }}</option>
+                        </select>
+                      </td>
+                      <td class="wp-col-date">
+                        <input type="date" class="wp-input wp-date" [(ngModel)]="d.plannedDate"
+                          (blur)="updateDeliverableField(d,'plannedDate',d.plannedDate)" />
+                      </td>
+                      <td class="wp-col-date">
+                        <input type="date" class="wp-input wp-date" [(ngModel)]="d.deliveryDate"
+                          (blur)="updateDeliverableField(d,'deliveryDate',d.deliveryDate)" />
+                      </td>
+                      <td class="wp-col-status">
+                        <select class="wp-status-select" [(ngModel)]="d.status"
+                          (change)="updateDeliverableField(d,'status',d.status)"
+                          [class.status-todo]="d.status==='TO_DO'"
+                          [class.status-inprogress]="d.status==='IN_PROGRESS'"
+                          [class.status-submitted]="d.status==='SUBMITTED'"
+                          [class.status-approved]="d.status==='APPROVED'"
+                          [class.status-blocked]="d.status==='BLOCKED'">
+                          <option value="TO_DO">To Do</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="SUBMITTED">Submitted</option>
+                          <option value="APPROVED">Approved</option>
+                          <option value="BLOCKED">Blocked</option>
+                        </select>
+                      </td>
+                      <td class="wp-col-rev">
+                        <input type="number" class="wp-input wp-num" [(ngModel)]="d.plannedRevenue"
+                          (blur)="updateDeliverableField(d,'plannedRevenue',d.plannedRevenue)" min="0" />
+                      </td>
+                      <td class="wp-col-rev">
+                        <input type="number" class="wp-input wp-num" [(ngModel)]="d.rfRevenue"
+                          (blur)="updateDeliverableField(d,'rfRevenue',d.rfRevenue)" min="0" />
+                      </td>
+                      <td class="wp-col-gap" [class.neg]="(d.rfRevenue||0)<(d.plannedRevenue||0)" [class.pos]="(d.rfRevenue||0)>(d.plannedRevenue||0)">
+                        <span *ngIf="d.rfRevenue!=null && d.plannedRevenue!=null">
+                          {{ (d.rfRevenue||0)-(d.plannedRevenue||0) >= 0 ? '+' : '' }}{{ cfmt((d.rfRevenue||0)-(d.plannedRevenue||0)) }}
+                        </span>
+                        <span *ngIf="d.rfRevenue==null || d.plannedRevenue==null" class="wp-dash">—</span>
+                      </td>
+                      <td class="wp-col-ftr">
+                        <select class="wp-ftr-select" [(ngModel)]="d.firstPass"
+                          (change)="updateDeliverableField(d,'firstPass',d.firstPass)"
+                          [class.ftr-yes]="d.firstPass===true"
+                          [class.ftr-no]="d.firstPass===false">
+                          <option [ngValue]="null">—</option>
+                          <option [ngValue]="true">Yes</option>
+                          <option [ngValue]="false">No</option>
+                        </select>
+                      </td>
+                      <td class="wp-col-otd">
+                        <span class="wp-otd-badge" [class.otd]="d.onTime==='OTD'" [class.overdue]="d.onTime==='OVERDUE'" [class.pending]="d.onTime==='PENDING'">
+                          {{ d.onTime === 'OTD' ? 'OTD' : d.onTime === 'OVERDUE' ? 'Overdue' : '—' }}
+                        </span>
+                      </td>
+                      <td class="wp-col-prio">
+                        <select class="wp-prio-select" [(ngModel)]="d.priority"
+                          (change)="updateDeliverableField(d,'priority',d.priority)"
+                          [class.prio-high]="d.priority==='HIGH'"
+                          [class.prio-medium]="d.priority==='MEDIUM'"
+                          [class.prio-low]="d.priority==='LOW'">
+                          <option value="HIGH">High</option>
+                          <option value="MEDIUM">Medium</option>
+                          <option value="LOW">Low</option>
+                        </select>
+                      </td>
+                      <td class="wp-col-comment">
+                        <input class="wp-input" [(ngModel)]="d.comments"
+                          (blur)="updateDeliverableField(d,'comments',d.comments)" placeholder="..." />
+                      </td>
+                      <td class="col-action">
+                        <button class="btn-delete-row" (click)="deleteDeliverable(d)">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot *ngIf="months.length">
+                    <tr class="wp-period-rev-row">
+                      <td class="sticky-col wp-tfoot-label" colspan="2">Revenu R/F par période</td>
+                      <td colspan="5"></td>
+                      <td *ngFor="let m of months" class="total-cell wp-period-rev">
+                        {{ wpRevenueForPeriod(m) > 0 ? cfmt(wpRevenueForPeriod(m)) : '—' }}
+                      </td>
+                      <td colspan="4"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </ng-container>
+
+          </ng-container>
+
+          <!-- ══ UNIT OF WORK — Accordion ══ -->
+          <ng-container *ngIf="engagementModules.unitOfWork && (!bothModulesActive || activeResultTab==='uow')">
+
+            <!-- KPI bar -->
+            <div class="wp-kpi-bar">
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Revenu Prévu</span>
+                <span class="wp-kpi-value">{{ cfmt(uowTotalPlanned()) }} {{ currencySymbol }}</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Revenu Réalisé</span>
+                <span class="wp-kpi-value actual">{{ cfmt(uowTotalActual()) }} {{ currencySymbol }}</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Taux FTR</span>
+                <span class="wp-kpi-value ftr">{{ uowFtrRate() | number:'1.0-0' }}%</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Taux OTD</span>
+                <span class="wp-kpi-value otd">{{ uowOtdRate() | number:'1.0-0' }}%</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Types</span>
+                <span class="wp-kpi-value">{{ workTypes.length }}</span>
+              </div>
+              <div class="wp-kpi">
+                <span class="wp-kpi-label">Tickets</span>
+                <span class="wp-kpi-value">{{ workTickets.length }}</span>
+              </div>
+            </div>
+
+            <!-- Navigation interne : Catalogue | Tickets -->
+            <div class="uow-internal-nav">
+              <button class="uow-nav-btn" [class.active]="uowActiveView==='catalogue'" (click)="uowActiveView='catalogue'">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Catalogue
+              </button>
+              <button class="uow-nav-btn" [class.active]="uowActiveView==='tickets'" (click)="uowActiveView='tickets'">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                Tickets
+              </button>
+              <!-- bouton visible seulement sur la vue Catalogue -->
+              <div class="uow-nav-action">
+                <button class="btn-add-resource" *ngIf="uowActiveView==='catalogue'" (click)="openAddWorkTypeModal()">
+                  + Type de livrable
+                </button>
+              </div>
+            </div>
+
+            <!-- ── VUE CATALOGUE ── -->
+            <ng-container *ngIf="uowActiveView==='catalogue'">
+              <div *ngIf="!workTypes.length" class="engagement-coming-soon">
+                <div class="ecs-icon">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </div>
+                <p class="ecs-title">Aucun type de livrable — cliquez sur <strong>+ Type de livrable</strong> pour commencer</p>
+              </div>
+              <div class="matrix-scroll" *ngIf="workTypes.length">
+                <table class="matrix-table uow-catalog-table">
+                  <thead><tr>
+                    <th class="uow-col-name">Nom du livrable</th>
+                    <th class="uow-col-unit">Unité</th>
+                    <th class="uow-col-price">Prix unitaire</th>
+                    <th class="uow-col-qty">Qté prévue</th>
+                    <th class="uow-col-dur">Durée/unité</th>
+                    <th class="uow-col-qty">Qté réalisée</th>
+                    <th class="uow-col-rev">Rev. Prévu</th>
+                    <th class="uow-col-rev">Rev. Réalisé</th>
+                    <th class="uow-col-pct">Avancement</th>
+                    <th class="col-action"></th>
+                  </tr></thead>
+                  <tbody>
+                    <tr *ngFor="let wt of workTypes" class="uow-type-row">
+                      <td class="uow-col-name"><strong>{{ wt.name }}</strong></td>
+                      <td class="uow-col-unit">{{ wt.unitLabel }}</td>
+                      <td class="uow-col-price">{{ cfmt(wt.unitPrice ?? 0) }} {{ currencySymbol }}</td>
+                      <td class="uow-col-qty">{{ wt.plannedQty }}</td>
+                      <td class="uow-col-dur">{{ wt.durationDays ? wt.durationDays + ' j' : '—' }}</td>
+                      <td class="uow-col-qty delivered">{{ wt.deliveredQty }}</td>
+                      <td class="uow-col-rev">{{ cfmt(wt.plannedRevenue) }}</td>
+                      <td class="uow-col-rev actual">{{ wt.actualRevenue > 0 ? cfmt(wt.actualRevenue) : '—' }}</td>
+                      <td class="uow-col-pct">
+                        <div class="uow-progress-wrap">
+                          <div class="uow-progress-bar" [style.width.%]="wt.completionRate > 100 ? 100 : wt.completionRate"></div>
+                          <span class="uow-progress-label">{{ wt.completionRate | number:'1.0-0' }}%</span>
+                        </div>
+                      </td>
+                      <td class="col-action">
+                        <button class="btn-delete-row" (click)="deleteWorkType(wt)">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
+
+            <!-- ── VUE TICKETS (Accordion) ── -->
+            <ng-container *ngIf="uowActiveView==='tickets'">
+              <div *ngIf="!workTypes.length" class="engagement-coming-soon">
+                <p class="ecs-title">Aucun type de livrable — allez dans <strong>Catalogue</strong> pour en créer un d'abord</p>
+              </div>
+
+            <!-- ACCORDION : un bloc par type de livrable -->
+            <div class="uow-accordion" *ngFor="let wt of workTypes">
+
+              <!-- En-tête accordéon — version allégée (juste le nom du type) -->
+              <div class="uow-ticket-group-header" (click)="toggleType(wt.id)">
+                <div class="uow-tgh-left">
+                  <svg class="uow-acc-chevron" [class.open]="isExpanded(wt.id)"
+                    width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                  <span class="uow-tgh-name">{{ wt.name }}</span>
+                  <span class="uow-tgh-badge">{{ ticketsForType(wt.id).length }} ticket(s)</span>
+                </div>
+                <div class="uow-tgh-right" (click)="$event.stopPropagation()">
+                  <button class="uow-add-ticket-btn" (click)="openAddWorkTicketModal(wt.id)">
+                    + Ticket
+                  </button>
+                </div>
+              </div>
+
+              <!-- Corps accordéon : tickets du type -->
+              <div class="uow-acc-body" *ngIf="isExpanded(wt.id)">
+                <div *ngIf="!ticketsForType(wt.id).length" class="uow-no-ticket">
+                  Aucun ticket pour ce type — cliquez sur <strong>+ Ticket</strong> pour en ajouter un.
+                </div>
+
+                <div class="matrix-scroll" *ngIf="ticketsForType(wt.id).length">
+                  <table class="matrix-table uow-ticket-table">
+                    <thead><tr>
+                      <th class="uow-col-id">ID</th>
+                      <th class="uow-col-qty">Qté</th>
+                      <th class="uow-col-owner">Consultant</th>
+                      <th class="uow-col-date">Assigné le</th>
+                      <th class="uow-col-date">Début</th>
+                      <th class="uow-col-date">Fin prévue</th>
+                      <th class="uow-col-date">Livraison</th>
+                      <th class="uow-col-status">Status</th>
+                      <th class="uow-col-ftr">FTR</th>
+                      <th class="uow-col-otd">On Time</th>
+                      <th class="uow-col-rev">Revenu</th>
+                      <th class="uow-col-comment">Comments</th>
+                      <th class="col-action"></th>
+                    </tr></thead>
+                    <tbody>
+                      <tr *ngFor="let t of ticketsForType(wt.id)" class="uow-ticket-row">
+                        <td class="uow-col-id uow-id-cell">{{ t.ticketId }}</td>
+                        <td class="uow-col-qty">
+                          <input type="number" class="wp-input wp-num" [(ngModel)]="t.quantity" min="1"
+                            (blur)="updateWorkTicketField(t,'quantity',t.quantity)" style="width:55px" />
+                        </td>
+                        <td class="uow-col-owner">
+                          <select class="wp-select" [(ngModel)]="t.consultant"
+                            (change)="updateWorkTicketField(t,'consultant',t.consultant)">
+                            <option value="">—</option>
+                            <option *ngFor="let r of resources" [value]="r.personName">{{ r.personName }}</option>
+                          </select>
+                        </td>
+                        <td class="uow-col-date">
+                          <input type="date" class="wp-input wp-date" [(ngModel)]="t.assignedDate"
+                            (blur)="updateWorkTicketField(t,'assignedDate',t.assignedDate)" />
+                        </td>
+                        <td class="uow-col-date">
+                          <input type="date" class="wp-input wp-date" [(ngModel)]="t.startDate"
+                            (blur)="updateWorkTicketField(t,'startDate',t.startDate)" />
+                        </td>
+                        <td class="uow-col-date">
+                          <input type="date" class="wp-input wp-date" [(ngModel)]="t.endDate"
+                            (blur)="updateWorkTicketField(t,'endDate',t.endDate)" />
+                        </td>
+                        <td class="uow-col-date">
+                          <input type="date" class="wp-input wp-date" [(ngModel)]="t.deliveryDate"
+                            (blur)="updateWorkTicketField(t,'deliveryDate',t.deliveryDate)" />
+                        </td>
+                        <td class="uow-col-status">
+                          <select class="wp-status-select" [(ngModel)]="t.status"
+                            (change)="updateWorkTicketField(t,'status',t.status)"
+                            [class.status-todo]="t.status==='TO_DO'"
+                            [class.status-inprogress]="t.status==='IN_PROGRESS'"
+                            [class.status-approved]="t.status==='DELIVERED'"
+                            [class.status-blocked]="t.status==='REJECTED'">
+                            <option value="TO_DO">To Do</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="DELIVERED">Delivered</option>
+                            <option value="REJECTED">Rejected</option>
+                          </select>
+                        </td>
+                        <td class="uow-col-ftr">
+                          <select class="wp-ftr-select" [(ngModel)]="t.firstPass"
+                            (change)="updateWorkTicketField(t,'firstPass',t.firstPass)"
+                            [class.ftr-yes]="t.firstPass===true"
+                            [class.ftr-no]="t.firstPass===false">
+                            <option [ngValue]="null">—</option>
+                            <option [ngValue]="true">Yes</option>
+                            <option [ngValue]="false">No</option>
+                          </select>
+                        </td>
+                        <td class="uow-col-otd">
+                          <span class="wp-otd-badge"
+                            [class.otd]="t.onTime==='OTD'"
+                            [class.overdue]="t.onTime==='OVERDUE'"
+                            [class.pending]="t.onTime==='PENDING'">
+                            {{ t.onTime==='OTD' ? 'OTD' : t.onTime==='OVERDUE' ? 'Overdue' : '—' }}
+                          </span>
+                        </td>
+                        <td class="uow-col-rev actual">{{ cfmt(t.revenue) }}</td>
+                        <td class="uow-col-comment">
+                          <input class="wp-input" [(ngModel)]="t.comments"
+                            (blur)="updateWorkTicketField(t,'comments',t.comments)" placeholder="..." />
+                        </td>
+                        <td class="col-action">
+                          <button class="btn-delete-row" (click)="deleteWorkTicket(t)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div><!-- /accordion -->
+            </ng-container><!-- /vue tickets -->
+
+          </ng-container>
+        </ng-container>
+
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: Risks ═══ -->
+    <ng-container *ngIf="activeTab==='risks'">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+        <app-risk-register
+          [projectId]="projectId"
+          [projectName]="projectName">
+        </app-risk-register>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: Issues ═══ -->
+    <ng-container *ngIf="activeTab==='issues'">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+        <app-issue-register
+          [projectId]="projectId"
+          [projectRisks]="[]">
+        </app-issue-register>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: Opportunities ═══ -->
+    <ng-container *ngIf="activeTab==='opportunities'">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+        <app-opportunity-register [projectId]="projectId"></app-opportunity-register>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: MIP ═══ -->
+    <ng-container *ngIf="activeTab==='mip'">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+        <app-mip-register [projectId]="projectId"></app-mip-register>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: WIP ═══ -->
+    <ng-container *ngIf="activeTab==='wip'">
+      <div class="pm-panel panel-blue" style="padding:1.2rem; overflow:visible;">
+        <app-wip-register [projectId]="projectId"></app-wip-register>
       </div>
     </ng-container>
 
@@ -463,9 +1293,9 @@
                   Labor Cost (Payroll)
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
-                  <span [class.has-value]="laborCostForMonth(m)>0">{{ fmt(laborCostForMonth(m)) }}</span>
+                  <span [class.has-value]="laborCostForMonth(m)>0">{{ cfmt(laborCostForMonth(m)) }}</span>
                 </td>
-                <td class="col-total total-cell cost-val">{{ fmt(totalLaborCost()) }}</td>
+                <td class="col-total total-cell cost-val">{{ cfmt(totalLaborCost()) }}</td>
               </tr>
               <!-- Other Cost -->
               <tr class="synth-row synth-cost">
@@ -474,9 +1304,9 @@
                   Other Costs (excl. rebill)
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
-                  <span [class.has-value]="(otherCostForMonth(m)-rebillForMonth(m))>0">{{ fmt(otherCostForMonth(m)-rebillForMonth(m)) }}</span>
+                  <span [class.has-value]="nonRebillCostForMonth(m)>0">{{ cfmt(nonRebillCostForMonth(m)) }}</span>
                 </td>
-                <td class="col-total total-cell cost-val">{{ fmt(totalOtherCost()-totalRebill()) }}</td>
+                <td class="col-total total-cell cost-val">{{ cfmt(totalOtherCost()) }}</td>
               </tr>
               <!-- Direct Cost -->
               <tr class="synth-row synth-subtotal">
@@ -485,9 +1315,9 @@
                   ➡ Total Direct Cost
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
-                  <span class="subtotal-val cost-val">{{ fmt(directCostForMonth(m)) }}</span>
+                  <span class="subtotal-val cost-val">{{ cfmt(directCostForMonth(m)) }}</span>
                 </td>
-                <td class="col-total total-cell cost-val grand">{{ fmt(totalDirectCost()) }}</td>
+                <td class="col-total total-cell cost-val grand">{{ cfmt(totalDirectCost()) }}</td>
               </tr>
               <!-- Separator -->
               <tr class="synth-separator"><td [attr.colspan]="months.length+2"></td></tr>
@@ -495,12 +1325,12 @@
               <tr class="synth-row synth-rev">
                 <td class="col-indicator sticky-col indicator-cell">
                   <div class="ind-dot rev-dot"></div>
-                  Revenue (Daily Rate × Billed Days)
+                  Revenu (ADR × Jours Facturés)
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
-                  <span [class.has-value]="(revenueForMonth(m)-rebillForMonth(m))>0">{{ fmt(revenueForMonth(m)-rebillForMonth(m)) }}</span>
+                  <span [class.has-value]="(revenueForMonth(m)-rebillForMonth(m))>0">{{ cfmt(revenueForMonth(m)-rebillForMonth(m)) }}</span>
                 </td>
-                <td class="col-total total-cell rev-val">{{ fmt(totalRevenue()-totalRebill()) }}</td>
+                <td class="col-total total-cell rev-val">{{ cfmt(totalRevenue()-totalRebill()) }}</td>
               </tr>
               <!-- Rebill -->
               <tr class="synth-row synth-rev">
@@ -509,20 +1339,20 @@
                   Rebill (Client Re-billing)
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
-                  <span [class.has-value]="rebillForMonth(m)>0">{{ fmt(rebillForMonth(m)) }}</span>
+                  <span [class.has-value]="rebillForMonth(m)>0">{{ cfmt(rebillForMonth(m)) }}</span>
                 </td>
-                <td class="col-total total-cell rev-val">{{ fmt(totalRebill()) }}</td>
+                <td class="col-total total-cell rev-val">{{ cfmt(totalRebill()) }}</td>
               </tr>
               <!-- Total Revenue -->
               <tr class="synth-row synth-subtotal">
                 <td class="col-indicator sticky-col indicator-cell bold-indicator">
                   <div class="ind-dot rev-dot"></div>
-                  ➡ Total Revenue
+                  ➡ Revenu Total
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
-                  <span class="subtotal-val rev-val">{{ fmt(revenueForMonth(m)) }}</span>
+                  <span class="subtotal-val rev-val">{{ cfmt(revenueForMonth(m)) }}</span>
                 </td>
-                <td class="col-total total-cell rev-val grand">{{ fmt(totalRevenue()) }}</td>
+                <td class="col-total total-cell rev-val grand">{{ cfmt(totalRevenue()) }}</td>
               </tr>
               <!-- Separator -->
               <tr class="synth-separator"><td [attr.colspan]="months.length+2"></td></tr>
@@ -533,10 +1363,10 @@
                   Margin (€)
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
-                  <span class="margin-val" [class]="marginClass(marginPctForMonth(m))">{{ fmt(marginForMonth(m)) }}</span>
+                  <span class="margin-val" [class]="marginClass(marginPctForMonth(m))">{{ cfmt(marginForMonth(m)) }}</span>
                 </td>
                 <td class="col-total total-cell grand">
-                  <span [class]="marginClass(totalMarginPct())">{{ fmt(totalMargin()) }}</span>
+                  <span [class]="marginClass(totalMarginPct())">{{ cfmt(totalMargin()) }}</span>
                 </td>
               </tr>
               <!-- Margin % -->
@@ -560,18 +1390,18 @@
         <div class="synth-kpi-row">
           <div class="synth-kpi cost-kpi">
             <div class="sk-label">Total Direct Cost</div>
-            <div class="sk-value">{{ fmt(totalDirectCost()) }} {{ currencySymbol }}</div>
-            <div class="sk-sub">Labor: {{ fmt(totalLaborCost()) }} {{ currencySymbol }} · Other: {{ fmt(totalOtherCost()-totalRebill()) }} {{ currencySymbol }}</div>
+            <div class="sk-value">{{ cfmt(totalDirectCost()) }} {{ currencySymbol }}</div>
+            <div class="sk-sub">Labor: {{ cfmt(totalLaborCost()) }} {{ currencySymbol }} · Other: {{ cfmt(totalOtherCost()) }} {{ currencySymbol }}</div>
           </div>
           <div class="synth-kpi rev-kpi">
-            <div class="sk-label">Total Revenue</div>
-            <div class="sk-value">{{ fmt(totalRevenue()) }} {{ currencySymbol }}</div>
-            <div class="sk-sub">Billing: {{ fmt(totalRevenue()-totalRebill()) }} {{ currencySymbol }} · Rebill: {{ fmt(totalRebill()) }} {{ currencySymbol }}</div>
+            <div class="sk-label">Revenu Total</div>
+            <div class="sk-value">{{ cfmt(totalRevenue()) }} {{ currencySymbol }}</div>
+            <div class="sk-sub">Facturation: {{ cfmt(totalRevenue()-totalRebill()) }} {{ currencySymbol }} · Refacturé: {{ cfmt(totalRebill()) }} {{ currencySymbol }}</div>
           </div>
           <div class="synth-kpi" [class]="'margin-kpi '+marginClass(totalMarginPct())">
             <div class="sk-label">Margin</div>
-            <div class="sk-value">{{ fmt(totalMargin()) }} {{ currencySymbol }}</div>
-            <div class="sk-sub">{{ fmtPct(totalMarginPct()) }} of revenue</div>
+            <div class="sk-value">{{ cfmt(totalMargin()) }} {{ currencySymbol }}</div>
+            <div class="sk-sub">{{ fmtPct(totalMarginPct()) }} du revenu</div>
           </div>
         </div>
       </div>
@@ -583,75 +1413,33 @@
   <div class="modal-overlay granularity-mandatory" *ngIf="showGranularityModal">
     <div class="modal-card granularity-modal" (click)="$event.stopPropagation()">
 
-      <!-- Steps indicator -->
-      <div class="modal-steps">
-        <div class="step-item" [class.active]="modalStep===1" [class.done]="modalStep>1">
-          <span class="step-num">1</span><span class="step-lbl">Granularity</span>
-        </div>
-        <div class="step-sep"></div>
-        <div class="step-item" [class.active]="modalStep===2">
-          <span class="step-num">2</span><span class="step-lbl">Currency</span>
-        </div>
+      <div class="granularity-warning mandatory-warning" [innerHTML]="i18n.t('pm.gran.warning')"></div>
+
+      <div class="modal-header" style="padding-top:16px">
+        <h3>{{ i18n.t('pm.gran.title') }}</h3>
       </div>
-
-      <div class="granularity-warning mandatory-warning">
-        🔒 These settings are <strong>permanent</strong> once confirmed.
+      <div class="granularity-options">
+        <button *ngFor="let opt of granularityOptions"
+                class="gran-option"
+                [class.selected]="pendingGranularity === opt.value"
+                (click)="pendingGranularity = opt.value">
+          <span class="gran-icon">{{ opt.icon }}</span>
+          <div class="gran-info">
+            <div class="gran-label">{{ opt.label }}</div>
+            <div class="gran-desc">
+              <ng-container *ngIf="opt.value==='MONTHLY'">{{ i18n.t('pm.gran.monthly') }}</ng-container>
+              <ng-container *ngIf="opt.value==='WEEKLY'">{{ i18n.t('pm.gran.weekly') }}</ng-container>
+              <ng-container *ngIf="opt.value==='DAILY'">{{ i18n.t('pm.gran.daily') }}</ng-container>
+            </div>
+          </div>
+          <span class="gran-check" *ngIf="pendingGranularity===opt.value">✓</span>
+        </button>
       </div>
-
-      <!-- Step 1 : Granularity -->
-      <ng-container *ngIf="modalStep===1">
-        <div class="modal-header" style="padding-top:16px">
-          <h3>Choose Tracking Granularity</h3>
-        </div>
-        <div class="granularity-options">
-          <button *ngFor="let opt of granularityOptions"
-                  class="gran-option"
-                  [class.selected]="pendingGranularity === opt.value"
-                  (click)="pendingGranularity = opt.value">
-            <span class="gran-icon">{{ opt.icon }}</span>
-            <div class="gran-info">
-              <div class="gran-label">{{ opt.label }}</div>
-              <div class="gran-desc">
-                <ng-container *ngIf="opt.value==='MONTHLY'">Monthly columns (Jan, Feb...)</ng-container>
-                <ng-container *ngIf="opt.value==='WEEKLY'">Weekly columns (W01, W02...)</ng-container>
-                <ng-container *ngIf="opt.value==='DAILY'">Daily columns (01/01, 02/01...)</ng-container>
-              </div>
-            </div>
-            <span class="gran-check" *ngIf="pendingGranularity===opt.value">✓</span>
-          </button>
-        </div>
-        <div class="gran-confirm-row">
-          <button class="btn-gran-confirm" [disabled]="!pendingGranularity" (click)="nextStep()">
-            Next →
-          </button>
-        </div>
-      </ng-container>
-
-      <!-- Step 2 : Currency -->
-      <ng-container *ngIf="modalStep===2">
-        <div class="modal-header" style="padding-top:16px">
-          <h3>Choose Project Currency</h3>
-        </div>
-        <div class="granularity-options">
-          <button *ngFor="let cur of currencyOptions"
-                  class="gran-option"
-                  [class.selected]="pendingCurrency === cur.value"
-                  (click)="pendingCurrency = cur.value">
-            <span class="gran-icon">{{ cur.flag }}</span>
-            <div class="gran-info">
-              <div class="gran-label">{{ cur.symbol }} — {{ cur.label }}</div>
-              <div class="gran-desc">{{ cur.value }}</div>
-            </div>
-            <span class="gran-check" *ngIf="pendingCurrency===cur.value">✓</span>
-          </button>
-        </div>
-        <div class="gran-confirm-row" style="justify-content:space-between">
-          <button class="btn-gran-back" (click)="modalStep=1">← Back</button>
-          <button class="btn-gran-confirm" [disabled]="!pendingCurrency" (click)="confirmGranularity()">
-            Confirm
-          </button>
-        </div>
-      </ng-container>
+      <div class="gran-confirm-row">
+        <button class="btn-gran-confirm" [disabled]="!pendingGranularity" (click)="confirmGranularity()">
+          {{ i18n.t('pm.gran.confirm') }}
+        </button>
+      </div>
 
     </div>
   </div>
@@ -660,7 +1448,7 @@
   <div class="modal-overlay" *ngIf="showAddCategoryModal" (click)="showAddCategoryModal=false">
     <div class="modal-card category-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Add Cost Category</h3>
+        <h3>{{ i18n.t('pm.cat.title') }}</h3>
         <button class="modal-close" (click)="showAddCategoryModal=false">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -696,49 +1484,686 @@
         <!-- Custom input — visible uniquement si Other cliqué -->
         <div class="cat-custom-input" *ngIf="showCustomInput">
           <input type="text" [(ngModel)]="newCategoryName"
-                 placeholder="Enter category name..."
+                 [placeholder]="i18n.t('pm.cat.custom_placeholder')"
                  (keydown.enter)="confirmAddCategory()" autofocus />
         </div>
 
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showAddCategoryModal=false">Cancel</button>
+        <button class="btn-cancel" (click)="showAddCategoryModal=false">{{ i18n.t('btn.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmAddCategory()"
-                [disabled]="!newCategoryName.trim()">Add</button>
+                [disabled]="!newCategoryName.trim()">{{ i18n.t('btn.add') }}</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Ajouter consultant -->
-  <div class="modal-overlay" *ngIf="showAddModal" (click)="showAddModal=false">
+  <!-- Modal: Reject -->
+  <div class="modal-overlay" *ngIf="showRejectModal" (click)="showRejectModal=false">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Add Consultant</h3>
-        <button class="modal-close" (click)="showAddModal=false">
+        <h3>{{ i18n.t('pm.modal.reject.title') }}</h3>
+        <button class="modal-close" (click)="showRejectModal=false">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Full name *</label>
-          <input type="text" [(ngModel)]="newResource.personName" placeholder="Ex: Jean Dupont" />
+          <label>{{ i18n.t('pm.modal.reject.reason') }}</label>
+          <textarea [(ngModel)]="rejectComment" rows="4" [placeholder]="i18n.t('pm.modal.reject.placeholder')"
+                    style="padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;width:100%;box-sizing:border-box;resize:vertical;outline:none"
+                    (focus)="rejectComment = rejectComment"
+                    (blur)="rejectComment = rejectComment"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showRejectModal=false">{{ i18n.t('btn.cancel') }}</button>
+        <button class="btn-confirm" style="background:#dc2626" (click)="confirmReject()" [disabled]="!rejectComment.trim()">{{ i18n.t('pm.modal.reject.btn') }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: SDH Import result -->
+  <div class="modal-overlay" *ngIf="showSdhModal" (click)="showSdhModal=false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ i18n.t('pm.sdh.title') }}</h3>
+        <button class="modal-close" (click)="showSdhModal=false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body sdh-result" *ngIf="sdhResult">
+        <div class="sdh-stat" *ngIf="sdhResult.imported > 0 || sdhResult.skipped > 0">
+          <span class="ok" *ngIf="sdhResult.imported > 0">✓ {{ sdhResult.imported }} {{ i18n.t('pm.sdh.imported') }}</span>
+          <span class="skip" *ngIf="sdhResult.skipped > 0">⚠ {{ sdhResult.skipped }} {{ i18n.t('pm.sdh.skipped') }}</span>
+        </div>
+        <div class="sdh-errors" *ngIf="sdhResult.errors?.length">
+          <p>{{ i18n.t('pm.sdh.errors') }}</p>
+          <ul><li *ngFor="let e of sdhResult.errors">{{ e }}</li></ul>
+        </div>
+        <div class="sdh-format-hint">
+          <p class="sdh-hint-title">📋 {{ i18n.lang() === 'fr' ? 'Format SDH accepté' : 'Accepted SDH format' }}</p>
+          <p class="sdh-hint-note" style="margin-bottom:6px">
+            {{ i18n.lang() === 'fr'
+              ? '✅ Export Excel SDH (onglet RapportPointageAffairesDetail)'
+              : '✅ SDH Excel export (sheet RapportPointageAffairesDetail)' }}
+          </p>
+          <p class="sdh-hint-note" style="margin-bottom:6px">
+            {{ i18n.lang() === 'fr'
+              ? '✅ CSV simple : Matricule ; mois (yyyy-MM) ; heures'
+              : '✅ Simple CSV: Matricule ; month (yyyy-MM) ; hours' }}
+          </p>
+          <p class="sdh-hint-note" style="color:#64748b">
+            {{ i18n.lang() === 'fr'
+              ? 'Seules les ressources enregistrées dans ce projet sont importées.'
+              : 'Only resources registered in this project are imported.' }}
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-confirm" (click)="showSdhModal=false">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmer soumission au BUM -->
+  <div class="modal-overlay" *ngIf="showSubmitModal" (click)="showSubmitModal=false">
+    <div class="modal-card confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-icon submit-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+      </div>
+      <h3 class="confirm-modal-title">{{ i18n.t('pm.modal.submit.title') }}</h3>
+      <p class="confirm-modal-msg" [innerHTML]="i18n.t('pm.modal.submit.msg', bumName)"></p>
+      <div class="confirm-modal-actions">
+        <button class="btn-cancel" (click)="showSubmitModal=false">{{ i18n.t('btn.cancel') }}</button>
+        <button class="btn-confirm submit-confirm-btn" (click)="confirmSubmit()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          {{ i18n.t('pm.modal.submit.btn') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmer validation BUM -->
+  <div class="modal-overlay" *ngIf="showValidateModal" (click)="showValidateModal=false">
+    <div class="modal-card confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-icon validate-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="confirm-modal-title">{{ i18n.t('pm.modal.validate.title') }}</h3>
+      <p class="confirm-modal-msg" [innerHTML]="i18n.t('pm.modal.validate.msg')"></p>
+      <div class="confirm-modal-actions">
+        <button class="btn-cancel" (click)="showValidateModal=false">{{ i18n.t('btn.cancel') }}</button>
+        <button class="btn-confirm validate-confirm-btn" (click)="confirmValidate()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          {{ i18n.t('pm.modal.validate.btn') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmer suppression -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="showDeleteModal=false">
+    <div class="modal-card confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-icon delete-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </div>
+      <h3 class="confirm-modal-title">{{ i18n.t('pm.modal.delete.title') }}</h3>
+      <p class="confirm-modal-msg" [innerHTML]="i18n.t('pm.modal.delete.msg', pendingDelete?.name || '') + i18n.t('irreversible')"></p>
+      <div class="confirm-modal-actions">
+        <button class="btn-cancel" (click)="showDeleteModal=false">{{ i18n.t('btn.cancel') }}</button>
+        <button class="btn-confirm delete-confirm-btn" (click)="confirmDelete()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          {{ i18n.t('btn.delete') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ajouter consultant -->
+  <!-- ── Modal : Ajouter un type de livrable (UoW) ── -->
+  <div class="modal-overlay" *ngIf="showAddWorkTypeModal" (click)="showAddWorkTypeModal=false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Nouveau type de livrable</h3>
+        <button class="modal-close" (click)="showAddWorkTypeModal=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nom du livrable *</label>
+          <input [(ngModel)]="newWorkType.name" placeholder="ex: Page web, Rapport PDF, Module..." />
         </div>
         <div class="form-group">
-          <label>Staff ID</label>
+          <label>Unité</label>
+          <input [(ngModel)]="newWorkType.unitLabel" placeholder="ex: Pages, Rapports, Modules..." />
+        </div>
+        <div class="form-group">
+          <label>Prix unitaire (€)</label>
+          <input type="number" [(ngModel)]="newWorkType.unitPrice" min="0" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Quantité prévue</label>
+          <input type="number" [(ngModel)]="newWorkType.plannedQty" min="1" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Durée estimée par unité (jours)</label>
+          <input type="number" [(ngModel)]="newWorkType.durationDays" min="0.5" step="0.5" placeholder="ex: 0.5, 1, 1.5, 2..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showAddWorkTypeModal=false">Annuler</button>
+        <button class="btn-confirm" (click)="confirmAddWorkType()" [disabled]="!newWorkType.name.trim()">
+          Créer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal : Ajouter un ticket (UoW) ── -->
+  <div class="modal-overlay" *ngIf="showAddWorkTicketModal" (click)="showAddWorkTicketModal=false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Nouveau ticket</h3>
+        <button class="modal-close" (click)="showAddWorkTicketModal=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Type de livrable *</label>
+          <select [(ngModel)]="newWorkTicket.workTypeId">
+            <option [ngValue]="null">— Sélectionner —</option>
+            <option *ngFor="let wt of workTypes" [ngValue]="wt.id">{{ wt.name }} ({{ wt.unitLabel }})</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantité</label>
+          <input type="number" [(ngModel)]="newWorkTicket.quantity" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Consultant *</label>
+          <select [(ngModel)]="newWorkTicket.consultant">
+            <option value="">— Sélectionner —</option>
+            <option *ngFor="let r of resources" [value]="r.personName">{{ r.personName }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date d'assignation</label>
+          <input type="date" [(ngModel)]="newWorkTicket.assignedDate" />
+        </div>
+        <div class="form-group">
+          <label>Date de début</label>
+          <input type="date" [(ngModel)]="newWorkTicket.startDate" (change)="onTicketStartDateChange()" />
+        </div>
+        <div class="form-group">
+          <label>Date de fin prévue <span class="uow-auto-hint">(auto-calculée si vide)</span></label>
+          <input type="date" [(ngModel)]="newWorkTicket.endDate" />
+        </div>
+        <div class="form-group">
+          <label>Comments</label>
+          <input [(ngModel)]="newWorkTicket.comments" placeholder="..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showAddWorkTicketModal=false">Annuler</button>
+        <button class="btn-confirm" (click)="confirmAddWorkTicket()"
+          [disabled]="!newWorkTicket.workTypeId || !newWorkTicket.consultant">
+          Créer le ticket
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal : Changement type d'engagement ── -->
+  <div class="modal-overlay" *ngIf="showChangeEngagementModal" (click)="showChangeEngagementModal=false">
+    <div class="modal-card engagement-switch-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Passer en Engagement Résultats</h3>
+        <button class="modal-close" (click)="showChangeEngagementModal=false">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Sélection du nouveau type -->
+        <div class="form-group">
+          <label>Choisir le type de résultats</label>
+          <select [(ngModel)]="targetEngagementType" class="engagement-type-select">
+            <option [ngValue]="null">— Sélectionner —</option>
+            <option *ngFor="let e of resultatsEngagementTypes" [value]="e.code"
+              [disabled]="e.code === projectEngagementType">{{ e.label }}</option>
+          </select>
+        </div>
+
+        <!-- Résumé de l'impact si un type est sélectionné -->
+        <ng-container *ngIf="targetEngagementType && targetEngagementType !== projectEngagementType">
+          <div class="engagement-switch-summary">
+            <div class="ess-row">
+              <span class="ess-from">Actuel : <strong>{{ currentEngagementLabel }}</strong></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <span class="ess-to">Nouveau : <strong>{{ targetEngagementLabel }}</strong></span>
+            </div>
+
+            <div class="ess-impact">
+              <!-- Vers Résultats (depuis Moyens) -->
+              <ng-container *ngIf="targetIsResultats && isMoyensEngagement">
+                <div class="ess-item preserved">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>Données conservées : Daily Cost, Working Days, Other Costs, Rebill</span>
+                </div>
+                <div class="ess-item hidden">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <span>Masqués (non supprimés) : Billed Days, Daily Rate (ADR), Revenus — Moyens</span>
+                </div>
+                <div class="ess-item new">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span>Nouveau disponible : {{ targetEngagementType === 'WP' ? 'Work Package' : 'Unit of Work' }}</span>
+                </div>
+              </ng-container>
+
+              <!-- Vers Moyens (depuis Résultats) -->
+              <ng-container *ngIf="targetIsMoyens && isResultatsEngagement">
+                <div class="ess-item preserved">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>Données conservées : Daily Cost, Working Days, Other Costs, Rebill</span>
+                </div>
+                <div class="ess-item hidden">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <span>Masqués (non supprimés) : Revenus — Résultats (WP/UoW)</span>
+                </div>
+                <div class="ess-item new">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span>Nouveau disponible : Billed Days, Daily Rate (ADR), Revenus — Moyens</span>
+                </div>
+              </ng-container>
+
+              <!-- Même catégorie (AT → T&M, etc.) -->
+              <ng-container *ngIf="(targetIsResultats && isResultatsEngagement) || (targetIsMoyens && isMoyensEngagement)">
+                <div class="ess-item preserved">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>Toutes les données conservées — même catégorie d'engagement</span>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showChangeEngagementModal=false">Annuler</button>
+        <button class="btn-confirm" (click)="confirmChangeEngagement()"
+          [disabled]="!targetEngagementType || targetEngagementType === projectEngagementType || changingEngagement">
+          {{ changingEngagement ? 'Changement en cours...' : 'Confirmer le changement' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal : Confirmer suppression Lot ── -->
+  <div class="modal-overlay" *ngIf="showDeleteLotModal" (click)="showDeleteLotModal=false">
+    <div class="modal-card" (click)="$event.stopPropagation()" style="max-width:420px">
+      <div class="modal-header">
+        <h3>Supprimer le lot</h3>
+        <button class="modal-close" (click)="showDeleteLotModal=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#1e293b;margin:0">
+          Êtes-vous sûr de vouloir supprimer le lot
+          <strong style="color:var(--pm-accent)">&laquo; {{ pendingDeleteLotName }} &raquo;</strong> ?
+        </p>
+        <p style="font-size:12px;color:#94a3b8;margin:8px 0 0">
+          Les livrables associés à ce lot seront également supprimés.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showDeleteLotModal=false">Annuler</button>
+        <button class="btn-delete-confirm" (click)="confirmDeleteLot()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal : Ajouter un Lot (Work Package) ── -->
+  <div class="modal-overlay" *ngIf="showAddLotModal" (click)="showAddLotModal=false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Créer un Lot / Milestone</h3>
+        <button class="modal-close" (click)="showAddLotModal=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nom du lot *</label>
+          <input [(ngModel)]="newLotName" placeholder="ex: Lot1, Lot2, Milestone A..." autofocus
+            (keydown.enter)="confirmAddLot()" />
+        </div>
+        <p style="font-size:12px;color:#94a3b8;margin:0">
+          Une fois le lot créé, vous pourrez y ajouter des livrables depuis la ligne du lot.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showAddLotModal=false">Annuler</button>
+        <button class="btn-confirm" (click)="confirmAddLot()" [disabled]="!newLotName.trim()">
+          Créer le lot
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal : Ajouter un livrable Work Package ── -->
+  <div class="modal-overlay" *ngIf="showAddDeliverableModal" (click)="showAddDeliverableModal=false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter un livrable</h3>
+        <button class="modal-close" (click)="showAddDeliverableModal=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Lot</label>
+          <div class="modal-lot-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            {{ newDeliverable.lotName }}
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Deliverable Name *</label>
+          <input class="modal-input" [(ngModel)]="newDeliverable.deliverableName" placeholder="ex: 3D CAD detailed design" />
+        </div>
+        <div class="form-row">
+          <label>Discipline</label>
+          <input class="modal-input" [(ngModel)]="newDeliverable.discipline" placeholder="ex: CAD Design, CAE Structure..." />
+        </div>
+        <div class="form-row">
+          <label>Owner</label>
+          <select class="modal-input" [(ngModel)]="newDeliverable.owner">
+            <option value="">— Sélectionner —</option>
+            <option *ngFor="let r of resources" [value]="r.personName">{{ r.personName }}</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Planned Date</label>
+          <input type="date" class="modal-input" [(ngModel)]="newDeliverable.plannedDate" />
+        </div>
+        <div class="form-row">
+          <label>Planned Revenue (€)</label>
+          <input type="number" class="modal-input" [(ngModel)]="newDeliverable.plannedRevenue" min="0" placeholder="0" />
+        </div>
+        <div class="form-row">
+          <label>Priority</label>
+          <select class="modal-input" [(ngModel)]="newDeliverable.priority">
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Comments</label>
+          <input class="modal-input" [(ngModel)]="newDeliverable.comments" placeholder="..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showAddDeliverableModal=false">Annuler</button>
+        <button class="btn-confirm" (click)="confirmAddDeliverable()"
+          [disabled]="!newDeliverable.deliverableName.trim() || !newDeliverable.lotName.trim()">
+          Créer le livrable
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="showAddModal" (click)="showAddModal=false">
+    <div class="modal-card modal-card-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ i18n.t('pm.add.title') }}</h3>
+        <button class="modal-close" (click)="showAddModal=false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Mode tabs -->
+      <div class="add-mode-tabs">
+        <button class="add-tab" [class.active]="addMode==='single'" (click)="addMode='single'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          {{ i18n.lang()==='fr' ? 'Ajout manuel' : 'Manual' }}
+        </button>
+        <button class="add-tab" [class.active]="addMode==='bulk'" (click)="addMode='bulk'; bulkPreview=[]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          {{ i18n.lang()==='fr' ? 'Coller depuis Excel' : 'Paste from Excel' }}
+        </button>
+      </div>
+
+      <!-- Mode: single -->
+      <div class="modal-body" *ngIf="addMode==='single'">
+        <div class="add-resource-error" *ngIf="addResourceError">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ addResourceError }}
+        </div>
+        <div class="form-group">
+          <label>{{ i18n.t('pm.add.fullname') }}</label>
+          <input type="text" [(ngModel)]="newResource.personName" [placeholder]="i18n.t('pm.add.fullname_ph')" />
+        </div>
+        <div class="form-group">
+          <label>{{ i18n.t('pm.add.staffid') }}</label>
           <input type="text" [(ngModel)]="newResource.matricule" placeholder="Ex: M12345" />
         </div>
         <div class="form-group">
-          <label>Contract type</label>
+          <label>{{ i18n.t('pm.add.contract') }}</label>
           <select [(ngModel)]="newResource.contractType">
             <option *ngFor="let ct of contractTypes" [value]="ct">{{ ct }}</option>
           </select>
         </div>
       </div>
+
+      <!-- Mode: bulk paste -->
+      <div class="modal-body" *ngIf="addMode==='bulk'">
+        <div class="bulk-instructions">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ i18n.lang()==='fr'
+            ? 'Copiez depuis Excel 3 colonnes dans l\'ordre : Nom complet | Matricule | Type de contrat'
+            : 'Copy from Excel 3 columns in order: Full name | Staff ID | Contract type' }}
+        </div>
+        <div class="form-group">
+          <label>{{ i18n.lang()==='fr' ? 'Coller ici (Ctrl+V)' : 'Paste here (Ctrl+V)' }}</label>
+          <textarea class="bulk-textarea"
+            [(ngModel)]="bulkPasteText"
+            (input)="parseBulkPaste()"
+            [placeholder]="i18n.lang()==='fr' ? 'Jean Dupont\tM12345\tInternal\nMarie Martin\tM67890\tExternal' : 'Jean Dupont\tM12345\tInternal\nMarie Martin\tM67890\tExternal'"
+            rows="5"></textarea>
+        </div>
+
+        <!-- Preview table -->
+        <div class="bulk-preview" *ngIf="bulkPreview.length > 0">
+          <div class="bulk-preview-header">
+            <span>{{ i18n.lang()==='fr' ? 'Aperçu' : 'Preview' }}</span>
+            <span class="bulk-count-ok">{{ bulkValidCount }} {{ i18n.lang()==='fr' ? 'valide(s)' : 'valid' }}</span>
+            <span class="bulk-count-err" *ngIf="bulkErrorCount > 0">· {{ bulkErrorCount }} {{ i18n.lang()==='fr' ? 'erreur(s)' : 'error(s)' }}</span>
+          </div>
+          <div class="bulk-table-wrap">
+            <table class="bulk-table">
+              <thead><tr><th>Nom complet</th><th>Matricule</th><th>Contrat</th><th></th></tr></thead>
+              <tbody>
+                <tr *ngFor="let r of bulkPreview" [class.bulk-row-error]="r.error">
+                  <td>{{ r.personName || '—' }}</td>
+                  <td>{{ r.matricule || '—' }}</td>
+                  <td>{{ r.contractType }}</td>
+                  <td class="bulk-status">
+                    <span *ngIf="!r.error" class="bulk-ok">✓</span>
+                    <span *ngIf="r.error" class="bulk-err" [title]="r.error">✕</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showAddModal=false">Cancel</button>
-        <button class="btn-confirm" (click)="confirmAddResource()" [disabled]="!newResource.personName.trim()">Add</button>
+        <button class="btn-cancel" (click)="showAddModal=false">{{ i18n.t('btn.cancel') }}</button>
+        <button class="btn-confirm" *ngIf="addMode==='single'"
+          (click)="confirmAddResource()"
+          [disabled]="!newResource.personName.trim()">
+          {{ i18n.t('pm.add.btn') }}
+        </button>
+        <button class="btn-confirm" *ngIf="addMode==='bulk'"
+          (click)="confirmBulkAdd()"
+          [disabled]="bulkAdding || bulkValidCount === 0">
+          <span *ngIf="bulkAdding">{{ i18n.lang()==='fr' ? 'Ajout en cours...' : 'Adding...' }}</span>
+          <span *ngIf="!bulkAdding">{{ i18n.lang()==='fr' ? 'Ajouter tous' : 'Add all' }} ({{ bulkValidCount }})</span>
+        </button>
       </div>
     </div>
+  </div>
+
+  <!-- Modal: Matricule manquant -->
+  <div class="modal-overlay" *ngIf="showMatriculeWarning" (click)="showMatriculeWarning=false">
+    <div class="modal-card modal-warn" (click)="$event.stopPropagation()">
+      <div class="warn-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="warn-title">{{ i18n.lang()==='fr' ? 'Matricule requis' : 'Staff ID required' }}</div>
+      <div class="warn-msg">
+        {{ i18n.lang()==='fr'
+          ? 'Un consultant doit obligatoirement avoir un matricule pour être identifié dans les fichiers SDH et les rapports.'
+          : 'A consultant must have a staff ID to be identified in SDH files and reports.' }}
+      </div>
+      <button class="btn-confirm" (click)="showMatriculeWarning=false">OK</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALE — Génération BL (Bon de Livraison non signé)
+════════════════════════════════════════════════════════════ -->
+<div class="bl-modal-overlay" *ngIf="showBlModal" (click)="closeBlModal()"></div>
+<div class="bl-modal" *ngIf="showBlModal">
+
+  <div class="bl-modal-header">
+    <div class="bl-modal-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+      Générer Bon de Livraison (non signé)
+    </div>
+    <button class="bl-modal-close" (click)="closeBlModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="bl-modal-body">
+
+    <!-- Sélecteur de mois -->
+    <div class="bl-section-title">Période</div>
+    <div class="bl-period-row">
+      <select class="bl-input" [(ngModel)]="blSelectedPeriod" (change)="openBlModal(blSelectedPeriod)">
+        <option *ngFor="let m of months" [value]="m">{{ formatMonth(m) }}</option>
+      </select>
+      <span class="bl-hint">Le mois détermine les billed days pré-remplis</span>
+    </div>
+
+    <!-- Infos générales -->
+    <div class="bl-section-title" style="margin-top:16px">Informations du BL</div>
+    <div class="bl-grid-2">
+      <div class="bl-field">
+        <label>Numéro BL</label>
+        <input class="bl-input" [(ngModel)]="blForm.blNumber">
+      </div>
+      <div class="bl-field">
+        <label>Date</label>
+        <input class="bl-input" [(ngModel)]="blForm.blDate" placeholder="JJ/MM/AAAA">
+      </div>
+      <div class="bl-field">
+        <label>Numéro de commande</label>
+        <input class="bl-input" [(ngModel)]="blForm.orderNumber">
+      </div>
+      <div class="bl-field">
+        <label>ID Projet Client</label>
+        <input class="bl-input" [(ngModel)]="blForm.clientProjectId">
+      </div>
+      <div class="bl-field">
+        <label>Client facturé</label>
+        <input class="bl-input" [(ngModel)]="blForm.clientName">
+      </div>
+      <div class="bl-field">
+        <label>Business Unit</label>
+        <input class="bl-input" [(ngModel)]="blForm.buCode">
+      </div>
+      <div class="bl-field">
+        <label>Description Projet</label>
+        <input class="bl-input" [(ngModel)]="blForm.projectDescription">
+      </div>
+      <div class="bl-field">
+        <label>Code Projet</label>
+        <input class="bl-input" [(ngModel)]="blForm.projectCode">
+      </div>
+      <div class="bl-field">
+        <label>Interlocuteur fournisseur</label>
+        <input class="bl-input" [(ngModel)]="blForm.supplierContact">
+      </div>
+      <div class="bl-field">
+        <label>Interlocuteur client</label>
+        <input class="bl-input" [(ngModel)]="blForm.clientContact">
+      </div>
+      <div class="bl-field">
+        <label>Interlocuteur additionnel</label>
+        <input class="bl-input" [(ngModel)]="blForm.additionalContact">
+      </div>
+    </div>
+
+    <!-- Lignes de prestation -->
+    <div class="bl-section-title" style="margin-top:16px">
+      Lignes de prestation
+      <button class="bl-add-line" (click)="addBlLine()">+ Ajouter ligne</button>
+    </div>
+    <table class="bl-lines-table">
+      <thead>
+        <tr>
+          <th>Désignation</th>
+          <th class="tc">Quantité (jours)</th>
+          <th class="tc">Prix unitaire (€)</th>
+          <th class="tr">Total (€)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let line of blLines; let i = index">
+          <td><input class="bl-input-inline" [(ngModel)]="line.designation"></td>
+          <td class="tc">
+            <input class="bl-input-inline tc" type="number" [(ngModel)]="line.quantity"
+                   (ngModelChange)="recalcBlLine(line)" step="0.5">
+          </td>
+          <td class="tc">
+            <input class="bl-input-inline tc" type="number" [(ngModel)]="line.unitPrice"
+                   (ngModelChange)="recalcBlLine(line)" step="1">
+          </td>
+          <td class="tr bl-line-total">{{ line.total | number:'1.2-2' }} €</td>
+          <td>
+            <button class="bl-remove-line" (click)="removeBlLine(i)" *ngIf="blLines.length > 1">✕</button>
+          </td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="bl-total-row">
+          <td colspan="3"><strong>TOTAL</strong></td>
+          <td class="tr"><strong>{{ blTotal | number:'1.2-2' }} €</strong></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <p class="bl-disclaimer">
+      Ce document est un brouillon non signé généré automatiquement depuis les données du projet.
+      Vérifiez tous les champs avant téléchargement.
+    </p>
+  </div>
+
+  <div class="bl-modal-footer">
+    <button class="btn-cancel-bl" (click)="closeBlModal()">Annuler</button>
+    <button class="btn-download-bl" (click)="generateBlPdf()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Télécharger PDF
+    </button>
   </div>
 
 </div>

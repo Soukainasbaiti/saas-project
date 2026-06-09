@@ -1,0 +1,378 @@
+<div class="rr-wrapper">
+
+  <!-- ── KPI Bar ── -->
+  <div class="rr-kpi-bar">
+    <div class="rr-kpi">
+      <span class="rr-kpi-label">{{ i18n.t('rr.kpi.total') }}</span>
+      <span class="rr-kpi-value">{{ totalRisks }}</span>
+    </div>
+    <div class="rr-kpi">
+      <span class="rr-kpi-label">{{ i18n.t('rr.kpi.critical') }}</span>
+      <span class="rr-kpi-value rating-critical">{{ criticalCount }}</span>
+    </div>
+    <div class="rr-kpi">
+      <span class="rr-kpi-label">High</span>
+      <span class="rr-kpi-value rating-high">{{ highCount }}</span>
+    </div>
+    <div class="rr-kpi">
+      <span class="rr-kpi-label">{{ i18n.t('rr.kpi.open') }}</span>
+      <span class="rr-kpi-value">{{ openCount }}</span>
+    </div>
+    <button class="rr-add-btn" (click)="openCreateModal()">
+      {{ i18n.t('rr.add') }}
+    </button>
+  </div>
+
+  <!-- ── Risk Table ── -->
+  <div class="rr-table-wrap">
+    <div *ngIf="loading" class="rr-loading">{{ i18n.t('loading') }}</div>
+
+    <table *ngIf="!loading" class="rr-table">
+      <thead>
+        <tr>
+          <th>R-ID</th>
+          <th>{{ i18n.t('rr.col.risk') }}</th>
+          <th>{{ i18n.t('rr.col.category') }}</th>
+          <th>{{ i18n.t('rr.col.prob') }}</th>
+          <th>{{ i18n.t('rr.col.impact') }}</th>
+          <th>{{ i18n.t('rr.col.rating') }}</th>
+          <th>{{ i18n.t('rr.col.strategy') }}</th>
+          <th>{{ i18n.t('rr.col.status') }}</th>
+          <th>{{ i18n.t('rr.col.owner') }}</th>
+          <th>{{ i18n.t('rr.col.deadline') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="risks.length === 0">
+          <td colspan="11" class="rr-empty">
+            {{ i18n.t('rr.empty') }} <strong>{{ i18n.t('rr.add') }}</strong>
+          </td>
+        </tr>
+        <tr *ngFor="let r of risks" class="rr-row" (click)="openEditMode(r)">
+          <td class="rr-col-id">{{ r.rId }}</td>
+          <td class="rr-col-risk">{{ truncate(r.risk, 70) }}</td>
+          <td class="rr-col-cat">
+            <span class="rr-category-badge">{{ r.category || '—' }}</span>
+          </td>
+          <td class="rr-col-prob">
+            <span *ngIf="r.probability">{{ r.probability }} ({{ r.probEval }})</span>
+            <span *ngIf="!r.probability" class="rr-dash">—</span>
+          </td>
+          <td class="rr-col-impact">{{ r.impact || '—' }}</td>
+          <td class="rr-col-rating">
+            <span *ngIf="r.rating" class="rr-rating-badge" [class]="ratingClass(r.rating)">{{ r.rating }}</span>
+            <span *ngIf="!r.rating" class="rr-dash">—</span>
+          </td>
+          <td class="rr-col-strat">{{ r.managementStrategy || '—' }}</td>
+          <td class="rr-col-status">
+            <span *ngIf="r.status" class="rr-status-badge" [class]="statusClass(r.status)">{{ r.status }}</span>
+          </td>
+          <td class="rr-col-owner">{{ r.owner || '—' }}</td>
+          <td class="rr-col-date">{{ r.deadline || '—' }}</td>
+          <td class="rr-col-action" (click)="$event.stopPropagation()">
+            <button class="rr-view-btn" (click)="openViewMode(r)" title="Voir les détails">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="rr-delete-btn" (click)="openDeleteConfirm(r, $event)" title="Supprimer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── MODAL CENTRÉ : Détail du Risk ── -->
+  <div class="rr-drawer-backdrop" *ngIf="showDrawer && selectedRisk" (click)="closeDrawer()">
+    <div class="rr-detail-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="rr-detail-header">
+        <div class="rr-detail-title">
+          <span class="rr-drawer-id">{{ selectedRisk.rId }}</span>
+          <span class="rr-rating-badge" [class]="ratingClass(computeRating(selectedRisk.probability, selectedRisk.impact))" *ngIf="selectedRisk.probability && selectedRisk.impact">
+            {{ computeRating(selectedRisk.probability, selectedRisk.impact) }}
+          </span>
+          <span class="rr-status-badge" [class]="statusClass(selectedRisk.status)" *ngIf="selectedRisk.status">{{ selectedRisk.status }}</span>
+        </div>
+        <div class="rr-detail-actions">
+          <span *ngIf="isViewMode" class="rr-view-badge">{{ i18n.t('rr.modal.view') }}</span>
+          <button *ngIf="!isViewMode" class="rr-save-btn" (click)="saveDrawer()" [disabled]="saving">
+            {{ saving ? i18n.t('common.saving') : i18n.t('common.save') }}
+          </button>
+          <button *ngIf="!isViewMode" class="rr-edit-toggle-btn" (click)="isViewMode=false" style="display:none"></button>
+          <button class="rr-close-btn" (click)="closeDrawer()">✕</button>
+        </div>
+      </div>
+
+      <!-- Body scrollable -->
+      <div class="rr-detail-body" [class.rr-view-mode]="isViewMode">
+
+        <!-- Section 1 : Identification -->
+        <div class="rr-section">
+          <div class="rr-section-title">{{ i18n.t('rr.sec.ident') }}</div>
+          <div class="rr-form-grid">
+            <div class="rr-field rr-field-third">
+              <label>R-ID <span class="rr-auto-tag">auto</span></label>
+              <div class="rr-auto-val">{{ selectedRisk.rId || '—' }}</div>
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Date d'identification *</label>
+              <input type="date" [(ngModel)]="selectedRisk.identificationDate" />
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Phase</label>
+              <select [(ngModel)]="selectedRisk.phase">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let p of phases" [value]="p">{{ p }}</option>
+              </select>
+            </div>
+            <div class="rr-field rr-field-full">
+              <label>Risk * <span class="rr-hint">(Si... Alors... Avec...)</span></label>
+              <textarea [(ngModel)]="selectedRisk.risk" rows="4"
+                placeholder="Si [condition]&#10;Alors [conséquence]&#10;Avec [impact]"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2 : Catégorisation -->
+        <div class="rr-section">
+          <div class="rr-section-title">{{ i18n.t('rr.sec.categ') }}</div>
+          <div class="rr-form-grid">
+            <div class="rr-field rr-field-half">
+              <label>Catégorie</label>
+              <select [(ngModel)]="selectedRisk.category">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="rr-field rr-field-half">
+              <label>Management Strategy</label>
+              <select [(ngModel)]="selectedRisk.managementStrategy">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let s of strategies" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="rr-field rr-field-half">
+              <label>Probabilité</label>
+              <select [(ngModel)]="selectedRisk.probability">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let p of probabilities" [value]="p.label">{{ p.label }} ({{ p.pct }}%)</option>
+              </select>
+            </div>
+            <div class="rr-field rr-field-half">
+              <label>Impact</label>
+              <select [(ngModel)]="selectedRisk.impact">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let i of impacts" [value]="i.label">{{ i.label }}</option>
+              </select>
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Prob. Eval <span class="rr-auto-tag">auto</span></label>
+              <div class="rr-auto-val">{{ getProbEval(selectedRisk.probability) ?? '—' }}</div>
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>% Probabilité <span class="rr-auto-tag">auto</span></label>
+              <div class="rr-auto-val">{{ getProbPct(selectedRisk.probability) != null ? getProbPct(selectedRisk.probability) + '%' : '—' }}</div>
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Impact Eval <span class="rr-auto-tag">auto</span></label>
+              <div class="rr-auto-val">{{ getImpactEval(selectedRisk.impact) ?? '—' }}</div>
+            </div>
+            <div class="rr-field rr-field-full">
+              <label>Rating <span class="rr-auto-tag">auto</span></label>
+              <div class="rr-auto-val">
+                <span *ngIf="selectedRisk.probability && selectedRisk.impact"
+                  class="rr-rating-badge lg"
+                  [class]="ratingClass(computeRating(selectedRisk.probability, selectedRisk.impact))">
+                  {{ computeRating(selectedRisk.probability, selectedRisk.impact) }}
+                </span>
+                <span *ngIf="!selectedRisk.probability || !selectedRisk.impact" style="color:#94a3b8;font-size:12px">
+                  Sélectionnez Probabilité et Impact
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3 : Risk Management -->
+        <div class="rr-section">
+          <div class="rr-section-title">{{ i18n.t('rr.sec.mgmt') }}</div>
+          <div class="rr-form-grid">
+            <div class="rr-field rr-field-half">
+              <label>Owner</label>
+              <input type="text" [(ngModel)]="selectedRisk.owner" placeholder="Nom du responsable" />
+            </div>
+            <div class="rr-field rr-field-full">
+              <label>Mitigation Action</label>
+              <textarea [(ngModel)]="selectedRisk.mitigationAction" rows="3" placeholder="Actions de mitigation..."></textarea>
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Costs (€)</label>
+              <input type="number" [(ngModel)]="selectedRisk.costs" min="0" placeholder="0" />
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Probability Residual (%)</label>
+              <input type="number" [(ngModel)]="selectedRisk.probabilityResidual" min="0" max="100" placeholder="0" />
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Net <span class="rr-auto-tag">auto</span></label>
+              <div class="rr-auto-val rr-net">
+                {{ computeNet(selectedRisk.costs, selectedRisk.probabilityResidual) != null
+                  ? fmt(computeNet(selectedRisk.costs, selectedRisk.probabilityResidual)) + ' €' : '—' }}
+              </div>
+            </div>
+            <div class="rr-field rr-field-full">
+              <label>Contingency Action</label>
+              <textarea [(ngModel)]="selectedRisk.contingencyAction" rows="2" placeholder="Action de contingence..."></textarea>
+            </div>
+            <div class="rr-field rr-field-full">
+              <label>Trigger</label>
+              <input type="text" [(ngModel)]="selectedRisk.trigger" placeholder="Déclencheur du risk..." />
+            </div>
+            <div class="rr-field rr-field-full">
+              <label>Residual Action</label>
+              <textarea [(ngModel)]="selectedRisk.residualAction" rows="2" placeholder="Action résiduelle après mitigation..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4 : Follow Up -->
+        <div class="rr-section">
+          <div class="rr-section-title">{{ i18n.t('rr.sec.followup') }}</div>
+          <div class="rr-form-grid">
+            <div class="rr-field rr-field-third">
+              <label>Deadline</label>
+              <input type="date" [(ngModel)]="selectedRisk.deadline" />
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Status</label>
+              <select [(ngModel)]="selectedRisk.status">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="rr-field rr-field-third">
+              <label>Closure Date</label>
+              <input type="date" [(ngModel)]="selectedRisk.closureDate" />
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /detail-body -->
+    </div><!-- /detail-modal -->
+  </div>
+
+  <!-- ── MODAL : Créer un Risk ── -->
+  <!-- ── Modal : Confirmer suppression Risk ── -->
+  <div class="rr-modal-overlay" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+    <div class="rr-delete-modal" (click)="$event.stopPropagation()">
+      <div class="rr-delete-modal-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+      </div>
+      <div class="rr-delete-modal-content">
+        <h3>Supprimer le risk</h3>
+        <p>Êtes-vous sûr de vouloir supprimer le risk
+          <strong>{{ pendingDeleteRisk?.rId }}</strong> ?
+        </p>
+        <p class="rr-delete-warning">Cette action est irréversible.</p>
+      </div>
+      <div class="rr-delete-modal-actions">
+        <button class="rr-cancel-btn" (click)="cancelDelete()">Annuler</button>
+        <button class="rr-delete-confirm-btn" (click)="confirmDelete()">
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="rr-modal-overlay" *ngIf="showCreateModal" (click)="showCreateModal=false">
+    <div class="rr-modal" (click)="$event.stopPropagation()">
+      <div class="rr-modal-header">
+        <h3>Nouveau Risk</h3>
+        <button class="rr-close-btn" (click)="showCreateModal=false">✕</button>
+      </div>
+      <div class="rr-modal-body">
+
+        <div class="rr-field">
+          <label>Date d'identification *</label>
+          <input type="date" [(ngModel)]="newRisk.identificationDate" />
+        </div>
+
+        <div class="rr-field">
+          <label>Risk * <span class="rr-hint">(Si... Alors... Avec...)</span></label>
+          <textarea [(ngModel)]="newRisk.risk" rows="4"
+            placeholder="Si [condition]&#10;Alors [conséquence]&#10;Avec [impact]"></textarea>
+        </div>
+
+        <div class="rr-field">
+          <label>Phase</label>
+          <select [(ngModel)]="newRisk.phase">
+            <option value="">— Sélectionner —</option>
+            <option *ngFor="let p of phases" [value]="p">{{ p }}</option>
+          </select>
+        </div>
+
+        <div class="rr-field">
+          <label>Catégorie</label>
+          <select [(ngModel)]="newRisk.category">
+            <option value="">— Sélectionner —</option>
+            <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+          <div class="rr-field">
+            <label>Probabilité</label>
+            <select [(ngModel)]="newRisk.probability">
+              <option value="">— Sélectionner —</option>
+              <option *ngFor="let p of probabilities" [value]="p.label">{{ p.label }}</option>
+            </select>
+          </div>
+          <div class="rr-field">
+            <label>Impact</label>
+            <select [(ngModel)]="newRisk.impact">
+              <option value="">— Sélectionner —</option>
+              <option *ngFor="let i of impacts" [value]="i.label">{{ i.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Rating preview -->
+        <div class="rr-rating-preview" *ngIf="newRisk.probability && newRisk.impact">
+          Rating prévu :
+          <span class="rr-rating-badge" [class]="ratingClass(computeRating(newRisk.probability, newRisk.impact))">
+            {{ computeRating(newRisk.probability, newRisk.impact) }}
+          </span>
+        </div>
+
+        <div class="rr-field">
+          <label>Management Strategy</label>
+          <select [(ngModel)]="newRisk.managementStrategy">
+            <option value="">— Sélectionner —</option>
+            <option *ngFor="let s of strategies" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+
+        <div class="rr-field">
+          <label>Owner</label>
+          <input type="text" [(ngModel)]="newRisk.owner" placeholder="Nom du responsable" />
+        </div>
+
+      </div>
+      <div class="rr-modal-footer">
+        <button class="rr-cancel-btn" (click)="showCreateModal=false">Annuler</button>
+        <button class="rr-confirm-btn"
+          [disabled]="!newRisk.identificationDate || !newRisk.risk.trim() || saving"
+          (click)="confirmCreate()">
+          {{ saving ? 'Création...' : 'Créer le Risk' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

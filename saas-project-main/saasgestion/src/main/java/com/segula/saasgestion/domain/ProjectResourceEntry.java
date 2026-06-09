@@ -16,18 +16,18 @@ public class ProjectResourceEntry {
     @JoinColumn(name = "resource_id", nullable = false)
     private ProjectResource resource;
 
-    @Column(name = "month", length = 7, nullable = false)
-    private String month; // YYYY-MM
+    @Column(name = "month", length = 10, nullable = false)
+    private String month; // YYYY-MM | YYYY-WXX | YYYY-MM-DD
 
-    @Column(name = "daily_cost", precision = 10, scale = 2)
+    @Column(name = "daily_cost", precision = 12, scale = 2)
     private BigDecimal dailyCost = BigDecimal.ZERO;
 
-    @Column(name = "worked_days", precision = 5, scale = 2)
+    @Column(name = "worked_days", precision = 8, scale = 2)
     private BigDecimal workedDays = BigDecimal.ZERO;
 
-    @Column(name = "billed_days", precision = 5, scale = 2)
+    @Column(name = "billed_days", precision = 8, scale = 2)
     private BigDecimal billedDays = BigDecimal.ZERO;
 
-    @Column(name = "daily_rate", precision = 10, scale = 2)
+    @Column(name = "daily_rate", precision = 12, scale = 2)
     private BigDecimal dailyRate = BigDecimal.ZERO;
 }

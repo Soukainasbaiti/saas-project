@@ -3,6 +3,12 @@ package com.segula.saasgestion.controller;
 import com.segula.saasgestion.domain.AppUser;
 import com.segula.saasgestion.dto.*;
 import com.segula.saasgestion.repository.AppUserRepository;
+import com.segula.saasgestion.repository.ProjectRiskRepository;
+import com.segula.saasgestion.repository.ProjectIssueRepository;
+import com.segula.saasgestion.repository.ProjectOpportunityRepository;
+import com.segula.saasgestion.repository.ProjectMipRepository;
+import com.segula.saasgestion.repository.ProjectWipRepository;
+import com.segula.saasgestion.repository.ProjectRepository;
 import com.segula.saasgestion.service.ProjectPendingService;
 import com.segula.saasgestion.service.ProjectService;
 import jakarta.validation.Valid;
@@ -13,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +30,16 @@ import java.util.Map;
 @Slf4j
 public class AdminController {
 
-    private final ProjectPendingService pendingService;
-    private final ProjectService        projectService;
-    private final AppUserRepository     userRepo;
-    private final PasswordEncoder       passwordEncoder;
+    private final ProjectPendingService     pendingService;
+    private final ProjectService            projectService;
+    private final AppUserRepository         userRepo;
+    private final PasswordEncoder           passwordEncoder;
+    private final ProjectRiskRepository     riskRepo;
+    private final ProjectIssueRepository    issueRepo;
+    private final ProjectOpportunityRepository oppRepo;
+    private final ProjectMipRepository      mipRepo;
+    private final ProjectWipRepository      wipRepo;
+    private final ProjectRepository         projectRepo;
 
     // ── GET /admin/approve/{token} ────────────────────────────────
     @GetMapping("/approve/{token}")
@@ -190,6 +203,39 @@ public class AdminController {
         userRepo.save(user);
         log.info("Utilisateur supprimé (soft): id={}", id);
         return ResponseEntity.ok(Map.of("message", "Utilisateur supprimé avec succès."));
+    }
+
+    // ── GET /admin/module-stats ───────────────────────────────────
+    // Stats modules (Risk/Issue/Opportunity/MIP/WIP) pour tous les projets
+    @GetMapping("/module-stats")
+    public ResponseEntity<List<ProjectModuleStatsDto>> getModuleStats() {
+        List<Long> projectIds = projectRepo.findAll().stream()
+            .map(p -> p.getId()).toList();
+
+        List<ProjectModuleStatsDto> stats = projectIds.stream().map(pid -> {
+            BigDecimal wipAmt = wipRepo.sumOpenWipAmountByProjectId(pid);
+            return new ProjectModuleStatsDto(
+                pid,
+                riskRepo.countByProjectId(pid),
+                issueRepo.countByProjectId(pid),
+                oppRepo.countByProjectId(pid),
+                mipRepo.countByProjectId(pid),
+                wipAmt != null ? wipAmt : BigDecimal.ZERO,
+                wipRepo.countByProjectId(pid)
+            );
+        }).toList();
+
+        return ResponseEntity.ok(stats);
+    }
+
+    // ── GET /admin/wip-global ─────────────────────────────────────
+    // WIP total global (tous projets, status != CLOSED)
+    @GetMapping("/wip-global")
+    public ResponseEntity<Map<String, Object>> getWipGlobal() {
+        BigDecimal total = wipRepo.sumAllOpenWipAmount();
+        return ResponseEntity.ok(Map.of(
+            "totalWipAmount", total != null ? total : BigDecimal.ZERO
+        ));
     }
 
     // ── POST /admin/projects/direct ───────────────────────────────

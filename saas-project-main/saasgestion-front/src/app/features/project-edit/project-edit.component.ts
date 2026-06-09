@@ -95,7 +95,7 @@ export class ProjectEditComponent implements OnInit {
 
   private loadRejectedProject(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.http.get<any>(`http://localhost:8080/api/projects/pending/${this.token}/edit`)
+      this.http.get<any>(`/api/projects/pending/${this.token}/edit`)
         .subscribe({
           next: data => {
             const p = data.project;
@@ -171,7 +171,7 @@ export class ProjectEditComponent implements OnInit {
     this.saving = true;
     this.cdr.markForCheck();
 
-    this.http.delete(`http://localhost:8080/api/projects/pending/${this.token}`)
+    this.http.delete(`/api/projects/pending/${this.token}`)
       .subscribe({
         next: () => {
           this.saving = false;
@@ -198,7 +198,7 @@ export class ProjectEditComponent implements OnInit {
     this.cdr.markForCheck();
 
     this.http.post(
-      `http://localhost:8080/api/projects/pending/${this.token}/resubmit`,
+      `/api/projects/pending/${this.token}/resubmit`,
       this.form.value
     ).subscribe({
       next: () => {

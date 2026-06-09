@@ -77,7 +77,7 @@ export class AdminApproveComponent implements OnInit {
 
   loadDetail(): void {
     console.log('[AdminApprove] loadDetail() token=', this.token);
-    this.http.get<PendingDetail>(`http://localhost:8080/api/admin/approve/${this.token}`)
+    this.http.get<PendingDetail>(`/api/admin/approve/${this.token}`)
       .subscribe({
         next: d => {
           console.log('[AdminApprove] réponse OK:', d);
@@ -102,7 +102,7 @@ export class AdminApproveComponent implements OnInit {
     this.processing = true;
     this.errorMsg   = '';
     console.log('[AdminApprove] POST approve...');
-    this.http.post(`http://localhost:8080/api/admin/approve/${this.token}`, { action: 'approve' })
+    this.http.post(`/api/admin/approve/${this.token}`, { action: 'approve' })
       .subscribe({
         next: (res) => {
           console.log('[AdminApprove] approve OK:', res);
@@ -128,7 +128,7 @@ export class AdminApproveComponent implements OnInit {
     this.processing = true;
     this.errorMsg   = '';
     console.log('[AdminApprove] POST reject...');
-    this.http.post(`http://localhost:8080/api/admin/approve/${this.token}`, {
+    this.http.post(`/api/admin/approve/${this.token}`, {
       action: 'reject',
       reason: this.rejectReason
     }).subscribe({
