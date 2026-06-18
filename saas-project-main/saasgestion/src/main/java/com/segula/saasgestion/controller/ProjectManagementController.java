@@ -89,10 +89,30 @@ public class ProjectManagementController {
         return ResponseEntity.ok().build();
     }
 
+    // ── Statut Réel/Prévision par mois (Revenus — Moyens / Synthèse Financière) ──
+    @PutMapping("/{id}/management/month-status")
+    public ResponseEntity<?> updateMonthStatus(@PathVariable Long id, @RequestBody List<MonthStatusDto> updates) {
+        try {
+            return ResponseEntity.ok(managementService.updateMonthStatus(id, updates));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(422).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/management/granularity")
     public ResponseEntity<?> setGranularity(@PathVariable Long id, @RequestBody Map<String, String> req) {
         try {
             managementService.setGranularity(id, req.get("granularity"), req.get("currency"));
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/management/onepager-extras")
+    public ResponseEntity<?> updateOnePagerExtras(@PathVariable Long id, @RequestBody ProjectManagementDto req) {
+        try {
+            managementService.updateOnePagerExtras(id, req);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

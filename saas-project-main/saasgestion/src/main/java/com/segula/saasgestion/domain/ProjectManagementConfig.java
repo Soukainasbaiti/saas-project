@@ -37,4 +37,32 @@ public class ProjectManagementConfig {
 
     @Column(name = "rejection_comment", columnDefinition = "TEXT")
     private String rejectionComment;
+
+    // ── One Pager : Health & Delivery (saisie PM) ──────────────────
+    @Column(name = "delivery_confidence_level", length = 20)
+    private String deliveryConfidenceLevel; // ON_TRACK | MINOR_RISKS | AT_RISK | OFF_TRACK | RECOVERY_MODE
+
+    @Column(name = "health_score_value")
+    private Integer healthScoreValue; // 0-100
+
+    @Column(name = "health_score_status", length = 20)
+    private String healthScoreStatus; // ON_TRACK | MINOR_RISKS | AT_RISK | OFF_TRACK | RECOVERY_MODE
+
+    @Column(name = "pm_remarks", columnDefinition = "TEXT")
+    private String pmRemarks;
+
+    @Column(name = "variance_actual_comment", columnDefinition = "TEXT")
+    private String varianceActualComment;
+
+    @Column(name = "variance_trend_comment", columnDefinition = "TEXT")
+    private String varianceTrendComment;
+
+    @Column(name = "variance_landing_comment", columnDefinition = "TEXT")
+    private String varianceLandingComment;
+
+    @Column(name = "tops", columnDefinition = "TEXT")
+    private String tops;
+
+    @Column(name = "flops", columnDefinition = "TEXT")
+    private String flops;
 }

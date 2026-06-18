@@ -56,6 +56,11 @@ export class WipRegisterComponent implements OnInit {
   deleteDocModal = false;
   deleteDocTarget: WipDocument | null = null;
 
+  // Toast feedback
+  toastMsg = '';
+  toastType: 'success' | 'error' = 'success';
+  private toastTimer: any = null;
+
   constructor(
     public i18n: I18nService,
     private api: ApiService,
@@ -81,8 +86,27 @@ export class WipRegisterComponent implements OnInit {
         }
         this.cdr.markForCheck();
       },
-      error: () => { this.loading = false; this.cdr.markForCheck(); }
+      error: () => {
+        this.loading = false;
+        this.showToast('Erreur lors du chargement des données WIP', 'error');
+        this.cdr.markForCheck();
+      }
     });
+  }
+
+  // ── Toast feedback ───────────────────────────────────────────────
+  showToast(msg: string, type: 'success' | 'error' = 'success'): void {
+    this.toastMsg = msg;
+    this.toastType = type;
+    this.cdr.markForCheck();
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => { this.toastMsg = ''; this.cdr.markForCheck(); }, 4000);
+  }
+
+  dismissToast(): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastMsg = '';
+    this.cdr.markForCheck();
   }
 
   // ── Drawer ──────────────────────────────────────────────────────
@@ -115,12 +139,15 @@ export class WipRegisterComponent implements OnInit {
           this.confirmDoc = doc;
           this.confirmAmount = doc.extractedAmount;
           this.confirmModal = true;
+        } else {
+          this.showToast('Document ajouté avec succès', 'success');
         }
         this.load();
         this.cdr.markForCheck();
       },
       error: () => {
         this.uploading[docType as keyof typeof this.uploading] = false;
+        this.showToast("Échec de l'envoi du document", 'error');
         this.cdr.markForCheck();
       }
     });
@@ -134,7 +161,12 @@ export class WipRegisterComponent implements OnInit {
       next: () => {
         this.confirmModal = false;
         this.confirmDoc = null;
+        this.showToast('Montant confirmé avec succès', 'success');
         this.load();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.showToast('Erreur lors de la confirmation du montant', 'error');
         this.cdr.markForCheck();
       }
     });
@@ -176,7 +208,13 @@ export class WipRegisterComponent implements OnInit {
       next: () => {
         this.deleteDocTarget = null;
         this.deleteDocModal = false;
+        this.showToast('Document supprimé', 'success');
         this.load();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.deleteDocModal = false;
+        this.showToast('Erreur lors de la suppression du document', 'error');
         this.cdr.markForCheck();
       }
     });
@@ -185,6 +223,15 @@ export class WipRegisterComponent implements OnInit {
   // ── Helpers ─────────────────────────────────────────────────────
   getDoc(row: WipTableRow, type: string): WipDocument | undefined {
     return row.documents.find(d => d.documentType === type);
+  }
+
+  invoicedHint(row: WipTableRow): string {
+    const bl = this.getDoc(row, 'BL_SIGNE');
+    const bc = this.getDoc(row, 'BON_COMMANDE');
+    if (!bl) return '— Pas de BL';
+    if (!bc) return '— Bon de commande manquant';
+    if (bl.confirmedAmount == null) return '— Montant à confirmer';
+    return '— Pas de BL';
   }
 
   // ── Filtres ──────────────────────────────────────────────────────

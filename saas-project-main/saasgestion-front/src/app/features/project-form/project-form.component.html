@@ -38,7 +38,7 @@
         <div class="form-group">
           <label class="form-label">Front Financier <span class="req">*</span></label>
           <input class="form-input" formControlName="frontFinancier"
-                 placeholder="Entrez le front financier"
+                 placeholder="Entrez le front financier" maxlength="255"
                  [class.invalid]="form.get('frontFinancier')?.invalid && form.get('frontFinancier')?.touched">
           <span class="error-msg" *ngIf="form.get('frontFinancier')?.invalid && form.get('frontFinancier')?.touched">
             Champ requis
@@ -90,7 +90,7 @@
         </div>
         <div class="mp-sep">=</div>
         <div class="mp-item">
-          <span class="mp-label">Marge</span>
+          <span class="mp-label">%BM</span>
           <span class="mp-val"
                 [class.marge-high]="marginPreview>=25"
                 [class.marge-mid]="marginPreview>=10 && marginPreview<25"
@@ -295,7 +295,7 @@
         ➡ Par ligne
       </button>
       <span class="pmode-hint" *ngIf="pasteMode==='column'">
-        Copiez 2 colonnes (Revenue | Cost), une ligne par mois
+        Copiez 3 colonnes (Revenue | Cost | COV), une ligne par mois
       </span>
       <span class="pmode-hint" *ngIf="pasteMode==='row'">
         Copiez chaque ligne séparément et collez-la dans la zone correspondante
@@ -334,6 +334,16 @@
           {{ costPasted ? '✅ Collé !' : 'Ctrl+V' }}
         </div>
       </div>
+      <div class="rpz" [class.pasted]="covPasted" tabindex="0" (paste)="onPasteRow($event, 'cov')">
+        <div class="rpz-icon">🧾</div>
+        <div class="rpz-body">
+          <b>COV (€)</b>
+          <small>Cliquez ici, puis Ctrl+V pour coller la ligne COV</small>
+        </div>
+        <div class="rpz-badge" [class.hint]="!covPasted">
+          {{ covPasted ? '✅ Collé !' : 'Ctrl+V' }}
+        </div>
+      </div>
     </div>
 
     <!-- Tableau des mois -->
@@ -344,19 +354,27 @@
             <th>Mois</th>
             <th>Revenue (€)</th>
             <th>Cost (€)</th>
-            <th>Marge</th>
+            <th>COV (€)</th>
+            <th>BM</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let row of monthlyRows">
             <td class="month-label">{{ row.label }}</td>
             <td>
-              <input type="number" class="cell-input" [(ngModel)]="row.revenue"
-                     placeholder="0" min="0">
+              <input type="text" inputmode="decimal" class="cell-input" [value]="row.revenue ?? ''"
+                     (blur)="onMonthlyCellBlur($event, row, 'revenue')"
+                     (keydown.enter)="$any($event.target).blur()" placeholder="0">
             </td>
             <td>
-              <input type="number" class="cell-input" [(ngModel)]="row.cost"
-                     placeholder="0" min="0">
+              <input type="text" inputmode="decimal" class="cell-input" [value]="row.cost ?? ''"
+                     (blur)="onMonthlyCellBlur($event, row, 'cost')"
+                     (keydown.enter)="$any($event.target).blur()" placeholder="0">
+            </td>
+            <td>
+              <input type="text" inputmode="decimal" class="cell-input" [value]="row.cov ?? ''"
+                     (blur)="onMonthlyCellBlur($event, row, 'cov')"
+                     (keydown.enter)="$any($event.target).blur()" placeholder="0">
             </td>
             <td class="margin-cell"
                 [class.marge-high]="(row.revenue || 0) > 0 && (((row.revenue||0)-(row.cost||0))/(row.revenue||1))*100 >= 25"
@@ -372,9 +390,10 @@
         <tfoot>
           <tr class="total-row">
             <td>TOTAL</td>
-            <td>{{ totalRevenue | number:'1.0-0' }} €</td>
-            <td>{{ totalCost | number:'1.0-0' }} €</td>
-            <td [class.marge-high]="totalMargin>=25" [class.marge-mid]="totalMargin>=10&&totalMargin<25" [class.marge-low]="totalMargin<10&&totalRevenue>0">
+            <td class="total-num">{{ totalRevenue | number:'1.0-0' }} €</td>
+            <td class="total-num">{{ totalCost | number:'1.0-0' }} €</td>
+            <td class="total-num">{{ totalCov | number:'1.0-0' }} €</td>
+            <td class="total-margin" [class.marge-high]="totalMargin>=25" [class.marge-mid]="totalMargin>=10&&totalMargin<25" [class.marge-low]="totalMargin<10&&totalRevenue>0">
               {{ totalRevenue > 0 ? (totalMargin | number:'1.0-0') + '%' : '—' }}
             </td>
           </tr>

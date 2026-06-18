@@ -6,12 +6,14 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ReferenceDto } from '../../core/models/project.model';
+import { parseNum } from '../../core/utils/parse-num';
 
 export interface MonthlyRow {
   month: string;   // "2026-01"
   label: string;   // "Jan 2026"
   revenue: number | null;
   cost:    number | null;
+  cov:     number | null;
 }
 
 @Component({
@@ -44,6 +46,7 @@ export class ProjectFormComponent implements OnInit {
   pasteMode: 'column' | 'row' = 'column';
   revPasted  = false;
   costPasted = false;
+  covPasted  = false;
 
   get dashboardRoute(): string {
     return this.auth.isAdmin() ? '/admin' : '/';
@@ -63,6 +66,10 @@ export class ProjectFormComponent implements OnInit {
     return this.monthlyRows.reduce((s, r) => s + (r.cost || 0), 0);
   }
 
+  get totalCov(): number {
+    return this.monthlyRows.reduce((s, r) => s + (r.cov || 0), 0);
+  }
+
   get totalMargin(): number {
     const rev = this.totalRevenue;
     return rev === 0 ? 0 : ((rev - this.totalCost) / rev) * 100;
@@ -79,7 +86,7 @@ export class ProjectFormComponent implements OnInit {
     this.form = this.fb.group({
       projectCode:             [''],
       projectYear:             [new Date().getFullYear()],
-      frontFinancier:          ['', Validators.required],
+      frontFinancier:          ['', [Validators.required, Validators.maxLength(255)]],
       projectManagerId:        [null, Validators.required],
       buId:                    [null, Validators.required],
       customerId:              [null, Validators.required],
@@ -144,7 +151,8 @@ export class ProjectFormComponent implements OnInit {
         month: key,
         label: `${MONTHS_FR[m]} ${y}`,
         revenue: null,
-        cost: null
+        cost: null,
+        cov: null
       });
       cur.setMonth(cur.getMonth() + 1);
     }
@@ -154,6 +162,7 @@ export class ProjectFormComponent implements OnInit {
     this.pasteMode    = 'column';
     this.revPasted    = false;
     this.costPasted   = false;
+    this.covPasted    = false;
     this.showMonthlyModal = true;
     this.cdr.markForCheck();
   }
@@ -186,10 +195,12 @@ export class ProjectFormComponent implements OnInit {
     lines.forEach((line, i) => {
       if (i >= this.monthlyRows.length) return;
       const parts = line.split('\t');
-      const rev  = this.parseNum(parts[0]);
-      const cost = this.parseNum(parts[1]);
+      const rev  = parseNum(parts[0]);
+      const cost = parseNum(parts[1]);
+      const cov  = parseNum(parts[2]);
       if (rev  !== null) this.monthlyRows[i].revenue = rev;
       if (cost !== null) this.monthlyRows[i].cost    = cost;
+      if (cov  !== null) this.monthlyRows[i].cov     = cov;
     });
 
     this.pasteApplied = true;
@@ -198,7 +209,7 @@ export class ProjectFormComponent implements OnInit {
   }
 
   // ── Coller depuis Excel / Google Sheets – mode ligne (zones dédiées) ──
-  onPasteRow(event: ClipboardEvent, field: 'revenue' | 'cost'): void {
+  onPasteRow(event: ClipboardEvent, field: 'revenue' | 'cost' | 'cov'): void {
     event.preventDefault();
     const text = event.clipboardData?.getData('text/plain') ?? '';
     // Prend la première ligne non vide : valeurs séparées par tabulation
@@ -206,24 +217,31 @@ export class ProjectFormComponent implements OnInit {
     const values = line.split('\t');
     values.forEach((v, i) => {
       if (i < this.monthlyRows.length) {
-        const num = this.parseNum(v.trim());
+        const num = parseNum(v.trim());
         if (num !== null) this.monthlyRows[i][field] = num;
       }
     });
     if (field === 'revenue') {
       this.revPasted = true;
       setTimeout(() => { this.revPasted = false; this.cdr.markForCheck(); }, 2500);
-    } else {
+    } else if (field === 'cost') {
       this.costPasted = true;
       setTimeout(() => { this.costPasted = false; this.cdr.markForCheck(); }, 2500);
+    } else {
+      this.covPasted = true;
+      setTimeout(() => { this.covPasted = false; this.cdr.markForCheck(); }, 2500);
     }
     this.cdr.markForCheck();
   }
 
-  private parseNum(s: string | undefined): number | null {
-    if (!s) return null;
-    const n = parseFloat(s.replace(/\s/g, '').replace(',', '.'));
-    return isNaN(n) ? null : n;
+  // ── Saisie directe Revenue/Cost/COV : accepte "514000", "514.000" ou
+  //    "514,000" (séparateur de milliers) sans tronquer le montant ──────
+  onMonthlyCellBlur(event: Event, row: MonthlyRow, field: 'revenue' | 'cost' | 'cov'): void {
+    const input = event.target as HTMLInputElement;
+    const parsed = parseNum(input.value);
+    row[field] = parsed;
+    input.value = parsed != null ? String(parsed) : '';
+    this.cdr.markForCheck();
   }
 
   // ── Formulaire principal ──────────────────────────────────────
@@ -251,8 +269,8 @@ export class ProjectFormComponent implements OnInit {
     const payload = {
       ...this.form.value,
       monthlyForecasts: this.monthlyRows
-        .filter(r => r.revenue !== null || r.cost !== null)
-        .map(r => ({ month: r.month, revenue: r.revenue ?? 0, cost: r.cost ?? 0 }))
+        .filter(r => r.revenue !== null || r.cost !== null || r.cov !== null)
+        .map(r => ({ month: r.month, revenue: r.revenue ?? 0, cost: r.cost ?? 0, cov: r.cov }))
     };
 
     if (this.auth.isAdmin()) {

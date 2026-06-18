@@ -18,8 +18,8 @@ public class ProjectRisk {
     private Long projectId;
 
     @JsonProperty("rId")
-    @Column(name = "r_id", length = 20)
-    private String rId; // e.g. R_2026_0001
+    @Column(name = "r_id", length = 50)
+    private String rId; // e.g. R_SMAF-PJ000153_2026_0001
 
     // ── Identification ──────────────────────────────────────────────
     @Column(name = "identification_date", nullable = false)

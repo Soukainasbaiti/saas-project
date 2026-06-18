@@ -61,9 +61,15 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
             "http://localhost:4200",
+            "http://localhost",
+            "http://localhost:80",
             "https://*.ngrok-free.app",
             "https://*.ngrok-free.dev",
-            "https://*.ngrok.io"
+            "https://*.ngrok.io",
+            "https://*.railway.app",
+            "https://*.up.railway.app",
+            "https://*.onrender.com",
+            "https://*.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));

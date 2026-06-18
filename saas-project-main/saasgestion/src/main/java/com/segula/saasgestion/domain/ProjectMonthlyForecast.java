@@ -24,4 +24,8 @@ public class ProjectMonthlyForecast {
 
     @Column(name = "cost", precision = 15, scale = 2)
     private BigDecimal cost;
+
+    /** COV : Client Order Value (montant de la commande client pour ce mois) */
+    @Column(name = "cov", precision = 15, scale = 2)
+    private BigDecimal cov;
 }

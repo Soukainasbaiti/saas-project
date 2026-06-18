@@ -31,6 +31,7 @@ export interface MonthlyForecastDto {
   month: string;     // "2026-03"
   revenue: number;
   cost: number;
+  cov: number | null; // COV : Client Order Value
 }
 
 export interface ProjectDetailDto extends ProjectListDto {

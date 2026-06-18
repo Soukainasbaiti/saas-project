@@ -79,6 +79,18 @@ public class ProjectController {
         }
     }
 
+    // ── PUT : mise a jour des previsions mensuelles (Revenue/Cost/COV) ──
+    @PutMapping("/{id}/monthly-forecasts")
+    public ResponseEntity<?> updateMonthlyForecasts(
+            @PathVariable Long id,
+            @RequestBody java.util.List<MonthlyForecastDto> updates) {
+        try {
+            return ResponseEntity.ok(projectService.updateMonthlyForecasts(id, updates));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(422).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> archive(@PathVariable Long id) {
         projectService.archive(id);

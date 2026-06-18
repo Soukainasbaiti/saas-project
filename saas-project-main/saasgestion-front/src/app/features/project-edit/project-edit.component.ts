@@ -49,7 +49,7 @@ export class ProjectEditComponent implements OnInit {
     this.form = this.fb.group({
       projectCode:             [''],
       projectYear:             [new Date().getFullYear()],
-      frontFinancier:          ['', Validators.required],
+      frontFinancier:          ['', [Validators.required, Validators.maxLength(255)]],
       projectManagerId:        [null, Validators.required],
       buId:                    [null, Validators.required],
       customerId:              [null, Validators.required],

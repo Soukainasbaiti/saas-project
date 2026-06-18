@@ -8,4 +8,5 @@ public class MonthlyForecastDto {
     private String     month;    // "2026-03"
     private BigDecimal revenue;
     private BigDecimal cost;
+    private BigDecimal cov;      // COV : Client Order Value
 }

@@ -109,3 +109,35 @@
   font-weight: 800; font-size: 13px; color: #0f1e35;
   border-top: 2px solid #e2e8f0; background: #f8fafc; padding: 10px 12px;
 }
+
+/* ── Édition COV ─────────────────────────────────────────────── */
+.dc-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #dbeafe;
+  .dc-title { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+}
+.cov-actions { display: flex; gap: 8px; }
+.btn-cov-edit, .btn-cov-save, .btn-cov-cancel {
+  font-size: 12px; font-weight: 700; border-radius: 8px; padding: 6px 14px;
+  cursor: pointer; transition: all 0.15s; border: 1px solid transparent;
+}
+.btn-cov-edit {
+  background: #eff6ff; color: #0066cc; border-color: #dbeafe;
+  &:hover { background: #dbeafe; }
+}
+.btn-cov-save {
+  background: #16a34a; color: #fff;
+  &:hover { background: #15803d; }
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+.btn-cov-cancel {
+  background: #f1f5f9; color: #64748b;
+  &:hover { background: #e2e8f0; }
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+.cov-input {
+  width: 100%; min-width: 100px; max-width: 130px; border: 1px solid #bfdbfe;
+  border-radius: 6px; padding: 5px 8px; font-size: 13px; text-align: right;
+  font-variant-numeric: tabular-nums; outline: none;
+  &:focus { border-color: #0066cc; box-shadow: 0 0 0 2px rgba(0,102,204,0.08); }
+}

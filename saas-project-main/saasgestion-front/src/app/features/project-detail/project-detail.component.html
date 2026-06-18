@@ -114,8 +114,19 @@
     </div>
 
     <!-- Prévisions mensuelles -->
-    <div class="detail-card wide" *ngIf="project.monthlyForecasts && project.monthlyForecasts.length > 0">
-      <div class="dc-title">📅 Prévisions Mensuelles</div>
+    <div class="detail-card wide" *ngIf="displayMonths.length > 0">
+      <div class="dc-title-row">
+        <div class="dc-title">📅 Prévisions Mensuelles</div>
+        <div class="cov-actions" *ngIf="!editingCov">
+          <button class="btn-cov-edit" (click)="startEditCov()">✏️ Éditer le COV</button>
+        </div>
+        <div class="cov-actions" *ngIf="editingCov">
+          <button class="btn-cov-cancel" (click)="cancelEditCov()" [disabled]="savingCov">Annuler</button>
+          <button class="btn-cov-save" (click)="saveCov()" [disabled]="savingCov">
+            {{ savingCov ? 'Enregistrement…' : '✓ Enregistrer' }}
+          </button>
+        </div>
+      </div>
       <div class="forecast-table-wrap">
         <table class="forecast-table">
           <thead>
@@ -123,15 +134,23 @@
               <th>Mois</th>
               <th>Revenue (€)</th>
               <th>Cost (€)</th>
+              <th>COV (€)</th>
               <th>Marge €</th>
               <th>Marge %</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let f of project.monthlyForecasts">
-              <td class="month-name">{{ monthLabel(f.month) }}</td>
+            <tr *ngFor="let f of displayMonths">
+              <td class="month-name">{{ f.label }}</td>
               <td class="num-cell">{{ fmt(f.revenue) }}</td>
               <td class="num-cell">{{ fmt(f.cost) }}</td>
+              <td class="num-cell">
+                <ng-container *ngIf="!editingCov">{{ fmt(f.cov) }}</ng-container>
+                <input *ngIf="editingCov" type="text" inputmode="decimal" class="cov-input"
+                       [value]="covEdits[f.month] ?? ''"
+                       (blur)="onCovCellBlur($event, f.month)"
+                       (keydown.enter)="$any($event.target).blur()" placeholder="0">
+              </td>
               <td class="num-cell">{{ fmt(f.revenue - f.cost) }}</td>
               <td class="num-cell">
                 {{ monthMargin(f.revenue, f.cost) }}
@@ -143,6 +162,7 @@
               <td>TOTAL</td>
               <td class="num-cell">{{ fmt(forecastTotalRevenue) }}</td>
               <td class="num-cell">{{ fmt(forecastTotalCost) }}</td>
+              <td class="num-cell">{{ fmt(forecastTotalCov) }}</td>
               <td class="num-cell">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
               <td class="num-cell">
                 {{ monthMargin(forecastTotalRevenue, forecastTotalCost) }}

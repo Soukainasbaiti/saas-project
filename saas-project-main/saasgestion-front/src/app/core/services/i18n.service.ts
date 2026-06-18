@@ -11,6 +11,8 @@ const T: Record<string, Record<Lang, string>> = {
   'btn.cancel':         { fr: 'Annuler',       en: 'Cancel' },
   'btn.close':          { fr: 'Fermer',        en: 'Close' },
   'btn.delete':         { fr: 'Supprimer',     en: 'Delete' },
+  'btn.delete_selected': { fr: 'Supprimer la sélection', en: 'Delete selected' },
+  'btn.delete_all':     { fr: 'Supprimer tout', en: 'Delete all' },
   'btn.add':            { fr: 'Ajouter',       en: 'Add' },
   'btn.back':           { fr: 'Retour',        en: 'Back' },
   'btn.logout':         { fr: 'Déconnexion',   en: 'Log Out' },
@@ -120,6 +122,14 @@ const T: Record<string, Record<Lang, string>> = {
   'pm.modal.delete.msg':     {
     fr: 'Vous êtes sur le point de supprimer <strong>« {0} »</strong> ainsi que toutes les données associées.<br><br>',
     en: 'You are about to delete <strong>"{0}"</strong> and all associated data.<br><br>'
+  },
+  'pm.modal.delete_selected.msg': {
+    fr: 'Vous êtes sur le point de supprimer <strong>{0} consultant(s) sélectionné(s)</strong> ainsi que toutes les données associées.<br><br>',
+    en: 'You are about to delete <strong>{0} selected consultant(s)</strong> and all associated data.<br><br>'
+  },
+  'pm.modal.delete_all.msg': {
+    fr: 'Vous êtes sur le point de supprimer <strong>TOUS les consultants ({0})</strong> ainsi que toutes les données associées.<br><br>',
+    en: 'You are about to delete <strong>ALL consultants ({0})</strong> and all associated data.<br><br>'
   },
 
   'pm.modal.reject.title':   { fr: 'Rejeter les données du projet', en: 'Reject Project Data' },

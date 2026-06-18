@@ -92,38 +92,6 @@
     <span class="crb-note">{{ i18n.lang() === 'fr' ? '(taux approximatifs)' : '(approximate rates)' }}</span>
   </div>
 
-  <!-- Validation status bar -->
-  <div class="validation-bar" *ngIf="!loading && granularityLocked"
-       [class.bar-draft]="validationStatus==='DRAFT'"
-       [class.bar-submitted]="validationStatus==='SUBMITTED'"
-       [class.bar-validated]="validationStatus==='VALIDATED'"
-       [class.bar-rejected]="validationStatus==='REJECTED'">
-    <div class="vbar-left">
-      <span class="vbar-icon">
-        <ng-container *ngIf="validationStatus==='DRAFT'">📝</ng-container>
-        <ng-container *ngIf="validationStatus==='SUBMITTED'">⏳</ng-container>
-        <ng-container *ngIf="validationStatus==='VALIDATED'">✅</ng-container>
-        <ng-container *ngIf="validationStatus==='REJECTED'">❌</ng-container>
-      </span>
-      <span class="vbar-status">
-        <ng-container *ngIf="validationStatus==='DRAFT'">{{ i18n.t('pm.val.draft') }}</ng-container>
-        <ng-container *ngIf="validationStatus==='SUBMITTED'">{{ i18n.t('pm.val.submitted') }} ({{ bumName }})</ng-container>
-        <ng-container *ngIf="validationStatus==='VALIDATED'">{{ i18n.t('pm.val.validated') }} {{ validatedBy }}</ng-container>
-        <ng-container *ngIf="validationStatus==='REJECTED'">{{ i18n.t('pm.val.rejected') }} <em>{{ rejectionComment }}</em></ng-container>
-      </span>
-    </div>
-    <div class="vbar-actions">
-      <!-- PM: submit when DRAFT or REJECTED -->
-      <button *ngIf="isEditable && !isBum && !isAdmin" class="btn-submit-validation" (click)="submitForValidation()">
-        {{ i18n.t('pm.val.submit_btn') }}
-      </button>
-      <!-- BUM: validate / reject when SUBMITTED -->
-      <ng-container *ngIf="isBum && validationStatus==='SUBMITTED'">
-        <button class="btn-validate" (click)="validateProject()">✓ Validate</button>
-        <button class="btn-reject-val" (click)="openRejectModal()">✗ Reject</button>
-      </ng-container>
-    </div>
-  </div>
 
   <!-- Loading -->
   <div class="pm-loading" *ngIf="loading">
@@ -135,6 +103,9 @@
 
     <!-- Tabs -->
     <div class="pm-tabs">
+      <button class="pm-tab tab-onepager" [class.active]="activeTab==='onePager'" (click)="setTab('onePager')">
+        <span class="tab-dot dot-gold"></span>One Pager
+      </button>
       <button class="pm-tab" [class.active]="activeTab==='dailyCost'"  (click)="setTab('dailyCost')">
         <span class="tab-dot dot-blue-dark"></span>Daily Cost
       </button>
@@ -182,11 +153,294 @@
     </div>
 
     <!-- Legend mois -->
-    <div class="month-legend" *ngIf="activeTab !== 'synthese'">
+    <div class="month-legend" *ngIf="activeTab !== 'synthese' && activeTab !== 'onePager'">
       <span class="legend-item past">{{ i18n.t('pm.legend.past') }}</span>
       <span class="legend-item current">{{ i18n.t('pm.legend.current') }}</span>
       <span class="legend-item future">{{ i18n.t('pm.legend.future') }}</span>
     </div>
+
+    <!-- ═══ TAB: One Pager ═══ -->
+    <ng-container *ngIf="activeTab==='onePager'">
+      <div class="pm-panel panel-gold onepager-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            One Pager — Executive Summary
+          </div>
+        </div>
+
+        <!-- Identity block -->
+        <div class="op-identity">
+          <div class="op-id-item">
+            <span class="op-id-label">Project ID</span>
+            <span class="op-id-value">{{ projectBusinessId || '—' }}</span>
+          </div>
+          <div class="op-id-item">
+            <span class="op-id-label">Project Name</span>
+            <span class="op-id-value">{{ projectName || '—' }}</span>
+          </div>
+          <div class="op-id-item">
+            <span class="op-id-label">PM</span>
+            <span class="op-id-value">{{ projectPmName || '—' }}</span>
+          </div>
+          <div class="op-id-item">
+            <span class="op-id-label">Customer</span>
+            <span class="op-id-value">{{ projectClientName || '—' }}</span>
+          </div>
+          <div class="op-id-item">
+            <span class="op-id-label">Start — End Date</span>
+            <span class="op-id-value">{{ startDate ? (startDate | date:'dd/MM/yyyy') : '—' }} → {{ endDate ? (endDate | date:'dd/MM/yyyy') : '—' }}</span>
+          </div>
+          <div class="op-id-item op-as-of">
+            <span class="op-id-label">{{ i18n.lang()==='fr' ? 'Au' : 'As of' }}</span>
+            <span class="op-id-value">{{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '—' }}</span>
+          </div>
+        </div>
+
+        <!-- KPI table -->
+        <div class="matrix-scroll">
+          <table class="matrix-table onepager-table">
+            <thead>
+              <tr>
+                <th class="col-indicator sticky-col">{{ i18n.lang()==='fr' ? 'Indicateur' : 'Indicator' }}</th>
+                <th class="col-op-val col-op-real">{{ i18n.lang()==='fr' ? 'Réel (cumul)' : 'Real (PtD)' }}</th>
+                <th class="col-op-val col-op-real-month">{{ i18n.lang()==='fr' ? 'Réel' : 'Real' }} {{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '' }}</th>
+                <th class="col-op-val col-op-forecast">Forecast</th>
+                <th class="col-op-val col-op-landing">Landing</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of onePagerRows" class="op-row" [class.op-row-margin]="row.marginRow">
+                <td class="col-indicator sticky-col indicator-cell" [class.bold-indicator]="row.marginRow">{{ row.label }}</td>
+                <td class="col-op-val col-op-real data-cell readonly" [class]="row.marginRow ? marginClass(row.real) : ''">{{ formatRowValue(row, row.real) }}</td>
+                <td class="col-op-val col-op-real-month data-cell readonly" [class]="row.marginRow ? marginClass(row.lastMonth) : ''">{{ formatRowValue(row, row.lastMonth) }}</td>
+                <td class="col-op-val col-op-forecast data-cell readonly" [class]="row.marginRow ? marginClass(row.forecast) : ''">{{ formatRowValue(row, row.forecast) }}</td>
+                <td class="col-op-val col-op-landing data-cell readonly" [class]="row.marginRow ? marginClass(row.landing) : ''">{{ formatRowValue(row, row.landing) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Charts -->
+        <div class="op-charts">
+          <div class="op-chart-card op-chart-cumul">
+            <div class="op-chart-title op-chart-title--cumul">
+              <span class="op-chart-badge op-chart-badge--cumul">{{ i18n.lang()==='fr' ? 'CUMULÉ' : 'CUMUL.' }}</span>
+              {{ i18n.lang()==='fr' ? 'KPI Financier Cumulé' : 'Cumulative Financial KPI' }}
+            </div>
+            <div class="op-chart-canvas">
+              <canvas baseChart [data]="chartMonthlyTrendData" [options]="chartMonthlyTrendOptions" type="bar"></canvas>
+            </div>
+          </div>
+          <div class="op-chart-card op-chart-mensuel">
+            <div class="op-chart-title op-chart-title--mensuel">
+              <span class="op-chart-badge op-chart-badge--mensuel">{{ i18n.lang()==='fr' ? 'MENSUEL' : 'MONTHLY' }}</span>
+              {{ i18n.lang()==='fr' ? 'KPI Financier Mensuel' : 'Monthly Financial KPI' }}
+            </div>
+            <div class="op-chart-canvas">
+              <canvas baseChart [data]="chartMonthlyBreakdownData" [options]="chartMonthlyBreakdownOptions" type="bar"></canvas>
+            </div>
+          </div>
+          <div class="op-chart-card">
+            <div class="op-chart-title">{{ i18n.lang()==='fr' ? 'Budget vs Réel vs Atterrissage' : 'Budget vs Real vs Landing' }}</div>
+            <div class="op-chart-canvas">
+              <canvas baseChart [data]="chartBudgetVsRealVsLandingData" [options]="chartBudgetVsRealVsLandingOptions" type="bar"></canvas>
+            </div>
+            <div class="op-gauge-legend op-bullet-gaps">
+              <span class="op-bullet-gap" [class]="varianceClass(budgetGapRevenue)">
+                {{ i18n.lang()==='fr' ? 'Écart Revenue' : 'Revenue gap' }}: {{ cfmtSigned(budgetGapRevenue) }}
+              </span>
+              <span class="op-bullet-gap" [class]="varianceClass(-budgetGapCost)">
+                {{ i18n.lang()==='fr' ? 'Écart Direct Cost' : 'Direct Cost gap' }}: {{ cfmtSigned(budgetGapCost) }}
+              </span>
+            </div>
+          </div>
+          <div class="op-chart-card op-gauge-card">
+            <div class="op-chart-title">{{ i18n.lang()==='fr' ? 'Marge % — Réel vs Objectif' : 'Margin % — Real vs Target' }}</div>
+            <div class="op-gauge-wrap">
+              <canvas baseChart [data]="chartMarginGaugeData" [options]="chartMarginGaugeOptions" type="doughnut"></canvas>
+              <div class="op-gauge-center">
+                <div class="op-gauge-real" [class]="marginClass(totalMarginPct())">{{ fmtPct(totalMarginPct()) }}</div>
+                <div class="op-gauge-sub">{{ i18n.lang()==='fr' ? 'Objectif' : 'Target' }} {{ fmtPct(budgetMarginPct()) }}</div>
+              </div>
+            </div>
+            <div class="op-gauge-legend">
+              <span class="op-legend-item"><span class="op-legend-dot" [class]="marginClass(totalMarginPct())"></span>PM Real</span>
+              <span class="op-legend-item"><span class="op-legend-dot op-target-dot"></span>BM Target</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Operational KPIs + Health Score -->
+        <div class="op-kpi-section">
+          <div class="op-kpi-cards">
+
+            <!-- Risks KPI -->
+            <div class="op-kpi-card">
+              <div class="op-kpi-header op-kpi-header--risks">Risks KPI</div>
+              <div class="op-kpi-body">
+                <div class="op-kpi-row"><span>% High &amp; Critical Risks</span><span>{{ riskHighCriticalPct }}</span></div>
+                <div class="op-kpi-row"><span>% Risks with Mitigation Plan</span><span>{{ riskMitigationPct }}</span></div>
+                <div class="op-kpi-row"><span>Overdue Risks (%)</span><span>{{ riskOverduePct }}</span></div>
+                <div class="op-kpi-row"><span>Risk Reduction (%)</span><span>{{ riskReduction }}</span></div>
+                <div class="op-kpi-row"><span>Risk Exposure</span><span>{{ riskExposure }}</span></div>
+              </div>
+            </div>
+
+            <!-- Issues KPI -->
+            <div class="op-kpi-card">
+              <div class="op-kpi-header op-kpi-header--issues">Issues KPI</div>
+              <div class="op-kpi-body">
+                <div class="op-kpi-row"><span>Open Issues</span><span>{{ issueOpenPct }}</span></div>
+                <div class="op-kpi-row"><span>High &amp; Critical Issues</span><span>{{ issueHighCriticalPct }}</span></div>
+                <div class="op-kpi-row"><span>Overdue Issues</span><span>{{ issueOverduePct }}</span></div>
+                <div class="op-kpi-row"><span>Net Change 30j</span><span>{{ issueNetChange30j }}</span></div>
+              </div>
+            </div>
+
+            <!-- Opportunities KPI -->
+            <div class="op-kpi-card">
+              <div class="op-kpi-header op-kpi-header--opps">Opportunities KPI</div>
+              <div class="op-kpi-body">
+                <div class="op-kpi-row"><span>Pipeline Value</span><span>{{ oppPipelineValue }}</span></div>
+                <div class="op-kpi-row"><span>Average Margin – Pipeline</span><span>{{ oppAvgMargin }}</span></div>
+                <div class="op-kpi-row"><span>Win Rate</span><span>{{ oppWinRate }}</span></div>
+                <div class="op-kpi-row"><span>Realized Benefit</span><span>{{ oppRealizedBenefit }}</span></div>
+              </div>
+            </div>
+
+            <!-- MIP KPI -->
+            <div class="op-kpi-card">
+              <div class="op-kpi-header op-kpi-header--mip">MIP KPI</div>
+              <div class="op-kpi-body">
+                <div class="op-kpi-row"><span>Secured Gains (€)</span><span>{{ mipSecuredGains }}</span></div>
+                <div class="op-kpi-row"><span>Active Pipeline Gains (€)</span><span>{{ mipActivePipeline }}</span></div>
+                <div class="op-kpi-row"><span>MIP Contribution to Project Margin (%)</span><span>{{ mipContributionPct }}</span></div>
+              </div>
+            </div>
+
+            <!-- WIP KPI -->
+            <div class="op-kpi-card">
+              <div class="op-kpi-header op-kpi-header--wip">WIP KPI</div>
+              <div class="op-kpi-body">
+                <div class="op-kpi-row"><span>Total WIP Amount (€)</span><span>{{ wipTotalDeclared }}</span></div>
+                <div class="op-kpi-row"><span>% Invoiced vs Planned</span><span>{{ wipInvoicedPct }}</span></div>
+                <div class="op-kpi-row"><span>Overdue Invoices (Volume / %)</span><span>{{ wipOverdueInvoices }}</span></div>
+                <div class="op-kpi-row"><span>WIP Aging Ratio (&gt;60j)</span><span>{{ wipAging60j }}</span></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Health Score -->
+          <div class="op-hs-card">
+            <div class="op-hs-left" [style.background]="scoreClass(healthScoreCalc) === 'score-green' ? '#1b8a4f' : scoreClass(healthScoreCalc) === 'score-orange' ? '#f59e0b' : '#dc2626'">
+              <div class="op-hs-label">Health Score</div>
+              <div class="op-hs-value">{{ healthScoreCalc }}</div>
+              <div class="op-hs-formula">Finance×35% + Risks×20%<br>Issues×15% + Facturation×20%<br>MIP×10%</div>
+            </div>
+            <div class="op-hs-scores">
+              <div class="op-hs-row"><span>Score Finance</span><span class="op-hs-badge" [class]="scoreClass(scoreFinance)">{{ scoreFinance }}</span></div>
+              <div class="op-hs-row"><span>Score Risks</span><span class="op-hs-badge" [class]="scoreClass(scoreRisks)">{{ scoreRisks }}</span></div>
+              <div class="op-hs-row"><span>Score Issues</span><span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span></div>
+              <div class="op-hs-row"><span>Score MIP</span><span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span></div>
+              <div class="op-hs-row"><span>Score Facturation</span><span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Health & Delivery -->
+        <div class="op-health-row">
+          <div class="op-health-card op-health-metric">
+            <div class="op-health-label">Health Score [RAYG]</div>
+            <div class="op-health-value" [class]="scoreClass(healthScoreCalc)">{{ healthScoreCalc }}</div>
+            <span class="op-rag-badge" [class]="ragClass(ragFromScore)">{{ ragLabel(ragFromScore) }}</span>
+          </div>
+          <div class="op-health-card">
+            <div class="op-health-label">Delivery Confidence Level</div>
+            <div class="op-health-body">
+              <select class="op-health-select op-health-select-wide" [(ngModel)]="deliveryConfidenceLevel" (change)="saveOnePagerExtras()">
+                <option [ngValue]="null">—</option>
+                <option *ngFor="let o of ragOptions" [value]="o.value">{{ ragLabel(o.value) }}</option>
+              </select>
+            </div>
+            <span class="op-rag-badge" [class]="ragClass(deliveryConfidenceLevel)">{{ ragLabel(deliveryConfidenceLevel) }}</span>
+          </div>
+          <div class="op-health-card op-health-metric">
+            <div class="op-health-label">DVI (%)</div>
+            <div class="op-health-value" [class]="varianceClass(dviPct)">{{ fmtPct(dviPct) }}</div>
+            <div class="op-health-sub">{{ i18n.lang()==='fr' ? 'Marge EAC − Marge Cible' : 'EAC Margin − Target Margin' }}</div>
+          </div>
+          <div class="op-health-card op-health-metric">
+            <div class="op-health-label">DVI (€)</div>
+            <div class="op-health-value" [class]="varianceClass(dviEuro)">{{ cfmtSigned(dviEuro) }}</div>
+            <div class="op-health-sub">{{ i18n.lang()==='fr' ? 'DVI % × Revenu (EAC)' : 'DVI % × Revenue (EAC)' }}</div>
+          </div>
+          <div class="op-health-card op-health-metric">
+            <div class="op-health-label">OverRun</div>
+            <div class="op-health-value" [class]="varianceClass(-overRun)">{{ cfmtSigned(overRun) }}</div>
+            <div class="op-health-sub">{{ i18n.lang()==='fr' ? 'Coûts EAC − Coûts budgétés' : 'EAC Costs − Budgeted Costs' }}</div>
+          </div>
+        </div>
+
+        <!-- PM Remarks -->
+        <div class="op-remarks">
+          <div class="op-section-title">{{ i18n.lang()==='fr' ? 'Remarques du PM' : 'PM Remarks' }}</div>
+          <textarea class="op-remarks-textarea" rows="3" [(ngModel)]="pmRemarks" (blur)="saveOnePagerExtras()"
+                    [placeholder]="i18n.lang()==='fr' ? 'Saisir vos remarques…' : 'Enter your remarks…'"></textarea>
+        </div>
+
+        <!-- Variance table -->
+        <div class="matrix-scroll">
+          <table class="matrix-table onepager-table op-variance-table">
+            <thead>
+              <tr>
+                <th class="col-indicator sticky-col">Variance</th>
+                <th class="col-op-variance">Δ R-B</th>
+                <th class="col-op-comment">Commentaires</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="op-row">
+                <td class="col-indicator sticky-col indicator-cell">Actual [PtD]</td>
+                <td class="col-op-variance data-cell readonly" [class]="varianceClass(varianceActualRevenue())">{{ cfmtSigned(varianceActualRevenue()) }}</td>
+                <td class="col-op-comment data-cell">
+                  <textarea class="op-table-textarea" rows="2" [(ngModel)]="varianceActualComment" (blur)="saveOnePagerExtras()"></textarea>
+                </td>
+              </tr>
+              <tr class="op-row">
+                <td class="col-indicator sticky-col indicator-cell">Trend [ETC]</td>
+                <td class="col-op-variance data-cell readonly" [class]="varianceClass(varianceTrendRevenue())">{{ cfmtSigned(varianceTrendRevenue()) }}</td>
+                <td class="col-op-comment data-cell">
+                  <textarea class="op-table-textarea" rows="2" [(ngModel)]="varianceTrendComment" (blur)="saveOnePagerExtras()"></textarea>
+                </td>
+              </tr>
+              <tr class="op-row">
+                <td class="col-indicator sticky-col indicator-cell">Landing [EAC]</td>
+                <td class="col-op-variance data-cell readonly" [class]="varianceClass(varianceLandingRevenue())">{{ cfmtSigned(varianceLandingRevenue()) }}</td>
+                <td class="col-op-comment data-cell">
+                  <textarea class="op-table-textarea" rows="2" [(ngModel)]="varianceLandingComment" (blur)="saveOnePagerExtras()"></textarea>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- TOPs / FLOPs -->
+        <div class="op-topflop-row">
+          <div class="op-topflop-card op-top-card">
+            <div class="op-topflop-title">TOPs</div>
+            <textarea class="op-topflop-textarea" rows="4" [(ngModel)]="tops" (blur)="saveOnePagerExtras()"
+                      [placeholder]="i18n.lang()==='fr' ? 'Points positifs…' : 'Positive highlights…'"></textarea>
+          </div>
+          <div class="op-topflop-card op-flop-card">
+            <div class="op-topflop-title">FLOPs</div>
+            <textarea class="op-topflop-textarea" rows="4" [(ngModel)]="flops" (blur)="saveOnePagerExtras()"
+                      [placeholder]="i18n.lang()==='fr' ? 'Points à améliorer…' : 'Points to improve…'"></textarea>
+          </div>
+        </div>
+      </div>
+    </ng-container>
 
     <!-- ═══ TAB: Daily Cost (average) ═══ -->
     <ng-container *ngIf="activeTab==='dailyCost'">
@@ -196,15 +450,28 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             Average Daily Cost ({{ currencySymbol }}/day)
           </div>
-          <button class="btn-add-resource" *ngIf="isEditable" (click)="openAddModal()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Consultant
-          </button>
+          <div class="panel-actions" *ngIf="isEditable">
+            <button class="btn-bulk-delete" *ngIf="selectedResourceIds.size > 0" (click)="deleteSelectedResources()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              {{ i18n.t('btn.delete_selected') }} ({{ selectedResourceIds.size }})
+            </button>
+            <button class="btn-bulk-delete" *ngIf="resources.length > 0" (click)="deleteAllResources()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              {{ i18n.t('btn.delete_all') }}
+            </button>
+            <button class="btn-add-resource" (click)="openAddModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Consultant
+            </button>
+          </div>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead><tr>
-              <th class="col-name sticky-col">Consultant</th>
+              <th class="col-name sticky-col">
+                <input *ngIf="isEditable" type="checkbox" class="row-select-checkbox" [checked]="allResourcesSelected" (change)="toggleSelectAllResources()" [disabled]="!resources.length" title="Tout sélectionner">
+                Consultant
+              </th>
               <th class="col-type">Contract</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Avg.</th>
@@ -213,6 +480,7 @@
             <tbody>
               <tr *ngFor="let r of resources">
                 <td class="col-name sticky-col"><div class="person-cell">
+                  <input *ngIf="isEditable" type="checkbox" class="row-select-checkbox" [checked]="isResourceSelected(r.id)" (change)="toggleResourceSelection(r.id)">
                   <div class="person-avatar">{{ r.personName.charAt(0) }}</div>
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
@@ -226,16 +494,17 @@
                     [class.cell-current]="isCurrentMonth(m)"
                     (click)="startEditResource(r.id, m, 'dailyCost', r.dailyCosts[m])">
                   <ng-container *ngIf="!isEditingResource(r.id,m,'dailyCost'); else editTpl">
-                    <span [class.has-value]="r.dailyCosts[m]>0">{{ cfmt(r.dailyCosts[m]) }}</span>
+                    <span [class.has-value]="r.dailyCosts[m]>0">{{ cfmt(r.dailyCosts[m], 2) }}</span>
                   </ng-container>
                   <ng-template #editTpl>
                     <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
+                      (paste)="onResourcePaste($event,r,m,'dailyCost')"
                       (blur)="saveResourceEdit(r,m,'dailyCost')"
                       (keydown.enter)="saveResourceEdit(r,m,'dailyCost')"
                       (keydown.escape)="cancelEdit()" autofocus />
                   </ng-template>
                 </td>
-                <td class="col-total total-cell">{{ cfmt(resourceRowTotal(r,'dailyCosts')) }}</td>
+                <td class="col-total total-cell">{{ cfmt(resourceRowTotal(r,'dailyCosts'), 2) }}</td>
                 <td class="col-action" *ngIf="isEditable"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
@@ -244,8 +513,8 @@
             </tbody>
             <tfoot><tr class="total-row">
               <td class="sticky-col">Avg.</td><td></td>
-              <td *ngFor="let m of months" class="total-cell">{{ cfmt(resourceMonthlyAvg('dailyCosts',m)) }}</td>
-              <td class="total-cell grand">{{ cfmt(grandTotal('dailyCosts')) }}</td><td *ngIf="isEditable"></td>
+              <td *ngFor="let m of months" class="total-cell">{{ cfmt(resourceMonthlyAvg('dailyCosts',m), 2) }}</td>
+              <td class="total-cell grand">{{ cfmt(grandTotal('dailyCosts'), 2) }}</td><td *ngIf="isEditable"></td>
             </tr></tfoot>
           </table>
         </div>
@@ -294,6 +563,7 @@
                   </ng-container>
                   <ng-template #editTpl>
                     <input type="number" class="cell-input" [(ngModel)]="editValue" min="0" step="0.5"
+                      (paste)="onResourcePaste($event,r,m,'workedDays')"
                       (blur)="saveResourceEdit(r,m,'workedDays')"
                       (keydown.enter)="saveResourceEdit(r,m,'workedDays')"
                       (keydown.escape)="cancelEdit()" autofocus />
@@ -490,6 +760,7 @@
                   </ng-container>
                   <ng-template #bdEditTpl>
                     <input type="number" class="cell-input" [(ngModel)]="editValue" min="0" step="0.5"
+                      (paste)="onResourcePaste($event,r,m,'billedDays')"
                       (blur)="saveResourceEdit(r,m,'billedDays')"
                       (keydown.enter)="saveResourceEdit(r,m,'billedDays')"
                       (keydown.escape)="cancelEdit()" autofocus />
@@ -549,7 +820,8 @@
                     <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
                       (blur)="saveResourceEdit(r,m,'dailyRate')"
                       (keydown.enter)="saveResourceEdit(r,m,'dailyRate')"
-                      (keydown.escape)="cancelEdit()" autofocus />
+                      (keydown.escape)="cancelEdit()"
+                      (paste)="onResourcePaste($event,r,m,'dailyRate')" autofocus />
                   </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ cfmt(resourceRowTotal(r,'dailyRates')) }}</td>
@@ -586,7 +858,24 @@
 
         <div class="matrix-scroll">
           <table class="matrix-table">
-            <thead><tr>
+            <thead>
+            <tr class="status-row">
+              <th class="col-name sticky-col">Statut</th>
+              <th class="col-type"></th>
+              <th *ngFor="let m of months" class="col-month status-cell">
+                <button type="button" class="status-badge"
+                        [class.badge-real]="monthStatusFor(m)==='REAL'"
+                        [class.badge-forecast]="monthStatusFor(m)==='FORECAST'"
+                        [disabled]="savingMonthStatus[m]"
+                        (click)="toggleMonthStatus(m)"
+                        title="Click to toggle Real / Forecast">
+                  {{ monthStatusFor(m)==='REAL' ? 'Real' : 'Forecast' }}
+                </button>
+              </th>
+              <th class="col-total"></th>
+              <th class="col-action"></th>
+            </tr>
+            <tr>
               <th class="col-name sticky-col">Consultant</th>
               <th class="col-type">Contract</th>
               <th *ngFor="let m of months" class="col-month"
@@ -595,7 +884,8 @@
               </th>
               <th class="col-total">Total</th>
               <th class="col-action"></th>
-            </tr></thead>
+            </tr>
+            </thead>
 
             <tbody>
               <!-- Ligne par consultant : ADR × Billed Days -->
@@ -671,6 +961,15 @@
                 <td class="total-cell grand rm-grand-cell">{{ cfmt(moyensGrandTotal()) }}</td>
                 <td></td>
               </tr>
+              <!-- Total des Coûts : (Daily Cost × Working Days) + Other Costs = Direct Cost (One Pager) -->
+              <tr class="rm-cost-total-row">
+                <td class="sticky-col rm-grand-label">Total des Coûts</td><td></td>
+                <td *ngFor="let m of months" class="total-cell rm-grand-cell">
+                  {{ cfmt(directCostForMonth(m)) }}
+                </td>
+                <td class="total-cell grand rm-grand-cell">{{ cfmt(totalDirectCost()) }}</td>
+                <td></td>
+              </tr>
             </tfoot>
           </table>
         </div>
@@ -691,6 +990,11 @@
             <div class="rm-card-label">Total Revenus Moyens</div>
             <div class="rm-card-value">{{ cfmt(moyensGrandTotal()) }}</div>
             <div class="rm-card-sub">= Billing + Rebilled</div>
+          </div>
+          <div class="rm-card rm-card-cost">
+            <div class="rm-card-label">Total des Coûts</div>
+            <div class="rm-card-value">{{ cfmt(totalDirectCost()) }}</div>
+            <div class="rm-card-sub">= (Daily Cost × Working Days) + Other Costs</div>
           </div>
         </div>
       </div>
@@ -1280,11 +1584,24 @@
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table synthese-table">
-            <thead><tr>
+            <thead>
+            <tr class="status-row">
+              <th class="col-indicator sticky-col">Statut</th>
+              <th *ngFor="let m of months" class="col-month status-cell">
+                <span class="status-badge readonly"
+                      [class.badge-real]="monthStatusFor(m)==='REAL'"
+                      [class.badge-forecast]="monthStatusFor(m)==='FORECAST'">
+                  {{ monthStatusFor(m)==='REAL' ? 'Real' : 'Forecast' }}
+                </span>
+              </th>
+              <th class="col-total"></th>
+            </tr>
+            <tr>
               <th class="col-indicator sticky-col">Indicator</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Total</th>
-            </tr></thead>
+            </tr>
+            </thead>
             <tbody>
               <!-- Labor Cost -->
               <tr class="synth-row synth-cost">
@@ -1608,7 +1925,9 @@
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
       </div>
       <h3 class="confirm-modal-title">{{ i18n.t('pm.modal.delete.title') }}</h3>
-      <p class="confirm-modal-msg" [innerHTML]="i18n.t('pm.modal.delete.msg', pendingDelete?.name || '') + i18n.t('irreversible')"></p>
+      <p class="confirm-modal-msg" *ngIf="pendingDelete?.type === 'resources-bulk'" [innerHTML]="i18n.t('pm.modal.delete_selected.msg', (pendingDelete?.ids?.length || 0).toString()) + i18n.t('irreversible')"></p>
+      <p class="confirm-modal-msg" *ngIf="pendingDelete?.type === 'resources-all'" [innerHTML]="i18n.t('pm.modal.delete_all.msg', (pendingDelete?.ids?.length || 0).toString()) + i18n.t('irreversible')"></p>
+      <p class="confirm-modal-msg" *ngIf="pendingDelete?.type !== 'resources-bulk' && pendingDelete?.type !== 'resources-all'" [innerHTML]="i18n.t('pm.modal.delete.msg', pendingDelete?.name || '') + i18n.t('irreversible')"></p>
       <div class="confirm-modal-actions">
         <button class="btn-cancel" (click)="showDeleteModal=false">{{ i18n.t('btn.cancel') }}</button>
         <button class="btn-confirm delete-confirm-btn" (click)="confirmDelete()">
@@ -1960,7 +2279,7 @@
           <textarea class="bulk-textarea"
             [(ngModel)]="bulkPasteText"
             (input)="parseBulkPaste()"
-            [placeholder]="i18n.lang()==='fr' ? 'Jean Dupont\tM12345\tInternal\nMarie Martin\tM67890\tExternal' : 'Jean Dupont\tM12345\tInternal\nMarie Martin\tM67890\tExternal'"
+            [placeholder]="i18n.lang()==='fr' ? 'Jean Dupont\tM12345\tInternal subco\nMarie Martin\tM67890\tExternal subco' : 'Jean Dupont\tM12345\tInternal subco\nMarie Martin\tM67890\tExternal subco'"
             rows="5"></textarea>
         </div>
 

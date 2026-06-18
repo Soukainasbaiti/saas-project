@@ -12,6 +12,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.Year;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -86,18 +89,20 @@ public class ProjectService {
     @Transactional
     public ProjectDetailDto create(ProjectCreateRequest req, Long createdById) {
 
-        String ffCode = req.getFrontFinancier().trim();
-        FrontFinancier ff = frontFinancierRepo.findByCodeIgnoreCase(ffCode)
-                .orElseGet(() -> frontFinancierRepo.save(
-                        FrontFinancier.builder().code(ffCode).label(ffCode).isActive(true).build()
-                ));
+        FrontFinancier ff = resolveFrontFinancier(req.getFrontFinancier());
 
-        AppUser pm = userRepo.findById(req.getProjectManagerId()).orElseThrow();
-        BU bu = buRepo.findById(req.getBuId()).orElseThrow();
-        Customer cust = customerRepo.findById(req.getCustomerId()).orElseThrow();
-        Industry ind = industryRepo.findById(req.getIndustryId()).orElseThrow();
-        EngineeringDiscipline disc = disciplineRepo.findById(req.getEngineeringDisciplineId()).orElseThrow();
-        Engagement eng = engagementRepo.findById(req.getEngagementId()).orElseThrow();
+        AppUser pm = userRepo.findById(req.getProjectManagerId())
+                .orElseThrow(() -> new IllegalArgumentException("Chef de projet introuvable (id=" + req.getProjectManagerId() + ")"));
+        BU bu = buRepo.findById(req.getBuId())
+                .orElseThrow(() -> new IllegalArgumentException("BU introuvable (id=" + req.getBuId() + ")"));
+        Customer cust = customerRepo.findById(req.getCustomerId())
+                .orElseThrow(() -> new IllegalArgumentException("Client introuvable (id=" + req.getCustomerId() + ")"));
+        Industry ind = industryRepo.findById(req.getIndustryId())
+                .orElseThrow(() -> new IllegalArgumentException("Secteur introuvable (id=" + req.getIndustryId() + ")"));
+        EngineeringDiscipline disc = disciplineRepo.findById(req.getEngineeringDisciplineId())
+                .orElseThrow(() -> new IllegalArgumentException("Discipline introuvable (id=" + req.getEngineeringDisciplineId() + ")"));
+        Engagement eng = engagementRepo.findById(req.getEngagementId())
+                .orElseThrow(() -> new IllegalArgumentException("Type d'engagement introuvable (id=" + req.getEngagementId() + ")"));
 
         ProjectFunction fn = null;
         if (req.getFunctionName() != null && !req.getFunctionName().isBlank()) {
@@ -163,6 +168,22 @@ public class ProjectService {
         return toDetailDto(saved);
     }
 
+    private FrontFinancier resolveFrontFinancier(String rawCode) {
+        String ffCode = rawCode == null ? "" : rawCode.trim();
+        if (ffCode.isEmpty()) {
+            throw new IllegalArgumentException("Le champ Front Financier est requis.");
+        }
+        if (ffCode.length() > 255) {
+            throw new IllegalArgumentException(
+                    "Le code Front Financier \"" + ffCode + "\" est trop long (" + ffCode.length()
+                            + " caractères, 255 maximum).");
+        }
+        return frontFinancierRepo.findByCodeIgnoreCase(ffCode)
+                .orElseGet(() -> frontFinancierRepo.save(
+                        FrontFinancier.builder().code(ffCode).label(ffCode).isActive(true).build()
+                ));
+    }
+
     private void saveMonthlyForecasts(Long projectId, ProjectCreateRequest req) {
         if (req.getMonthlyForecasts() == null || req.getMonthlyForecasts().isEmpty()) return;
         monthlyForecastRepo.deleteByProjectId(projectId);
@@ -172,8 +193,48 @@ public class ProjectService {
                 .month(f.getMonth())
                 .revenue(f.getRevenue() != null ? f.getRevenue() : BigDecimal.ZERO)
                 .cost(f.getCost()     != null ? f.getCost()     : BigDecimal.ZERO)
+                .cov(f.getCov())
                 .build()
         ));
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // MISE A JOUR DES PREVISIONS MENSUELLES (Revenue / Cost / COV) — apres creation
+    // ────────────────────────────────────────────────────────────────
+    @Transactional
+    public List<MonthlyForecastDto> updateMonthlyForecasts(Long projectId, List<MonthlyForecastDto> updates) {
+        if (!projectRepo.existsById(projectId)) {
+            throw new IllegalArgumentException("Projet introuvable: " + projectId);
+        }
+
+        Map<String, ProjectMonthlyForecast> byMonth = monthlyForecastRepo.findByProjectIdOrderByMonthAsc(projectId)
+                .stream()
+                .collect(Collectors.toMap(ProjectMonthlyForecast::getMonth, f -> f));
+
+        for (MonthlyForecastDto u : updates) {
+            ProjectMonthlyForecast f = byMonth.get(u.getMonth());
+            if (f == null) {
+                f = ProjectMonthlyForecast.builder()
+                        .projectId(projectId)
+                        .month(u.getMonth())
+                        .revenue(BigDecimal.ZERO)
+                        .cost(BigDecimal.ZERO)
+                        .build();
+            }
+            if (u.getRevenue() != null) f.setRevenue(u.getRevenue());
+            if (u.getCost()    != null) f.setCost(u.getCost());
+            f.setCov(u.getCov());
+            monthlyForecastRepo.save(f);
+        }
+
+        return monthlyForecastRepo.findByProjectIdOrderByMonthAsc(projectId).stream()
+                .map(f -> MonthlyForecastDto.builder()
+                        .month(f.getMonth())
+                        .revenue(f.getRevenue())
+                        .cost(f.getCost())
+                        .cov(f.getCov())
+                        .build())
+                .toList();
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -192,17 +253,20 @@ public class ProjectService {
         Project p = projectRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Projet introuvable: " + id));
 
-        String ffCode = req.getFrontFinancier().trim();
-        FrontFinancier ff = frontFinancierRepo.findByCodeIgnoreCase(ffCode)
-                .orElseGet(() -> frontFinancierRepo.save(
-                        FrontFinancier.builder().code(ffCode).label(ffCode).isActive(true).build()));
+        FrontFinancier ff = resolveFrontFinancier(req.getFrontFinancier());
 
-        AppUser pm   = userRepo.findById(req.getProjectManagerId()).orElseThrow();
-        BU bu        = buRepo.findById(req.getBuId()).orElseThrow();
-        Customer cust = customerRepo.findById(req.getCustomerId()).orElseThrow();
-        Industry ind  = industryRepo.findById(req.getIndustryId()).orElseThrow();
-        EngineeringDiscipline disc = disciplineRepo.findById(req.getEngineeringDisciplineId()).orElseThrow();
-        Engagement eng = engagementRepo.findById(req.getEngagementId()).orElseThrow();
+        AppUser pm   = userRepo.findById(req.getProjectManagerId())
+                .orElseThrow(() -> new IllegalArgumentException("Chef de projet introuvable (id=" + req.getProjectManagerId() + ")"));
+        BU bu        = buRepo.findById(req.getBuId())
+                .orElseThrow(() -> new IllegalArgumentException("BU introuvable (id=" + req.getBuId() + ")"));
+        Customer cust = customerRepo.findById(req.getCustomerId())
+                .orElseThrow(() -> new IllegalArgumentException("Client introuvable (id=" + req.getCustomerId() + ")"));
+        Industry ind  = industryRepo.findById(req.getIndustryId())
+                .orElseThrow(() -> new IllegalArgumentException("Secteur introuvable (id=" + req.getIndustryId() + ")"));
+        EngineeringDiscipline disc = disciplineRepo.findById(req.getEngineeringDisciplineId())
+                .orElseThrow(() -> new IllegalArgumentException("Discipline introuvable (id=" + req.getEngineeringDisciplineId() + ")"));
+        Engagement eng = engagementRepo.findById(req.getEngagementId())
+                .orElseThrow(() -> new IllegalArgumentException("Type d'engagement introuvable (id=" + req.getEngagementId() + ")"));
 
         ProjectFunction fn = null;
         if (req.getFunctionName() != null && !req.getFunctionName().isBlank()) {
@@ -416,6 +480,7 @@ public class ProjectService {
                                 .month(f.getMonth())
                                 .revenue(f.getRevenue())
                                 .cost(f.getCost())
+                                .cov(f.getCov())
                                 .build())
                         .toList()
                 )

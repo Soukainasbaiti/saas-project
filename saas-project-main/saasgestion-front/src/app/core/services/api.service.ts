@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ProjectListDto, ProjectDetailDto, PagedResponse,
-  DashboardStats, ReferenceDto, ProjectCreateRequest
+  DashboardStats, ReferenceDto, ProjectCreateRequest, MonthlyForecastDto
 } from '../models/project.model';
 
 export interface ProjectSubmitResponse {
@@ -54,6 +54,10 @@ export class ApiService {
 
   updateProject(id: number, req: ProjectCreateRequest): Observable<ProjectDetailDto> {
     return this.http.put<ProjectDetailDto>(`${this.base}/projects/${id}`, req);
+  }
+
+  updateMonthlyForecasts(id: number, updates: { month: string; revenue?: number | null; cost?: number | null; cov: number | null }[]): Observable<MonthlyForecastDto[]> {
+    return this.http.put<MonthlyForecastDto[]>(`${this.base}/projects/${id}/monthly-forecasts`, updates);
   }
 
   // ── Admin ─────────────────────────────────────────────────────
@@ -149,6 +153,22 @@ export class ApiService {
   }
   setGranularity(projectId: number, granularity: string, currency: string): Observable<any> {
     return this.http.post<any>(`${this.base}/projects/${projectId}/management/granularity`, { granularity, currency });
+  }
+  updateMonthStatus(projectId: number, updates: { month: string; status: 'REAL' | 'FORECAST' }[]): Observable<{ month: string; status: string }[]> {
+    return this.http.put<{ month: string; status: string }[]>(`${this.base}/projects/${projectId}/management/month-status`, updates);
+  }
+  updateOnePagerExtras(projectId: number, payload: {
+    deliveryConfidenceLevel?: string | null;
+    healthScoreValue?: number | null;
+    healthScoreStatus?: string | null;
+    pmRemarks?: string | null;
+    varianceActualComment?: string | null;
+    varianceTrendComment?: string | null;
+    varianceLandingComment?: string | null;
+    tops?: string | null;
+    flops?: string | null;
+  }): Observable<void> {
+    return this.http.put<void>(`${this.base}/projects/${projectId}/management/onepager-extras`, payload);
   }
 
   // ── Validation workflow ────────────────────────────────────────

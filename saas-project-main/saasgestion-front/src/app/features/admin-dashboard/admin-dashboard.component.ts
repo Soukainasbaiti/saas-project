@@ -8,6 +8,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { AdminSidebarComponent } from '../admin-sidebar/admin-sidebar.component';
 import { ProjectListDto, ProjectDetailDto, ReferenceDto } from '../../core/models/project.model';
+import { parseNum } from '../../core/utils/parse-num';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -42,6 +43,7 @@ export class AdminDashboardComponent implements OnInit {
   editForm!: FormGroup;
   editTarget: ProjectListDto | null = null;
   saving = false;
+  editMonthlyForecasts: { month: string; label: string; revenue: number; cost: number; cov: number | null }[] = [];
 
   // Données de référence
   bus:        ReferenceDto[] = [];
@@ -84,7 +86,7 @@ export class AdminDashboardComponent implements OnInit {
 
   initEditForm(): void {
     this.editForm = this.fb.group({
-      frontFinancier:          ['', Validators.required],
+      frontFinancier:          ['', [Validators.required, Validators.maxLength(255)]],
       projectManagerId:        [null, Validators.required],
       buId:                    [null, Validators.required],
       customerId:              [null, Validators.required],
@@ -175,11 +177,11 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   get totalRevenue(): number {
-    return this.projects.reduce((s, p) => s + (p.revenueBudget ?? 0), 0);
+    return this.projects.reduce((s, p) => s + Number(p.revenueBudget ?? 0), 0);
   }
 
   get totalMargin(): number {
-    return this.projects.reduce((s, p) => s + ((p.revenueBudget ?? 0) - (p.costBudget ?? 0)), 0);
+    return this.projects.reduce((s, p) => s + (Number(p.revenueBudget ?? 0) - Number(p.costBudget ?? 0)), 0);
   }
 
   // ── Détail ──────────────────────────────────────────────────
@@ -259,6 +261,13 @@ export class AdminDashboardComponent implements OnInit {
           projectYear:             detail.projectYear || new Date().getFullYear(),
           projectId:               detail.projectId || '',
         });
+        this.editMonthlyForecasts = (detail.monthlyForecasts ?? []).map(f => ({
+          month: f.month,
+          label: this.monthLabel(f.month),
+          revenue: f.revenue || 0,
+          cost: f.cost || 0,
+          cov: f.cov ?? null
+        }));
         this.showEditModal = true;
         this.cdr.markForCheck();
       }
@@ -268,6 +277,34 @@ export class AdminDashboardComponent implements OnInit {
   closeEdit(): void {
     this.showEditModal = false;
     this.editTarget = null;
+    this.editMonthlyForecasts = [];
+    this.cdr.markForCheck();
+  }
+
+  get editForecastTotalCov(): number | null {
+    const values = this.editMonthlyForecasts.map(f => f.cov).filter((v): v is number => v != null);
+    return values.length === 0 ? null : values.reduce((s, v) => s + v, 0);
+  }
+
+  get editForecastTotalRevenue(): number {
+    return this.editMonthlyForecasts.reduce((s, f) => s + (f.revenue || 0), 0);
+  }
+
+  get editForecastTotalCost(): number {
+    return this.editMonthlyForecasts.reduce((s, f) => s + (f.cost || 0), 0);
+  }
+
+  // ── Saisie directe Revenue/Cost/COV : accepte "514000", "514.000" ou
+  //    "514,000" (séparateur de milliers) sans tronquer le montant ──────
+  onForecastCellBlur(event: Event, f: { revenue: number; cost: number; cov: number | null }, field: 'revenue' | 'cost' | 'cov'): void {
+    const input = event.target as HTMLInputElement;
+    const parsed = parseNum(input.value);
+    if (field === 'cov') {
+      f.cov = parsed;
+    } else {
+      f[field] = parsed ?? 0;
+    }
+    input.value = parsed != null ? String(parsed) : '';
     this.cdr.markForCheck();
   }
 
@@ -280,7 +317,15 @@ export class AdminDashboardComponent implements OnInit {
     this.saving = true;
     this.cdr.markForCheck();
 
-    this.api.updateProject(this.editTarget.id, this.editForm.value).subscribe({
+    const projectId = this.editTarget.id;
+    const forecastUpdates = this.editMonthlyForecasts.map(f => ({ month: f.month, revenue: f.revenue, cost: f.cost, cov: f.cov }));
+
+    const requests: any = { project: this.api.updateProject(projectId, this.editForm.value) };
+    if (forecastUpdates.length > 0) {
+      requests.forecasts = this.api.updateMonthlyForecasts(projectId, forecastUpdates);
+    }
+
+    forkJoin(requests).subscribe({
       next: () => {
         this.saving = false;
         this.showEditModal = false;
@@ -344,6 +389,10 @@ export class AdminDashboardComponent implements OnInit {
 
   get forecastTotalCost(): number {
     return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.cost || 0), 0);
+  }
+
+  get forecastTotalCov(): number {
+    return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.cov || 0), 0);
   }
 
   // ── Export helpers ──────────────────────────────────────────

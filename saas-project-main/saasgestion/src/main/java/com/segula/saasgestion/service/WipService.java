@@ -81,10 +81,16 @@ public class WipService {
 
             List<WipMonthDocument> docs = docRepo.findByProjectIdAndYearAndMonth(projectId, y, m);
 
-            BigDecimal invoiced = docs.stream()
-                .filter(d -> "BL_SIGNE".equals(d.getDocumentType()) && d.getConfirmedAmount() != null)
-                .map(WipMonthDocument::getConfirmedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            boolean hasBlSigne = docs.stream().anyMatch(d -> "BL_SIGNE".equals(d.getDocumentType()));
+            boolean hasBonCommande = docs.stream().anyMatch(d -> "BON_COMMANDE".equals(d.getDocumentType()));
+
+            BigDecimal invoiced = BigDecimal.ZERO;
+            if (hasBlSigne && hasBonCommande) {
+                invoiced = docs.stream()
+                    .filter(d -> "BL_SIGNE".equals(d.getDocumentType()) && d.getConfirmedAmount() != null)
+                    .map(WipMonthDocument::getConfirmedAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            }
 
             WipTableRowDto row = new WipTableRowDto();
             row.setPeriod(period);

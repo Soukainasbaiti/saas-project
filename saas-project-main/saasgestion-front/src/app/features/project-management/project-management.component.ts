@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { lastValueFrom } from 'rxjs';
+import { ChartConfiguration, ChartData, ChartOptions } from 'chart.js';
+import { BaseChartDirective } from 'ng2-charts';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -63,6 +65,16 @@ interface WorkTicketRow {
   revenue: number;
 }
 
+interface OnePagerRow {
+  label: string;
+  real: number;
+  lastMonth: number;
+  forecast: number;
+  landing: number;
+  format: 'currency' | 'percent' | 'days' | 'rate';
+  marginRow?: boolean;
+}
+
 interface DeliverableRow {
   id: number;
   deliverableId: string;
@@ -85,7 +97,7 @@ interface DeliverableRow {
 @Component({
   selector: 'app-project-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, RiskRegisterComponent, IssueRegisterComponent, OpportunityRegisterComponent, MipRegisterComponent, WipRegisterComponent],
+  imports: [CommonModule, FormsModule, RouterModule, BaseChartDirective, RiskRegisterComponent, IssueRegisterComponent, OpportunityRegisterComponent, MipRegisterComponent, WipRegisterComponent],
   templateUrl: './project-management.component.html',
   styleUrls: ['./project-management.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -102,6 +114,61 @@ export class ProjectManagementComponent implements OnInit {
   projectPmName = '';
   projectCode = '';
   projectBusinessId = '';
+
+  // ── One Pager ─────────────────────────────────────────────────────
+  startDate: string | null = null;
+  endDate: string | null = null;
+  monthlyForecasts: { [month: string]: { revenue: number; cost: number; cov: number | null } } = {};
+
+  // ── One Pager : Health & Delivery (saisie PM) ──────────────────
+  deliveryConfidenceLevel: string | null = null;
+  healthScoreValue: number | null = null;
+  healthScoreStatus: string | null = null;
+  pmRemarks = '';
+  varianceActualComment = '';
+  varianceTrendComment = '';
+  varianceLandingComment = '';
+  tops = '';
+  flops = '';
+
+  readonly ragOptions: { value: string; label: string }[] = [
+    { value: 'ON_TRACK',      label: 'On Track' },
+    { value: 'MINOR_RISKS',   label: 'Minor Risks' },
+    { value: 'AT_RISK',       label: 'At Risk' },
+    { value: 'OFF_TRACK',     label: 'Off Track' },
+    { value: 'RECOVERY_MODE', label: 'Recovery Mode' },
+  ];
+
+  ragLabel(value: string | null): string {
+    if (!value) return '—';
+    const opt = this.ragOptions.find(o => o.value === value);
+    return opt ? opt.label : value;
+  }
+
+  ragClass(value: string | null): string {
+    switch (value) {
+      case 'ON_TRACK':      return 'rag-on-track';
+      case 'MINOR_RISKS':   return 'rag-minor-risks';
+      case 'AT_RISK':       return 'rag-at-risk';
+      case 'OFF_TRACK':     return 'rag-off-track';
+      case 'RECOVERY_MODE': return 'rag-recovery-mode';
+      default:              return '';
+    }
+  }
+
+  saveOnePagerExtras(): void {
+    this.api.updateOnePagerExtras(this.projectId, {
+      deliveryConfidenceLevel: this.deliveryConfidenceLevel,
+      healthScoreValue: this.healthScoreValue,
+      healthScoreStatus: this.healthScoreStatus,
+      pmRemarks: this.pmRemarks,
+      varianceActualComment: this.varianceActualComment,
+      varianceTrendComment: this.varianceTrendComment,
+      varianceLandingComment: this.varianceLandingComment,
+      tops: this.tops,
+      flops: this.flops,
+    }).subscribe();
+  }
 
   // ── Génération BL ─────────────────────────────────────────────
   showBlModal = false;
@@ -190,6 +257,8 @@ export class ProjectManagementComponent implements OnInit {
     return !!this.projectEngagementType && !this.isResultatsEngagement;
   }
   months: string[] = [];
+  monthStatus: { [period: string]: 'REAL' | 'FORECAST' } = {};
+  savingMonthStatus: { [period: string]: boolean } = {};
   resources: ResourceRow[] = [];
   otherCosts: OtherCostRow[] = [];
   deliverables: DeliverableRow[] = [];
@@ -428,7 +497,14 @@ export class ProjectManagementComponent implements OnInit {
     return { TO_DO: 'To Do', IN_PROGRESS: 'In Progress', SUBMITTED: 'Submitted', APPROVED: 'Approved', BLOCKED: 'Blocked' }[s] ?? s;
   }
 
-  activeTab: 'dailyCost' | 'workedDays' | 'otherCosts' | 'rebillCosts' | 'billedDays' | 'dailyRate' | 'revenueMoyens' | 'revenueResultats' | 'risks' | 'issues' | 'opportunities' | 'mip' | 'wip' | 'synthese' = 'dailyCost';
+  activeTab: 'onePager' | 'dailyCost' | 'workedDays' | 'otherCosts' | 'rebillCosts' | 'billedDays' | 'dailyRate' | 'revenueMoyens' | 'revenueResultats' | 'risks' | 'issues' | 'opportunities' | 'mip' | 'wip' | 'synthese' = 'onePager';
+
+  // ── One Pager — données KPI opérationnels ─────────────────────
+  kpiRisks:   any[] = [];
+  kpiIssues:  any[] = [];
+  kpiOpps:    any[] = [];
+  kpiMips:    any[] = [];
+  kpiWipRows: any[] = [];
 
   // ── Engagement modules (Revenus — Résultats) ─────────────────────
   engagementModules = { workPackage: false, unitOfWork: false };
@@ -564,7 +640,8 @@ export class ProjectManagementComponent implements OnInit {
   showSubmitModal = false;
   showValidateModal = false;
   showDeleteModal = false;
-  pendingDelete: { type: 'resource' | 'category'; id?: number; name: string } | null = null;
+  pendingDelete: { type: 'resource' | 'category' | 'resources-bulk' | 'resources-all'; id?: number; ids?: number[]; name: string } | null = null;
+  selectedResourceIds = new Set<number>();
 
   get isEditable(): boolean {
     return this.validationStatus === 'DRAFT' || this.validationStatus === 'REJECTED';
@@ -576,8 +653,8 @@ export class ProjectManagementComponent implements OnInit {
 
   // Add resource modal
   showAddModal = false;
-  newResource = { matricule: '', personName: '', contractType: 'CDI' };
-  contractTypes = ['Stagiaire', 'ANAPEC', 'CDI', 'CDD', 'Sous-traitant interne', 'Sous-traitant externe'];
+  newResource = { matricule: '', personName: '', contractType: 'Internal subco' };
+  contractTypes = ['Anapec', 'External subco', 'Internal subco'];
 
   // Matricule warning
   showMatriculeWarning = false;
@@ -633,6 +710,11 @@ export class ProjectManagementComponent implements OnInit {
     this.loadDeliverables();
     this.loadWorkTypes();
     this.loadWorkTickets();
+    this.api.getRisks(this.projectId).subscribe({ next: d => { this.kpiRisks = d; this.cdr.markForCheck(); } });
+    this.api.getIssues(this.projectId).subscribe({ next: d => { this.kpiIssues = d; this.cdr.markForCheck(); } });
+    this.api.getOpportunities(this.projectId).subscribe({ next: d => { this.kpiOpps = d; this.cdr.markForCheck(); } });
+    this.api.getMips(this.projectId).subscribe({ next: d => { this.kpiMips = d; this.cdr.markForCheck(); } });
+    this.api.getWipTable(this.projectId).subscribe({ next: d => { this.kpiWipRows = d; this.cdr.markForCheck(); } });
   }
 
   goBack(): void {
@@ -667,7 +749,28 @@ export class ProjectManagementComponent implements OnInit {
         this.projectPmName      = data.pmName             || '';
         this.projectCode        = data.projectCode        || '';
         this.projectBusinessId  = data.projectBusinessId  || '';
+        this.startDate = data.startDate || null;
+        this.endDate = data.endDate || null;
+        this.monthlyForecasts = {};
+        const monthlyForecasts = data.monthlyForecasts || {};
+        for (const k of Object.keys(monthlyForecasts)) {
+          this.monthlyForecasts[k] = {
+            revenue: Number(monthlyForecasts[k].revenue) || 0,
+            cost: Number(monthlyForecasts[k].cost) || 0,
+            cov: monthlyForecasts[k].cov != null ? Number(monthlyForecasts[k].cov) : null
+          };
+        }
+        this.deliveryConfidenceLevel  = data.deliveryConfidenceLevel  || null;
+        this.healthScoreValue         = data.healthScoreValue         ?? null;
+        this.healthScoreStatus        = data.healthScoreStatus        || null;
+        this.pmRemarks                = data.pmRemarks                || '';
+        this.varianceActualComment    = data.varianceActualComment    || '';
+        this.varianceTrendComment     = data.varianceTrendComment     || '';
+        this.varianceLandingComment   = data.varianceLandingComment   || '';
+        this.tops                     = data.tops                     || '';
+        this.flops                    = data.flops                    || '';
         this.months = data.months;
+        this.monthStatus = data.monthStatus || {};
         this.resources = data.resources.map((r: any) => ({
           ...r,
           dailyCosts: this.toNumberMap(r.dailyCosts),
@@ -675,6 +778,8 @@ export class ProjectManagementComponent implements OnInit {
           billedDays: this.toNumberMap(r.billedDays),
           dailyRates: this.toNumberMap(r.dailyRates),
         }));
+        const validResourceIds = new Set(this.resources.map(r => r.id));
+        this.selectedResourceIds.forEach(id => { if (!validResourceIds.has(id)) this.selectedResourceIds.delete(id); });
         this.otherCosts = data.otherCosts.map((c: any) => ({
           ...c,
           amounts: this.toNumberMap(c.amounts),
@@ -806,6 +911,28 @@ export class ProjectManagementComponent implements OnInit {
     if (this.granularity === 'DAILY')   return p === new Date().toISOString().slice(0, 10);
     if (this.granularity === 'WEEKLY')  return p === this.getCurrentWeekKey();
     return false;
+  }
+
+  // ── Réel / Prévision par mois ──────────────────────────────────────
+  monthStatusFor(p: string): 'REAL' | 'FORECAST' {
+    return this.monthStatus[p] || (this.isPastMonth(p) || this.isCurrentMonth(p) ? 'REAL' : 'FORECAST');
+  }
+
+  toggleMonthStatus(p: string): void {
+    if (this.savingMonthStatus[p]) return;
+    const next: 'REAL' | 'FORECAST' = this.monthStatusFor(p) === 'REAL' ? 'FORECAST' : 'REAL';
+    this.savingMonthStatus[p] = true;
+    this.api.updateMonthStatus(this.projectId, [{ month: p, status: next }]).subscribe({
+      next: () => {
+        this.monthStatus[p] = next;
+        this.savingMonthStatus[p] = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.savingMonthStatus[p] = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   private getCurrentWeekKey(): string {
@@ -954,6 +1081,673 @@ export class ProjectManagementComponent implements OnInit {
   totalMargin(): number       { return this.totalRevenue() - this.totalDirectCost(); }
   totalMarginPct(): number    { return this.totalRevenue() > 0 ? (this.totalMargin() / this.totalRevenue()) * 100 : 0; }
 
+  // ══════════════════════════════════════════════════════════════
+  // ONE PAGER
+  // ══════════════════════════════════════════════════════════════
+  workedDaysForMonth(m: string): number {
+    return this.resources.reduce((s, r) => s + (r.workedDays[m] || 0), 0);
+  }
+
+  billedDaysForMonth(m: string): number {
+    return this.resources.reduce((s, r) => s + (r.billedDays[m] || 0), 0);
+  }
+
+  /** Les prévisions mensuelles (revenue/cost/cov) sont saisies en K€ : on convertit en € ici. */
+  private readonly FORECAST_SCALE = 1000;
+
+  covForMonth(m: string): number {
+    return (this.monthlyForecasts[m]?.cov || 0) * this.FORECAST_SCALE;
+  }
+
+  budgetRevenueForMonth(m: string): number {
+    return (this.monthlyForecasts[m]?.revenue || 0) * this.FORECAST_SCALE;
+  }
+
+  budgetCostForMonth(m: string): number {
+    return (this.monthlyForecasts[m]?.cost || 0) * this.FORECAST_SCALE;
+  }
+
+  /** Dernier mois marqué comme Réel (pour le label "Au: ..."). */
+  lastRealMonth(): string | null {
+    let last: string | null = null;
+    for (const m of this.months) {
+      if (this.monthStatusFor(m) === 'REAL') last = m;
+    }
+    return last;
+  }
+
+  sumByStatus(valueFn: (m: string) => number, status: 'REAL' | 'FORECAST' | 'ALL'): number {
+    return this.months
+      .filter(m => status === 'ALL' || this.monthStatusFor(m) === status)
+      .reduce((s, m) => s + valueFn(m), 0);
+  }
+
+  budgetRevenueTotal(): number {
+    return Object.keys(this.monthlyForecasts).reduce((s, m) => s + this.budgetRevenueForMonth(m), 0);
+  }
+
+  budgetCostTotal(): number {
+    return Object.keys(this.monthlyForecasts).reduce((s, m) => s + this.budgetCostForMonth(m), 0);
+  }
+
+  budgetMarginPct(): number {
+    const rev = this.budgetRevenueTotal();
+    const cost = this.budgetCostTotal();
+    return rev > 0 ? ((rev - cost) / rev) * 100 : 0;
+  }
+
+  marginGaugeColor(pct: number): string {
+    if (pct >= 20) return '#1b8a4f';
+    if (pct >= 0) return '#3B5BDB';
+    return '#c62828';
+  }
+
+  budgetRevenueByStatus(status: 'REAL' | 'FORECAST' | 'ALL'): number {
+    return this.sumByStatus(m => this.budgetRevenueForMonth(m), status);
+  }
+
+  /** DVI% = Marge % à l'atterrissage (EAC) − Marge % budgétée (Target) */
+  get dviPct(): number {
+    return this.totalMarginPct() - this.budgetMarginPct();
+  }
+
+  /** DVI€ = DVI% × Revenu à l'atterrissage (EAC) */
+  get dviEuro(): number {
+    return (this.dviPct / 100) * this.totalRevenue();
+  }
+
+  /** OverRun = Coûts à l'atterrissage (EAC) − Coûts budgétés */
+  get overRun(): number {
+    return this.totalDirectCost() - this.budgetCostTotal();
+  }
+
+  /** Variance Δ R-B (Revenue €) : Revenu Réel − Revenu Budget, par période */
+  varianceActualRevenue(): number  { return this.sumByStatus(m => this.revenueForMonth(m), 'REAL') - this.budgetRevenueByStatus('REAL'); }
+  varianceTrendRevenue(): number   { return this.sumByStatus(m => this.revenueForMonth(m), 'FORECAST') - this.budgetRevenueByStatus('FORECAST'); }
+  varianceLandingRevenue(): number { return this.sumByStatus(m => this.revenueForMonth(m), 'ALL') - this.budgetRevenueByStatus('ALL'); }
+
+  get onePagerRows(): OnePagerRow[] {
+    const revReal = this.sumByStatus(m => this.revenueForMonth(m), 'REAL');
+    const revFcst = this.sumByStatus(m => this.revenueForMonth(m), 'FORECAST');
+    const revLand = revReal + revFcst;
+
+    const costReal = this.sumByStatus(m => this.directCostForMonth(m), 'REAL');
+    const costFcst = this.sumByStatus(m => this.directCostForMonth(m), 'FORECAST');
+    const costLand = costReal + costFcst;
+
+    const budgetRevReal = this.sumByStatus(m => this.budgetRevenueForMonth(m), 'REAL');
+    const budgetRevFcst = this.sumByStatus(m => this.budgetRevenueForMonth(m), 'FORECAST');
+    const budgetRevLand = budgetRevReal + budgetRevFcst;
+
+    const budgetCostReal = this.sumByStatus(m => this.budgetCostForMonth(m), 'REAL');
+    const budgetCostFcst = this.sumByStatus(m => this.budgetCostForMonth(m), 'FORECAST');
+    const budgetCostLand = budgetCostReal + budgetCostFcst;
+
+    const workedReal = this.sumByStatus(m => this.workedDaysForMonth(m), 'REAL');
+    const workedFcst = this.sumByStatus(m => this.workedDaysForMonth(m), 'FORECAST');
+    const workedLand = workedReal + workedFcst;
+
+    const billedReal = this.sumByStatus(m => this.billedDaysForMonth(m), 'REAL');
+    const billedFcst = this.sumByStatus(m => this.billedDaysForMonth(m), 'FORECAST');
+    const billedLand = billedReal + billedFcst;
+
+    const covReal = this.sumByStatus(m => this.covForMonth(m), 'REAL');
+    const covFcst = this.sumByStatus(m => this.covForMonth(m), 'FORECAST');
+
+    const marginReal = revReal - costReal;
+    const marginFcst = revFcst - costFcst;
+    const marginLand = revLand - costLand;
+
+    const budgetMarginReal = budgetRevReal - budgetCostReal;
+    const budgetMarginFcst = budgetRevFcst - budgetCostFcst;
+    const budgetMarginLand = budgetRevLand - budgetCostLand;
+
+    const ratio = (num: number, den: number) => den > 0 ? num / den : 0;
+
+    // Dernier mois Réel (colonne "Real <mois>")
+    const lm = this.lastRealMonth();
+    const revLM        = lm ? this.revenueForMonth(lm)                 : 0;
+    const costLM       = lm ? this.directCostForMonth(lm)              : 0;
+    const budgetRevLM  = lm ? this.budgetRevenueForMonth(lm) : 0;
+    const budgetCostLM = lm ? this.budgetCostForMonth(lm)    : 0;
+    const workedLM     = lm ? this.workedDaysForMonth(lm)              : 0;
+    const billedLM     = lm ? this.billedDaysForMonth(lm)              : 0;
+    const covLM        = lm ? this.covForMonth(lm)                     : 0;
+    const marginLM       = revLM - costLM;
+    const budgetMarginLM = budgetRevLM - budgetCostLM;
+
+    return [
+      { label: 'COV - Client Order Value', real: covReal,         lastMonth: covLM,        forecast: covFcst,        landing: covReal + covFcst, format: 'currency' },
+      { label: 'Revenue - Budget (TCV)',   real: budgetRevReal,    lastMonth: budgetRevLM,  forecast: budgetRevFcst,  landing: budgetRevLand,  format: 'currency' },
+      { label: 'Revenue - Real',           real: revReal,          lastMonth: revLM,        forecast: revFcst,        landing: revLand,        format: 'currency' },
+      { label: 'Cost - Budget',            real: budgetCostReal,   lastMonth: budgetCostLM, forecast: budgetCostFcst, landing: budgetCostLand, format: 'currency' },
+      { label: 'Direct Costs - Real',      real: costReal,         lastMonth: costLM,       forecast: costFcst,       landing: costLand,       format: 'currency' },
+      { label: '% BM Target',              real: ratio(budgetMarginReal, budgetRevReal) * 100, lastMonth: ratio(budgetMarginLM, budgetRevLM) * 100, forecast: ratio(budgetMarginFcst, budgetRevFcst) * 100, landing: ratio(budgetMarginLand, budgetRevLand) * 100, format: 'percent' },
+      { label: 'Project Margin - Real',    real: marginReal,       lastMonth: marginLM,     forecast: marginFcst,     landing: marginLand,     format: 'currency', marginRow: true },
+      { label: '% PM Real',                real: ratio(marginReal, revReal) * 100, lastMonth: ratio(marginLM, revLM) * 100, forecast: ratio(marginFcst, revFcst) * 100, landing: ratio(marginLand, revLand) * 100, format: 'percent', marginRow: true },
+      { label: 'Worked Day',                real: workedReal, lastMonth: workedLM, forecast: workedFcst, landing: workedLand, format: 'days' },
+      { label: 'PROR',                      real: ratio(billedReal, workedReal) * 100, lastMonth: ratio(billedLM, workedLM) * 100, forecast: ratio(billedFcst, workedFcst) * 100, landing: ratio(billedLand, workedLand) * 100, format: 'percent' },
+      { label: 'ADR',                       real: ratio(revReal, workedReal),  lastMonth: ratio(revLM, workedLM),   forecast: ratio(revFcst, workedFcst),  landing: ratio(revLand, workedLand),  format: 'rate' },
+      { label: 'ADC',                       real: ratio(costReal, workedReal), lastMonth: ratio(costLM, workedLM), forecast: ratio(costFcst, workedFcst), landing: ratio(costLand, workedLand), format: 'rate' },
+    ];
+  }
+
+  formatRowValue(row: OnePagerRow, value: number): string {
+    switch (row.format) {
+      case 'percent': return this.fmtPct(value);
+      case 'days':    return this.fmt(value, 1);
+      default:        return `${this.cfmt(value)} ${this.currencySymbol}`;
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ONE PAGER — KPI OPÉRATIONNELS
+  // ══════════════════════════════════════════════════════════════
+
+  private get todayStr(): string { return new Date().toISOString().slice(0, 10); }
+
+  // ── Risks ──────────────────────────────────────────────────────
+  private get openRisks(): any[] { return this.kpiRisks.filter(r => r.status !== 'Closed'); }
+
+  get riskHighCriticalPct(): string {
+    const open = this.openRisks;
+    const hc = open.filter(r => r.rating === 'High' || r.rating === 'Critical');
+    return open.length ? `${Math.round(hc.length / open.length * 100)}% (${hc.length} / ${open.length})` : '—';
+  }
+
+  get riskMitigationPct(): string {
+    const open = this.openRisks;
+    const with_ = open.filter(r => r.mitigationAction?.trim());
+    return open.length ? `${Math.round(with_.length / open.length * 100)}% (${with_.length} / ${open.length})` : '—';
+  }
+
+  get riskOverduePct(): string {
+    const open = this.openRisks;
+    const od = open.filter(r => r.deadline && r.deadline < this.todayStr);
+    return open.length ? `${Math.round(od.length / open.length * 100)}% (${od.length} / ${open.length})` : '—';
+  }
+
+  get riskReduction(): string {
+    const grossExp = this.openRisks.reduce((s, r) => s + ((r.percentProbability || 0) / 100) * (r.costs || 0), 0);
+    const netExp   = this.openRisks.reduce((s, r) => s + (r.net || 0), 0);
+    const pct      = grossExp > 0 ? Math.round((grossExp - netExp) / grossExp * 100) : 0;
+    return grossExp > 0 ? `${pct}%` : '—';
+  }
+
+  get riskExposure(): string {
+    const gross = this.openRisks.reduce((s, r) => s + (r.probEval || 0) * (r.impactEval || 0), 0);
+    const net   = this.openRisks.reduce((s, r) => s + ((r.probabilityResidual || 0) / 100) * (r.impactEval || 0), 0);
+    return gross > 0 ? `${this.fmt(gross, 1)} → ${this.fmt(net, 1)}` : '—';
+  }
+
+  // ── Issues ─────────────────────────────────────────────────────
+  private get openIssues(): any[] { return this.kpiIssues.filter(i => i.status === 'Open' || i.status === 'Reopened'); }
+
+  get issueOpenPct(): string {
+    const n = this.kpiIssues.length;
+    const o = this.openIssues.length;
+    return n ? `${Math.round(o / n * 100)}% (${o} / ${n})` : '—';
+  }
+
+  get issueHighCriticalPct(): string {
+    const open = this.openIssues;
+    const hc = open.filter(i => i.impacts === 'Critical Impact' || i.impacts === 'High Impact');
+    return open.length ? `${Math.round(hc.length / open.length * 100)}% (${hc.length} / ${open.length})` : '—';
+  }
+
+  get issueOverduePct(): string {
+    const open = this.openIssues;
+    const od = open.filter(i => i.deadline && i.deadline < this.todayStr);
+    return open.length ? `${Math.round(od.length / open.length * 100)}% (${od.length} / ${open.length})` : '—';
+  }
+
+  get issueNetChange30j(): string {
+    const cutoff = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+    const recent = this.kpiIssues.filter(i => (i.identificationDate || i.createdAt || '') >= cutoff).length;
+    const n = this.kpiIssues.length;
+    return n ? `${Math.round(recent / n * 100)}% (${recent} / ${n})` : '—';
+  }
+
+  // ── Opportunities ──────────────────────────────────────────────
+  private get pipelineOpps(): any[] { return this.kpiOpps.filter(o => o.status !== 'Lost'); }
+
+  get oppPipelineValue(): string {
+    const t = this.pipelineOpps.reduce((s, o) => s + (o.price || 0), 0);
+    return `${Math.round(t / 1000)} k€`;
+  }
+
+  get oppAvgMargin(): string {
+    const p = this.pipelineOpps.filter(o => o.price);
+    if (!p.length) return '—';
+    const avgB = p.reduce((s, o) => s + (o.estimatedBenefit || 0), 0) / p.length;
+    const avgP = p.reduce((s, o) => s + ((o.price - (o.costs || 0)) / o.price * 100), 0) / p.length;
+    return `${this.fmt(avgB)} € | ${Math.round(avgP)}%`;
+  }
+
+  get oppWinRate(): string {
+    const won  = this.kpiOpps.filter(o => o.status === 'Won').length;
+    const closed = this.kpiOpps.filter(o => o.status === 'Won' || o.status === 'Lost').length;
+    return closed ? `${Math.round(won / closed * 100)}%` : '—';
+  }
+
+  get oppRealizedBenefit(): string {
+    const t = this.kpiOpps.filter(o => o.status === 'Won').reduce((s, o) => s + (o.estimatedBenefit || 0), 0);
+    return `${Math.round(t / 1000)} k€`;
+  }
+
+  // ── MIP ────────────────────────────────────────────────────────
+  get mipSecuredGains(): string {
+    const t = this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
+    return `${Math.round(t / 1000)} k€`;
+  }
+
+  get mipActivePipeline(): string {
+    const t = this.kpiMips.filter(m => m.status === 'In Progress').reduce((s, m) => s + (m.plannedGain || 0), 0);
+    return `${Math.round(t / 1000)} k€`;
+  }
+
+  get mipContributionPct(): string {
+    const secured = this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
+    const rev = this.totalRevenue();
+    return `${rev > 0 ? Math.round(secured / rev * 100) : 0}%`;
+  }
+
+  // ── WIP ────────────────────────────────────────────────────────
+  private get pastWipRows(): any[] {
+    const ym = this.todayStr.slice(0, 7);
+    return this.kpiWipRows.filter(r => r.period <= ym);
+  }
+
+  get wipTotalDeclared(): string {
+    const t = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    return t ? `${this.fmt(t)} €` : '—';
+  }
+
+  get wipInvoicedPct(): string {
+    const decl = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const inv  = this.pastWipRows.reduce((s, r) => s + (r.invoicedAmount || 0), 0);
+    return decl > 0 ? `${Math.round(inv / decl * 100)}%` : '0%';
+  }
+
+  get wipOverdueInvoices(): string {
+    const od  = this.pastWipRows.filter(r => (r.delta || 0) < 0);
+    const amt = od.reduce((s, r) => s + Math.abs(r.delta || 0), 0);
+    const tot = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const pct = tot > 0 ? Math.round(amt / tot * 100) : 0;
+    return `${this.fmt(amt)} € / ${pct}%`;
+  }
+
+  get wipAging60j(): string {
+    const cutoff = new Date(Date.now() - 60 * 864e5);
+    const cutoffYM = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}`;
+    const aging = this.pastWipRows.filter(r => r.period <= cutoffYM);
+    const amt   = aging.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const tot   = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const pct   = tot > 0 ? Math.round(amt / tot * 100) : 0;
+    return `${this.fmt(amt)} € / ${pct}%`;
+  }
+
+  // ── Health Score ───────────────────────────────────────────────
+  get scoreFinance(): number {
+    const target = this.budgetMarginPct();
+    if (!target) return 0;
+    return Math.min(100, Math.max(0, Math.round(this.totalMarginPct() / target * 100)));
+  }
+
+  get scoreRisks(): number {
+    const open = this.openRisks;
+    if (!open.length) return 100;
+    const hcPct = open.filter(r => r.rating === 'High' || r.rating === 'Critical').length / open.length * 100;
+    const odPct = open.filter(r => r.deadline && r.deadline < this.todayStr).length / open.length * 100;
+    return Math.max(0, Math.round(100 - hcPct * 0.6 - odPct * 0.4));
+  }
+
+  get scoreIssues(): number {
+    const n = this.kpiIssues.length;
+    if (!n) return 100;
+    const openPct = this.openIssues.length / n * 100;
+    const odPct   = this.openIssues.filter(i => i.deadline && i.deadline < this.todayStr).length / (this.openIssues.length || 1) * 100;
+    return Math.max(0, Math.round(100 - openPct * 0.5 - odPct * 0.5));
+  }
+
+  get scoreFacturation(): number {
+    const decl = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const inv  = this.pastWipRows.reduce((s, r) => s + (r.invoicedAmount || 0), 0);
+    return decl > 0 ? Math.min(100, Math.round(inv / decl * 100)) : 0;
+  }
+
+  get scoreMIP(): number {
+    const secured = this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
+    const planned = this.kpiMips.reduce((s, m) => s + (m.plannedGain || 0), 0);
+    return planned > 0 ? Math.min(100, Math.round(secured / planned * 100)) : 0;
+  }
+
+  /** Health Score = Finance×35% + Risks×20% + Issues×15% + Facturation×20% + MIP×10% */
+  get healthScoreCalc(): number {
+    return Math.round(
+      this.scoreFinance     * 0.35 +
+      this.scoreRisks       * 0.20 +
+      this.scoreIssues      * 0.15 +
+      this.scoreFacturation * 0.20 +
+      this.scoreMIP         * 0.10
+    );
+  }
+
+  scoreClass(s: number): string {
+    if (s >= 80) return 'score-green';
+    if (s >= 60) return 'score-orange';
+    return 'score-red';
+  }
+
+  /** Convertit le Health Score calculé (0-100) en valeur RAYG automatique. */
+  get ragFromScore(): string {
+    const s = this.healthScoreCalc;
+    if (s >= 80) return 'ON_TRACK';
+    if (s >= 60) return 'MINOR_RISKS';
+    if (s >= 40) return 'AT_RISK';
+    return 'OFF_TRACK';
+  }
+
+  // ── Charts ────────────────────────────────────────────────────────
+  get chartMonthlyTrendData(): ChartData<'bar'> {
+    const labels = this.months.map(m => this.formatMonth(m));
+    const costColor    = '#f97316';
+    const costColorEtc = 'rgba(249,115,22,0.30)';
+    const revColor    = '#0ea5e9';
+    const revColorEtc = 'rgba(14,165,233,0.30)';
+
+    let cumRev = 0, cumCost = 0;
+    const cumRevenue: number[] = [];
+    const cumCostArr: number[] = [];
+    const margePct: number[] = [];
+
+    this.months.forEach(m => {
+      cumRev  += this.convert(this.revenueForMonth(m));
+      cumCost += this.convert(this.directCostForMonth(m));
+      cumRevenue.push(cumRev);
+      cumCostArr.push(cumCost);
+      margePct.push(cumRev > 0 ? ((cumRev - cumCost) / cumRev) * 100 : 0);
+    });
+
+    const isReal   = this.months.map(m => this.monthStatusFor(m) === 'REAL');
+    const targetPct = this.budgetMarginPct();
+
+    return {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Cost YtD',
+          data: cumCostArr.map((v, i) => isReal[i] ? v : null),
+          backgroundColor: costColor,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'bar',
+          label: 'Revenu YtD',
+          data: cumRevenue.map((v, i) => isReal[i] ? v : null),
+          backgroundColor: revColor,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'bar',
+          label: 'Cost ETC',
+          data: cumCostArr.map((v, i) => isReal[i] ? null : v),
+          backgroundColor: costColorEtc,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'bar',
+          label: 'Revenu ETC',
+          data: cumRevenue.map((v, i) => isReal[i] ? null : v),
+          backgroundColor: revColorEtc,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'line',
+          label: '%Marge',
+          data: margePct,
+          borderColor: '#10b981',
+          backgroundColor: '#10b981',
+          pointBackgroundColor: '#10b981',
+          pointStyle: 'rectRot',
+          pointRadius: 4,
+          tension: 0.3,
+          yAxisID: 'y1',
+          order: 1
+        },
+        {
+          type: 'line',
+          label: 'PM Target',
+          data: this.months.map(() => targetPct),
+          borderColor: '#ef4444',
+          backgroundColor: '#ef4444',
+          pointRadius: 0,
+          borderWidth: 2,
+          yAxisID: 'y1',
+          order: 2
+        }
+      ]
+    } as unknown as ChartData<'bar'>;
+  }
+
+  readonly chartMonthlyTrendOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => {
+            const label = ctx.dataset.label || '';
+            const value = ctx.parsed.y;
+            if (value == null) return '';
+            if (label === '%Marge' || label === 'PM Target') {
+              return `${label}: ${this.fmt(value, 1)}%`;
+            }
+            return `${label}: ${this.fmt(value)} ${this.currencySymbol}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { font: { size: 10 } } },
+      y: { type: 'linear', position: 'left', ticks: { font: { size: 10 } } },
+      y1: {
+        type: 'linear', position: 'right', min: 0, max: 100,
+        ticks: { font: { size: 10 }, callback: (v: any) => v + '%' },
+        grid: { drawOnChartArea: false }
+      }
+    }
+  };
+
+  /** Version non cumulée (mois par mois) du graphique "KPI Financier Cumulé". */
+  get chartMonthlyBreakdownData(): ChartData<'bar'> {
+    const labels = this.months.map(m => this.formatMonth(m));
+    const costColor    = '#059669';
+    const costColorEtc = 'rgba(5,150,105,0.30)';
+    const revColor    = '#f97316';
+    const revColorEtc = 'rgba(249,115,22,0.30)';
+
+    const revenue = this.months.map(m => this.convert(this.revenueForMonth(m)));
+    const cost    = this.months.map(m => this.convert(this.directCostForMonth(m)));
+    const margePct = revenue.map((rev, i) => rev > 0 ? ((rev - cost[i]) / rev) * 100 : 0);
+
+    const isReal    = this.months.map(m => this.monthStatusFor(m) === 'REAL');
+    const targetPct = this.budgetMarginPct();
+
+    return {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Cost Réel',
+          data: cost.map((v, i) => isReal[i] ? v : null),
+          backgroundColor: costColor,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'bar',
+          label: 'Revenu Réel',
+          data: revenue.map((v, i) => isReal[i] ? v : null),
+          backgroundColor: revColor,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'bar',
+          label: 'Cost Prév.',
+          data: cost.map((v, i) => isReal[i] ? null : v),
+          backgroundColor: costColorEtc,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'bar',
+          label: 'Revenu Prév.',
+          data: revenue.map((v, i) => isReal[i] ? null : v),
+          backgroundColor: revColorEtc,
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          type: 'line',
+          label: '%Marge',
+          data: margePct,
+          borderColor: '#7c3aed',
+          backgroundColor: '#7c3aed',
+          pointBackgroundColor: '#7c3aed',
+          pointStyle: 'rectRot',
+          pointRadius: 4,
+          tension: 0.3,
+          yAxisID: 'y1',
+          order: 1
+        },
+        {
+          type: 'line',
+          label: 'PM Target',
+          data: this.months.map(() => targetPct),
+          borderColor: '#dc2626',
+          backgroundColor: '#dc2626',
+          pointRadius: 0,
+          borderWidth: 2,
+          yAxisID: 'y1',
+          order: 2
+        }
+      ]
+    } as unknown as ChartData<'bar'>;
+  }
+
+  get chartMonthlyBreakdownOptions(): ChartOptions<'bar'> {
+    return this.chartMonthlyTrendOptions;
+  }
+
+  /** Graphique "bullet" : barre Budget (fond) + barre Réel superposée + repère Atterrissage. */
+  get chartBudgetVsRealVsLandingData(): ChartData<'bar'> {
+    const revReal = this.sumByStatus(m => this.revenueForMonth(m), 'REAL');
+    const revLand = this.sumByStatus(m => this.revenueForMonth(m), 'ALL');
+    const costReal = this.sumByStatus(m => this.directCostForMonth(m), 'REAL');
+    const costLand = this.sumByStatus(m => this.directCostForMonth(m), 'ALL');
+    return {
+      labels: ['Revenue', 'Direct Cost'],
+      datasets: [
+        {
+          type: 'bar', label: 'Budget',
+          data: [this.convert(this.budgetRevenueTotal()), this.convert(this.budgetCostTotal())],
+          backgroundColor: '#e2e8f0', borderColor: '#cbd5e1', borderWidth: 1, borderRadius: 4,
+          barPercentage: 0.6, categoryPercentage: 0.6, grouped: false, order: 3
+        },
+        {
+          type: 'bar', label: 'Réel',
+          data: [this.convert(revReal), this.convert(costReal)],
+          backgroundColor: '#3B5BDB', borderRadius: 4,
+          barPercentage: 0.6, categoryPercentage: 0.6, grouped: false, order: 2
+        },
+        {
+          type: 'line', label: 'Atterrissage',
+          data: [this.convert(revLand), this.convert(costLand)],
+          borderColor: '#E91E8C', backgroundColor: '#E91E8C',
+          pointStyle: 'line', pointBorderColor: '#E91E8C', pointBackgroundColor: '#E91E8C',
+          pointRadius: 16, pointHoverRadius: 16, pointBorderWidth: 3,
+          borderWidth: 0, showLine: false, order: 1
+        }
+      ]
+    } as unknown as ChartData<'bar'>;
+  }
+
+  readonly chartBudgetVsRealVsLandingOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => {
+            const value = ctx.parsed.y;
+            if (value == null) return '';
+            return `${ctx.dataset.label}: ${this.fmt(value)} ${this.currencySymbol}`;
+          },
+          afterBody: (items: any[]) => {
+            const idx = items[0]?.dataIndex;
+            if (idx == null) return [];
+            const isRevenue = idx === 0;
+            const budget = isRevenue ? this.budgetRevenueTotal() : this.budgetCostTotal();
+            const real = isRevenue
+              ? this.sumByStatus(m => this.revenueForMonth(m), 'REAL')
+              : this.sumByStatus(m => this.directCostForMonth(m), 'REAL');
+            const land = isRevenue
+              ? this.sumByStatus(m => this.revenueForMonth(m), 'ALL')
+              : this.sumByStatus(m => this.directCostForMonth(m), 'ALL');
+            const fmtEcart = (v: number) => `${v >= 0 ? '+' : ''}${this.fmt(this.convert(v))} ${this.currencySymbol}`;
+            return [
+              `Écart Réel vs Budget: ${fmtEcart(real - budget)}`,
+              `Écart Atterrissage vs Budget: ${fmtEcart(land - budget)}`
+            ];
+          }
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { font: { size: 11 } } },
+      y: { ticks: { font: { size: 10 } }, beginAtZero: true }
+    }
+  };
+
+  /** Écart Atterrissage vs Budget (€ bruts, non convertis) — affiché sous le graphe bullet. */
+  get budgetGapRevenue(): number {
+    return this.sumByStatus(m => this.revenueForMonth(m), 'ALL') - this.budgetRevenueTotal();
+  }
+
+  get budgetGapCost(): number {
+    return this.sumByStatus(m => this.directCostForMonth(m), 'ALL') - this.budgetCostTotal();
+  }
+
+  get chartMarginGaugeData(): ChartData<'doughnut'> {
+    const realPct = Math.max(0, Math.min(100, this.totalMarginPct()));
+    const targetPct = Math.max(0, Math.min(100, this.budgetMarginPct()));
+    const realColor = this.marginGaugeColor(this.totalMarginPct());
+    return {
+      labels: ['PM Real', 'BM Target'],
+      datasets: [
+        { label: 'PM Real',   data: [realPct, 100 - realPct],     backgroundColor: [realColor, '#e2e8f0'], borderWidth: 0 },
+        { label: 'BM Target', data: [targetPct, 100 - targetPct], backgroundColor: ['#94a3b8', '#f1f5f9'], borderWidth: 0 },
+      ]
+    };
+  }
+
+  readonly chartMarginGaugeOptions: ChartOptions<'doughnut'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+  };
+
   // ── Add / Delete category ────────────────────────────────────────
   openAddCategoryModal(forRebill = false): void {
     this.newCategoryName = '';
@@ -1012,12 +1806,13 @@ export class ProjectManagementComponent implements OnInit {
     this.editValue = currentVal > 0 ? String(currentVal) : '';
   }
 
+  private resourceFieldMap: Record<string, keyof Pick<ResourceRow,'dailyCosts'|'workedDays'|'billedDays'|'dailyRates'>> = {
+    dailyCost: 'dailyCosts', workedDays: 'workedDays', billedDays: 'billedDays', dailyRate: 'dailyRates'
+  };
+
   saveResourceEdit(resource: ResourceRow, month: string, field: string): void {
     const val = parseFloat(this.editValue) || 0;
-    const fieldMap: Record<string, keyof Pick<ResourceRow,'dailyCosts'|'workedDays'|'billedDays'|'dailyRates'>> = {
-      dailyCost: 'dailyCosts', workedDays: 'workedDays', billedDays: 'billedDays', dailyRate: 'dailyRates'
-    };
-    const prop = fieldMap[field];
+    const prop = this.resourceFieldMap[field];
     const previousVal = resource[prop][month];
     resource[prop][month] = val;
     this.editingCell = null;
@@ -1031,6 +1826,56 @@ export class ProjectManagementComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  // ── Copy-paste from Excel into resource cells (dailyCost/workedDays/billedDays) ──
+  private parsePastedNumber(raw: string): number | null {
+    const cleaned = raw.trim().replace(/\s/g, '').replace(',', '.').replace(/[^\d.\-]/g, '');
+    if (cleaned === '' || cleaned === '-') return 0;
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+
+  onResourcePaste(event: ClipboardEvent, resource: ResourceRow, month: string, field: string): void {
+    const text = event.clipboardData?.getData('text');
+    if (!text) return;
+    event.preventDefault();
+
+    const rows = text.split(/\r\n|\n|\r/).filter(line => line.trim().length > 0);
+    if (!rows.length) return;
+
+    const prop = this.resourceFieldMap[field];
+    const startResourceIndex = this.resources.indexOf(resource);
+    const startMonthIndex = this.months.indexOf(month);
+    if (startResourceIndex === -1 || startMonthIndex === -1) return;
+
+    rows.forEach((row, ri) => {
+      const target = this.resources[startResourceIndex + ri];
+      if (!target) return;
+      row.split('\t').forEach((cell, ci) => {
+        const m = this.months[startMonthIndex + ci];
+        if (!m) return;
+        const num = this.parsePastedNumber(cell);
+        if (num === null) return;
+        const previousVal = target[prop][m];
+        target[prop][m] = num;
+        this.api.saveResourceEntry({ resourceId: target.id, month: m, [field]: num }).subscribe({
+          error: (err) => {
+            target[prop][m] = previousVal;
+            const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+            this.showSaveError('❌ ' + msg);
+            this.cdr.markForCheck();
+          }
+        });
+      });
+    });
+
+    // The focused cell's input is about to be removed from the DOM, which triggers a
+    // (blur) -> saveResourceEdit() using the stale `editValue`. Sync it to the pasted
+    // value first so that re-save is a no-op instead of overwriting it with 0.
+    this.editValue = String(resource[prop][month] ?? 0);
+    this.editingCell = null;
+    this.cdr.markForCheck();
   }
 
   // ── Inline editing - other cost cells ───────────────────────────
@@ -1094,6 +1939,16 @@ export class ProjectManagementComponent implements OnInit {
     });
   }
 
+  private matchContractType(raw: string): string {
+    const norm = raw.toLowerCase().trim();
+    const exact = this.contractTypes.find(c => c.toLowerCase() === norm);
+    if (exact) return exact;
+    if (norm.includes('anapec')) return 'Anapec';
+    if (norm.includes('extern')) return 'External subco';
+    if (norm.includes('intern')) return 'Internal subco';
+    return 'Internal subco';
+  }
+
   parseBulkPaste(): void {
     this.bulkPreview = this.bulkPasteText
       .split('\n')
@@ -1104,9 +1959,7 @@ export class ProjectManagementComponent implements OnInit {
         const personName = (cols[0] || '').trim();
         const matricule  = (cols[1] || '').trim();
         const rawContract = (cols[2] || '').trim();
-        const contractType = this.contractTypes.find(
-          c => c.toLowerCase() === rawContract.toLowerCase()
-        ) || 'Internal';
+        const contractType = this.matchContractType(rawContract);
         let error: string | undefined;
         if (!personName) error = 'Nom manquant';
         else if (!matricule) error = 'Matricule manquant';
@@ -1136,6 +1989,47 @@ export class ProjectManagementComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  // ── Bulk selection (Daily Cost tab) ────────────────────────────────
+  isResourceSelected(id: number): boolean {
+    return this.selectedResourceIds.has(id);
+  }
+
+  toggleResourceSelection(id: number): void {
+    if (this.selectedResourceIds.has(id)) {
+      this.selectedResourceIds.delete(id);
+    } else {
+      this.selectedResourceIds.add(id);
+    }
+    this.cdr.markForCheck();
+  }
+
+  get allResourcesSelected(): boolean {
+    return this.resources.length > 0 && this.resources.every(r => this.selectedResourceIds.has(r.id));
+  }
+
+  toggleSelectAllResources(): void {
+    if (this.allResourcesSelected) {
+      this.selectedResourceIds.clear();
+    } else {
+      this.resources.forEach(r => this.selectedResourceIds.add(r.id));
+    }
+    this.cdr.markForCheck();
+  }
+
+  deleteSelectedResources(): void {
+    if (this.selectedResourceIds.size === 0) return;
+    this.pendingDelete = { type: 'resources-bulk', ids: Array.from(this.selectedResourceIds), name: '' };
+    this.showDeleteModal = true;
+    this.cdr.markForCheck();
+  }
+
+  deleteAllResources(): void {
+    if (!this.resources.length) return;
+    this.pendingDelete = { type: 'resources-all', ids: this.resources.map(r => r.id), name: '' };
+    this.showDeleteModal = true;
+    this.cdr.markForCheck();
+  }
+
   confirmDelete(): void {
     if (!this.pendingDelete) return;
     this.showDeleteModal = false;
@@ -1144,6 +2038,12 @@ export class ProjectManagementComponent implements OnInit {
     } else if (this.pendingDelete.type === 'category') {
       this.api.deleteOtherCostCategory({ projectId: this.projectId, category: this.pendingDelete.name }).subscribe({
         next: () => this.load()
+      });
+    } else if (this.pendingDelete.type === 'resources-bulk' || this.pendingDelete.type === 'resources-all') {
+      const ids = this.pendingDelete.ids || [];
+      Promise.allSettled(ids.map(id => lastValueFrom(this.api.deleteResource(id)))).then(() => {
+        this.selectedResourceIds.clear();
+        this.load();
       });
     }
     this.pendingDelete = null;
@@ -1171,10 +2071,24 @@ export class ProjectManagementComponent implements OnInit {
     return `${sign}${v.toFixed(1)}%`;
   }
 
+  /** Montant signé (+/-) avec devise — utilisé pour Δ R-B, DVI€, OverRun */
+  cfmtSigned(v: number): string {
+    if (!v) return '—';
+    const sign = v > 0 ? '+' : '';
+    return `${sign}${this.cfmt(v)} ${this.currencySymbol}`;
+  }
+
   marginClass(pct: number): string {
     if (pct >= 20) return 'positive';
     if (pct >= 0) return 'neutral';
     return 'negative';
+  }
+
+  /** Pour les écarts (Δ R-B, DVI, OverRun…) : >0 = positive, <0 = negative, =0 = neutral */
+  varianceClass(value: number): string {
+    if (value > 0) return 'positive';
+    if (value < 0) return 'negative';
+    return 'neutral';
   }
 
   // ══════════════════════════════════════════════════════════════

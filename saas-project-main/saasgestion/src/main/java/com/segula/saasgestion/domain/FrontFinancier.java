@@ -11,9 +11,9 @@ import java.time.OffsetDateTime;
 public class FrontFinancier {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "code", length = 10, nullable = false, unique = true)
+    @Column(name = "code", length = 255, nullable = false, unique = true)
     private String code;
-    @Column(name = "label", length = 150)
+    @Column(name = "label", length = 255)
     private String label;
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;

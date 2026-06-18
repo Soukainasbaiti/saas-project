@@ -1,8 +1,10 @@
 package com.segula.saasgestion.service;
 
+import com.segula.saasgestion.domain.Project;
 import com.segula.saasgestion.domain.ProjectRisk;
 import com.segula.saasgestion.dto.CreateRiskRequest;
 import com.segula.saasgestion.dto.ProjectRiskDto;
+import com.segula.saasgestion.repository.ProjectRepository;
 import com.segula.saasgestion.repository.ProjectRiskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 public class RiskService {
 
     private final ProjectRiskRepository riskRepo;
+    private final ProjectRepository projectRepo;
 
     // ── Rating matrix ─────────────────────────────────────────────
     private static final Map<String, Map<String, String>> RATING_MATRIX = Map.of(
@@ -57,7 +60,10 @@ public class RiskService {
         int year  = req.getIdentificationDate() != null
             ? req.getIdentificationDate().getYear()
             : LocalDate.now().getYear();
-        String rId = String.format("R_%04d_%04d", year, count + 1);
+        String projectCode = projectRepo.findById(req.getProjectId())
+            .map(p -> p.getProjectId() != null ? p.getProjectId() : p.getProjectCode())
+            .orElse("UNKNOWN");
+        String rId = String.format("R_%s_%04d_%04d", projectCode, year, count + 1);
 
         ProjectRisk risk = ProjectRisk.builder()
             .projectId(req.getProjectId())

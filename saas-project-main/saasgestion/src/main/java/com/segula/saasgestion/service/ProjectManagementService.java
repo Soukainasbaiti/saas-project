@@ -33,6 +33,8 @@ public class ProjectManagementService {
     private final EngagementRepository engagementRepository;
     private final ProjectWorkTypeRepository workTypeRepo;
     private final ProjectWorkTicketRepository workTicketRepo;
+    private final ProjectMonthStatusRepository monthStatusRepo;
+    private final ProjectMonthlyForecastRepository monthlyForecastRepo;
 
 
     // ── Get full management DTO ────────────────────────────────────
@@ -108,6 +110,19 @@ public class ProjectManagementService {
                 .build();
         }).collect(Collectors.toList());
 
+        // Statut Réel/Prévision par mois (uniquement les valeurs explicitement choisies par le PM)
+        Map<String, String> monthStatusMap = monthStatusRepo.findByProjectId(projectId).stream()
+            .collect(Collectors.toMap(ProjectMonthStatus::getPeriod, ProjectMonthStatus::getStatus));
+
+        // Prévisions budgétaires mensuelles (revenue/cost/cov) pour le One Pager
+        Map<String, MonthlyForecastDto> monthlyForecastsMap = monthlyForecastRepo.findByProjectIdOrderByMonthAsc(projectId).stream()
+            .collect(Collectors.toMap(ProjectMonthlyForecast::getMonth, f -> MonthlyForecastDto.builder()
+                .month(f.getMonth())
+                .revenue(f.getRevenue())
+                .cost(f.getCost())
+                .cov(f.getCov())
+                .build()));
+
         ProjectManagementConfig config = configRepo.findById(projectId).orElse(null);
         String currency         = config != null ? config.getCurrency()         : "EUR";
         String validationStatus = config != null ? config.getValidationStatus() : "DRAFT";
@@ -116,6 +131,17 @@ public class ProjectManagementService {
         String rejectionComment = config != null ? config.getRejectionComment() : null;
         String bumName = project.getBu().getBumName();
 
+        // One Pager : Health & Delivery (saisie PM)
+        String deliveryConfidenceLevel  = config != null ? config.getDeliveryConfidenceLevel()  : null;
+        Integer healthScoreValue        = config != null ? config.getHealthScoreValue()         : null;
+        String healthScoreStatus        = config != null ? config.getHealthScoreStatus()        : null;
+        String pmRemarks                = config != null ? config.getPmRemarks()                : null;
+        String varianceActualComment    = config != null ? config.getVarianceActualComment()    : null;
+        String varianceTrendComment     = config != null ? config.getVarianceTrendComment()     : null;
+        String varianceLandingComment   = config != null ? config.getVarianceLandingComment()   : null;
+        String tops                     = config != null ? config.getTops()                     : null;
+        String flops                    = config != null ? config.getFlops()                    : null;
+
         return ProjectManagementDto.builder()
             .projectId(projectId)
             .projectName(project.getProjectName() != null ? project.getProjectName() : project.getActivity())
@@ -123,6 +149,10 @@ public class ProjectManagementService {
             .granularityLocked(locked)
             .currency(currency)
             .months(periods)
+            .monthStatus(monthStatusMap)
+            .monthlyForecasts(monthlyForecastsMap)
+            .startDate(project.getStartDate())
+            .endDate(project.getEndDate())
             .resources(resourceDtos)
             .otherCosts(otherCostDtos)
             .validationStatus(validationStatus)
@@ -133,9 +163,18 @@ public class ProjectManagementService {
             .engagementType(project.getEngagement() != null ? project.getEngagement().getEngagementType() : null)
             .clientName(project.getCustomer() != null ? project.getCustomer().getName() : "")
             .buTrigram(project.getBu() != null ? project.getBu().getTrigram() : "")
-            .pmName(project.getProjectManager() != null ? project.getProjectManager().getPersonName() : "")
+            .pmName(project.getProjectManager() != null ? project.getProjectManager().getFullName() : "")
             .projectCode(project.getProjectCode() != null ? project.getProjectCode() : "")
             .projectBusinessId(project.getProjectId() != null ? project.getProjectId() : "")
+            .deliveryConfidenceLevel(deliveryConfidenceLevel)
+            .healthScoreValue(healthScoreValue)
+            .healthScoreStatus(healthScoreStatus)
+            .pmRemarks(pmRemarks)
+            .varianceActualComment(varianceActualComment)
+            .varianceTrendComment(varianceTrendComment)
+            .varianceLandingComment(varianceLandingComment)
+            .tops(tops)
+            .flops(flops)
             .build();
     }
 
@@ -158,9 +197,46 @@ public class ProjectManagementService {
         configRepo.save(config);
     }
 
+    // ── One Pager : Health & Delivery (saisie PM) ──────────────────
+    @Transactional
+    public void updateOnePagerExtras(Long projectId, ProjectManagementDto req) {
+        ProjectManagementConfig config = configRepo.findById(projectId)
+            .orElse(ProjectManagementConfig.builder().projectId(projectId).build());
+        config.setDeliveryConfidenceLevel(req.getDeliveryConfidenceLevel());
+        config.setHealthScoreValue(req.getHealthScoreValue());
+        config.setHealthScoreStatus(req.getHealthScoreStatus());
+        config.setPmRemarks(req.getPmRemarks());
+        config.setVarianceActualComment(req.getVarianceActualComment());
+        config.setVarianceTrendComment(req.getVarianceTrendComment());
+        config.setVarianceLandingComment(req.getVarianceLandingComment());
+        config.setTops(req.getTops());
+        config.setFlops(req.getFlops());
+        configRepo.save(config);
+    }
+
     public boolean isGranularityLocked(Long projectId) {
         // Locked as soon as the user explicitly confirmed a granularity choice
         return configRepo.existsById(projectId);
+    }
+
+    // ── Statut Réel/Prévision par mois ───────────────────────────────
+    @Transactional
+    public List<MonthStatusDto> updateMonthStatus(Long projectId, List<MonthStatusDto> updates) {
+        if (!projectRepository.existsById(projectId)) {
+            throw new IllegalArgumentException("Projet introuvable: " + projectId);
+        }
+        for (MonthStatusDto u : updates) {
+            ProjectMonthStatus status = monthStatusRepo.findByProjectIdAndPeriod(projectId, u.getMonth())
+                .orElse(ProjectMonthStatus.builder()
+                    .projectId(projectId)
+                    .period(u.getMonth())
+                    .build());
+            status.setStatus(u.getStatus());
+            monthStatusRepo.save(status);
+        }
+        return monthStatusRepo.findByProjectId(projectId).stream()
+            .map(s -> MonthStatusDto.builder().month(s.getPeriod()).status(s.getStatus()).build())
+            .toList();
     }
 
     // ── Resources ──────────────────────────────────────────────────

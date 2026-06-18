@@ -4,6 +4,8 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
+const REMEMBERED_EMAIL_KEY = 'remembered_email';
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -28,6 +30,11 @@ export class LoginComponent {
       email:    ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+
+    const rememberedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    if (rememberedEmail) {
+      this.form.patchValue({ email: rememberedEmail });
+    }
   }
 
   togglePassword(): void {
@@ -46,6 +53,7 @@ export class LoginComponent {
     this.auth.login(this.form.value).subscribe({
       next: res => {
         this.loading = false;
+        localStorage.setItem(REMEMBERED_EMAIL_KEY, this.form.value.email);
         if (res.forceChange) {
           this.router.navigate(['/change-password']);
         } else {
