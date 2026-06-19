@@ -4,6 +4,7 @@ import com.segula.saasgestion.domain.*;
 import com.segula.saasgestion.dto.*;
 import com.segula.saasgestion.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProjectManagementService {
@@ -256,11 +258,13 @@ public class ProjectManagementService {
             .isActive(true)
             .build();
         resourceRepo.save(resource);
+        log.info("Ressource ajoutée : projet={} nom={}", req.getProjectId(), req.getPersonName());
     }
 
     @Transactional
     public void deleteResource(Long resourceId) {
         resourceRepo.deleteById(resourceId);
+        log.info("Ressource supprimée : id={}", resourceId);
     }
 
     @Transactional
@@ -283,6 +287,7 @@ public class ProjectManagementService {
         if (req.getBilledDays() != null) entry.setBilledDays(req.getBilledDays());
         if (req.getDailyRate()  != null) entry.setDailyRate(req.getDailyRate());
         entryRepo.save(entry);
+        log.debug("Saisie temps enregistrée : ressource={} mois={}", req.getResourceId(), req.getMonth());
     }
 
     // ── Other costs ────────────────────────────────────────────────
@@ -348,6 +353,7 @@ public class ProjectManagementService {
         configRepo.save(config);
         historyRepo.save(ProjectValidationHistory.builder()
             .projectId(projectId).action("SUBMITTED").actorName(pmName).build());
+        log.info("One Pager soumis pour validation : projet={} pm={}", projectId, pmName);
     }
 
     @Transactional
@@ -362,6 +368,7 @@ public class ProjectManagementService {
         configRepo.save(config);
         historyRepo.save(ProjectValidationHistory.builder()
             .projectId(projectId).action("VALIDATED").actorName(bumName).build());
+        log.info("One Pager validé : projet={} bum={}", projectId, bumName);
     }
 
     @Transactional
@@ -376,6 +383,7 @@ public class ProjectManagementService {
         configRepo.save(config);
         historyRepo.save(ProjectValidationHistory.builder()
             .projectId(projectId).action("REJECTED").actorName(bumName).comment(comment).build());
+        log.warn("One Pager rejeté : projet={} bum={} motif={}", projectId, bumName, comment);
     }
 
     public List<Map<String, Object>> getValidationHistory() {

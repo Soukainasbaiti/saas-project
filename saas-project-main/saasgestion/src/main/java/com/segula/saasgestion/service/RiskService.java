@@ -7,6 +7,7 @@ import com.segula.saasgestion.dto.ProjectRiskDto;
 import com.segula.saasgestion.repository.ProjectRepository;
 import com.segula.saasgestion.repository.ProjectRiskRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RiskService {
@@ -92,7 +94,9 @@ public class RiskService {
             .closureDate(req.getClosureDate())
             .build();
 
-        return toDto(riskRepo.save(risk));
+        ProjectRiskDto result = toDto(riskRepo.save(risk));
+        log.info("Risque créé : {} projet={} rating={}", rId, req.getProjectId(), result.getRating());
+        return result;
     }
 
     @Transactional
@@ -135,6 +139,7 @@ public class RiskService {
     @Transactional
     public void deleteRisk(Long id) {
         riskRepo.deleteById(id);
+        log.info("Risque supprimé : id={}", id);
     }
 
     // ── Helpers ───────────────────────────────────────────────────

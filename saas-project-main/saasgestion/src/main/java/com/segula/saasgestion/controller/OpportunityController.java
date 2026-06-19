@@ -3,6 +3,8 @@ package com.segula.saasgestion.controller;
 import com.segula.saasgestion.dto.CreateOpportunityRequest;
 import com.segula.saasgestion.dto.ProjectOpportunityDto;
 import com.segula.saasgestion.service.OpportunityService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
+@Tag(name = "Registre Opportunités", description = "Gestion des opportunités commerciales identifiées dans le projet")
+@SecurityRequirement(name = "bearerAuth")
 public class OpportunityController {
 
     private final OpportunityService opportunityService;

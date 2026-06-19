@@ -4,6 +4,7 @@ import com.segula.saasgestion.domain.*;
 import com.segula.saasgestion.dto.*;
 import com.segula.saasgestion.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
@@ -165,6 +167,7 @@ public class ProjectService {
 
         Project saved = projectRepo.save(p);
         saveMonthlyForecasts(saved.getId(), req);
+        log.info("Projet créé : id={} code={} pm={}", saved.getId(), saved.getProjectId(), pm.getFullName());
         return toDetailDto(saved);
     }
 
@@ -304,7 +307,9 @@ public class ProjectService {
                 ? ProjectStatus.ON_GOING
                 : ProjectStatus.fromDbValue(req.getStatus().trim()));
 
-        return toDetailDto(projectRepo.save(p));
+        ProjectDetailDto result = toDetailDto(projectRepo.save(p));
+        log.info("Projet mis à jour : id={} code={}", id, p.getProjectId());
+        return result;
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -315,6 +320,7 @@ public class ProjectService {
         Project p = projectRepo.findById(id).orElseThrow();
         p.setDeletedAt(OffsetDateTime.now());
         projectRepo.save(p);
+        log.info("Projet archivé : id={}", id);
     }
 
     // ────────────────────────────────────────────────────────────────

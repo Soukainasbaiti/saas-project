@@ -6,6 +6,7 @@ import com.segula.saasgestion.dto.ProjectOpportunityDto;
 import com.segula.saasgestion.repository.ProjectOpportunityRepository;
 import com.segula.saasgestion.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OpportunityService {
@@ -64,7 +66,9 @@ public class OpportunityService {
             .comments(req.getComments())
             .build();
 
-        return toDto(opportunityRepo.save(opp));
+        ProjectOpportunityDto result = toDto(opportunityRepo.save(opp));
+        log.info("Opportunité créée : {} projet={}", oId, req.getProjectId());
+        return result;
     }
 
     @Transactional
@@ -95,6 +99,7 @@ public class OpportunityService {
     @Transactional
     public void deleteOpportunity(Long id) {
         opportunityRepo.deleteById(id);
+        log.info("Opportunité supprimée : id={}", id);
     }
 
     // ── Helpers ───────────────────────────────────────────────────

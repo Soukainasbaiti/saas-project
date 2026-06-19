@@ -2,6 +2,8 @@ package com.segula.saasgestion.controller;
 
 import com.segula.saasgestion.dto.ReferenceDto;
 import com.segula.saasgestion.repository.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/ref")
 @RequiredArgsConstructor
+@Tag(name = "Référentiels", description = "Listes de référence accessibles aux PMs : BU, clients, industries, disciplines, engagements")
+@SecurityRequirement(name = "bearerAuth")
 public class ReferenceDataController {
 
     private final BuRepository                    buRepo;

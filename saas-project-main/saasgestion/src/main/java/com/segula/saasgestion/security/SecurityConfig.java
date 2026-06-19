@@ -39,6 +39,8 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/refresh").permitAll()
                 // Approbation projet via token email (public — le token fait office d'autorisation)
                 .requestMatchers("/admin/approve/**").permitAll()
+                // Swagger UI & OpenAPI docs
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 // Route change-password : accessible avec n'importe quel JWT valide
                 .requestMatchers("/auth/change-password").authenticated()
                 // Routes admin uniquement

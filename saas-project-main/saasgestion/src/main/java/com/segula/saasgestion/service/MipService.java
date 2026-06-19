@@ -6,6 +6,7 @@ import com.segula.saasgestion.dto.ProjectMipDto;
 import com.segula.saasgestion.repository.ProjectMipRepository;
 import com.segula.saasgestion.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MipService {
@@ -56,7 +58,9 @@ public class MipService {
             .status(req.getStatus() != null ? req.getStatus() : "Identified")
             .build();
 
-        return toDto(mipRepo.save(mip));
+        ProjectMipDto result = toDto(mipRepo.save(mip));
+        log.info("MIP créé : {} projet={}", mipId, req.getProjectId());
+        return result;
     }
 
     @Transactional
@@ -82,6 +86,7 @@ public class MipService {
     @Transactional
     public void deleteMip(Long id) {
         mipRepo.deleteById(id);
+        log.info("MIP supprimé : id={}", id);
     }
 
     private ProjectMipDto toDto(ProjectMip m) {

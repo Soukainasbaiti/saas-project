@@ -2,6 +2,8 @@ package com.segula.saasgestion.controller;
 
 import com.segula.saasgestion.dto.ProjectCreateRequest;
 import com.segula.saasgestion.service.ProjectPendingService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/projects/pending")
 @RequiredArgsConstructor
+@Tag(name = "Projets en attente", description = "Modification et re-soumission des projets en attente d'approbation")
+@SecurityRequirement(name = "bearerAuth")
 public class ProjectEditController {
 
     private final ProjectPendingService pendingService;

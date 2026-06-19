@@ -3,6 +3,8 @@ package com.segula.saasgestion.controller;
 import com.segula.saasgestion.dto.CreateMipRequest;
 import com.segula.saasgestion.dto.ProjectMipDto;
 import com.segula.saasgestion.service.MipService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
+@Tag(name = "Registre MIP", description = "Points d'amélioration importants (Most Important Points)")
+@SecurityRequirement(name = "bearerAuth")
 public class MipController {
 
     private final MipService mipService;

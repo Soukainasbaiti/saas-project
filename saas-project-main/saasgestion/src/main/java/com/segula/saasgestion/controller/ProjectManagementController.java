@@ -4,6 +4,9 @@ import com.segula.saasgestion.domain.AppUser;
 import com.segula.saasgestion.dto.*;
 import com.segula.saasgestion.repository.AppUserRepository;
 import com.segula.saasgestion.service.ProjectManagementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,6 +18,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
+@Tag(name = "Project Management", description = "Ressources, saisies de temps, coûts, livrables, work types, WBS et One Pager")
+@SecurityRequirement(name = "bearerAuth")
 public class ProjectManagementController {
 
     private final ProjectManagementService managementService;

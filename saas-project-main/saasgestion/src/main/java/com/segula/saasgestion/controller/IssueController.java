@@ -3,6 +3,8 @@ package com.segula.saasgestion.controller;
 import com.segula.saasgestion.dto.CreateIssueRequest;
 import com.segula.saasgestion.dto.ProjectIssueDto;
 import com.segula.saasgestion.service.IssueService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
+@Tag(name = "Registre Issues", description = "Gestion des issues projet (blocages, actions correctives)")
+@SecurityRequirement(name = "bearerAuth")
 public class IssueController {
 
     private final IssueService issueService;

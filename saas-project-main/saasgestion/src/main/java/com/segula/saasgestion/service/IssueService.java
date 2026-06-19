@@ -6,6 +6,7 @@ import com.segula.saasgestion.dto.ProjectIssueDto;
 import com.segula.saasgestion.repository.ProjectIssueRepository;
 import com.segula.saasgestion.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class IssueService {
@@ -96,7 +98,9 @@ public class IssueService {
             .remarks(req.getRemarks())
             .build();
 
-        return toDto(issueRepo.save(issue));
+        ProjectIssueDto result = toDto(issueRepo.save(issue));
+        log.info("Issue créée : {} projet={} sévérité={}", iId, req.getProjectId(), req.getSeverity());
+        return result;
     }
 
     @Transactional
@@ -139,6 +143,7 @@ public class IssueService {
     @Transactional
     public void deleteIssue(Long id) {
         issueRepo.deleteById(id);
+        log.info("Issue supprimée : id={}", id);
     }
 
     private ProjectIssueDto toDto(ProjectIssue i) {

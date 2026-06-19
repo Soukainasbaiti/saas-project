@@ -4,6 +4,8 @@ import com.segula.saasgestion.dto.ProjectWipDto;
 import com.segula.saasgestion.dto.WipMonthDocumentDto;
 import com.segula.saasgestion.dto.WipTableRowDto;
 import com.segula.saasgestion.service.WipService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +20,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/projects/{projectId}/wip")
 @RequiredArgsConstructor
+@Tag(name = "WIP (Work In Progress)", description = "Suivi mensuel du WIP : saisie, documents BL, tableau synthèse")
+@SecurityRequirement(name = "bearerAuth")
 public class WipController {
 
     private final WipService wipService;

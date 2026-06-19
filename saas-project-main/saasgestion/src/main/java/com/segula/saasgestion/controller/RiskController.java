@@ -3,6 +3,8 @@ package com.segula.saasgestion.controller;
 import com.segula.saasgestion.dto.CreateRiskRequest;
 import com.segula.saasgestion.dto.ProjectRiskDto;
 import com.segula.saasgestion.service.RiskService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
+@Tag(name = "Registre Risques", description = "Gestion des risques projet (criticité, probabilité, impact, statut)")
+@SecurityRequirement(name = "bearerAuth")
 public class RiskController {
 
     private final RiskService riskService;

@@ -5,6 +5,9 @@ import com.segula.saasgestion.dto.LoginRequest;
 import com.segula.saasgestion.dto.LoginResponse;
 import com.segula.saasgestion.dto.RefreshRequest;
 import com.segula.saasgestion.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +19,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentification", description = "Login, refresh token et changement de mot de passe")
 public class AuthController {
 
     private final AuthService authService;
 
-    // POST /auth/login
+    @Operation(summary = "Login", description = "Authentifie un utilisateur et retourne les tokens JWT access + refresh")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
         try {
@@ -32,7 +36,7 @@ public class AuthController {
         }
     }
 
-    // POST /auth/change-password  (nécessite JWT valide, même avec forceChange=true)
+    @Operation(summary = "Changer le mot de passe", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/change-password")
     public ResponseEntity<Map<String, String>> changePassword(
             @Valid @RequestBody ChangePasswordRequest req,
@@ -43,7 +47,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Mot de passe mis à jour avec succès"));
     }
 
-    // POST /auth/refresh
+    @Operation(summary = "Rafraîchir les tokens", description = "Génère un nouveau access token à partir du refresh token")
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshRequest req) {
         try {

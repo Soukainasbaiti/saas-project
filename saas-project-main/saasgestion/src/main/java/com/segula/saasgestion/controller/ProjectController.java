@@ -4,6 +4,9 @@ import com.segula.saasgestion.dto.*;
 import com.segula.saasgestion.repository.AppUserRepository;
 import com.segula.saasgestion.service.ProjectPendingService;
 import com.segula.saasgestion.service.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -16,12 +19,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
+@Tag(name = "Projets", description = "CRUD projets, dashboard stats et prévisions mensuelles")
+@SecurityRequirement(name = "bearerAuth")
 public class ProjectController {
 
     private final ProjectService        projectService;
     private final ProjectPendingService pendingService;
     private final AppUserRepository     userRepo;
 
+    @Operation(summary = "Lister les projets", description = "Pagination + filtres BU, client, statut, année, recherche texte")
     @GetMapping
     public ResponseEntity<PagedResponse<ProjectListDto>> list(
             @RequestParam(required = false) String buId,
@@ -45,6 +51,7 @@ public class ProjectController {
         );
     }
 
+    @Operation(summary = "Détail d'un projet")
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDetailDto> detail(@PathVariable Long id) {
         ProjectDetailDto proj = projectService.findById(id);
@@ -52,7 +59,7 @@ public class ProjectController {
         return ResponseEntity.ok(proj);
     }
 
-    // ── POST : soumet pour approbation admin ──────────────────────
+    @Operation(summary = "Créer un projet", description = "Soumet le projet pour approbation par l'admin (envoi email Brevo)")
     @PostMapping
     public ResponseEntity<Map<String, String>> create(
             @Valid @RequestBody ProjectCreateRequest req,
@@ -97,6 +104,7 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Stats dashboard", description = "KPIs globaux : budget total, CA réalisé, taux de rentabilité, répartition statuts")
     @GetMapping("/stats/dashboard")
     public ResponseEntity<DashboardStatsDto> dashboardStats(
             @RequestParam(required = false) Short year,

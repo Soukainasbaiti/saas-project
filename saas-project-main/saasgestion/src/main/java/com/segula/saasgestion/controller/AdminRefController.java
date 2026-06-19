@@ -2,6 +2,8 @@ package com.segula.saasgestion.controller;
 
 import com.segula.saasgestion.domain.*;
 import com.segula.saasgestion.repository.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,8 @@ import java.util.*;
 @RequestMapping("/admin/ref")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Référentiels Admin", description = "CRUD des données de référence : BU, clients, industries, disciplines, engagements")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminRefController {
 
     private final BuRepository                    buRepo;
