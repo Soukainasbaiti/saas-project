@@ -13,7 +13,7 @@ server:
   port: 8080
 
 app:
-  base-url: ${FRONTEND_URL:http://localhost}
+  base-url: ${FRONTEND_URL:https://saas-gestion-front.vercel.app}
   jwt:
     secret: ${JWT_SECRET:segula-saas-super-secret-key-2024-must-be-at-least-32-chars}
     access-token-ms: 3600000

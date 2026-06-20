@@ -103,6 +103,18 @@ export class ApiService {
     return this.http.get<any>(`${this.base}/admin/wip-global`);
   }
 
+  getAdminPending(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/admin/pending`);
+  }
+
+  approveProject(token: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/approve/${token}`, { action: 'approve' });
+  }
+
+  rejectProject(token: string, reason: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/approve/${token}`, { action: 'reject', reason });
+  }
+
   getDashboardStats(year?: number): Observable<DashboardStats> {
     let params = new HttpParams();
     if (year) params = params.set('year', year);

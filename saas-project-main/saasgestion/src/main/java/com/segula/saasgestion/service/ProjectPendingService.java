@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -104,6 +105,26 @@ public class ProjectPendingService {
 
         log.info("Projet soumis pour approbation par userId={}, token={}", submitterId, token);
         return token;
+    }
+
+    // ── Lister tous les projets PENDING (pour l'admin) ───────────
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> listAllPending() {
+        return pendingRepo.findAllPending().stream().map(p -> {
+            ProjectCreateRequest req = deserialize(p.getPayload());
+            Map<String, Object> item = new java.util.LinkedHashMap<>();
+            item.put("token",       p.getApprovalToken());
+            item.put("status",      p.getStatus());
+            item.put("submittedBy", p.getSubmittedBy().getFullName());
+            item.put("submittedAt", p.getCreatedAt());
+            item.put("expiresAt",   p.getExpiresAt());
+            item.put("activity",    req.getActivity());
+            item.put("buId",        req.getBuId());
+            item.put("frontFinancier", req.getFrontFinancier());
+            item.put("revenueBudget",  req.getRevenueBudget());
+            item.put("costBudget",     req.getCostBudget());
+            return item;
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     // ── Approuver un projet ───────────────────────────────────────

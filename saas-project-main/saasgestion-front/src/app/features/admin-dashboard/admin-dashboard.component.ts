@@ -57,6 +57,10 @@ export class AdminDashboardComponent implements OnInit {
   moduleStats: Map<number, any> = new Map();
   wipGlobalAmount = 0;
 
+  // Projets en attente d'approbation
+  pendingProjects: any[] = [];
+  pendingLoading = false;
+
   // ── Export ──────────────────────────────────────────────────
   showExportModal = false;
   exportFormat: 'excel' | 'pdf' = 'excel';
@@ -81,6 +85,7 @@ export class AdminDashboardComponent implements OnInit {
     this.loadProjects();
     this.loadRefData();
     this.loadModuleStats();
+    this.loadPendingProjects();
     this.initEditForm();
   }
 
@@ -141,6 +146,55 @@ export class AdminDashboardComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  loadPendingProjects(): void {
+    this.pendingLoading = true;
+    this.api.getAdminPending().subscribe({
+      next: data => {
+        this.pendingProjects = data;
+        this.pendingLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.pendingLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  approvePending(token: string): void {
+    if (!confirm('Approuver ce projet ?')) return;
+    this.api.approveProject(token).subscribe({
+      next: () => {
+        this.snack.open('Projet approuvé et créé avec succès.', 'OK', { duration: 3000 });
+        this.loadPendingProjects();
+        this.loadProjects();
+        this.cdr.markForCheck();
+      },
+      error: (err: any) => {
+        this.snack.open(err.error?.error || 'Erreur lors de l\'approbation.', 'Fermer', { duration: 5000 });
+      }
+    });
+  }
+
+  rejectPending(token: string): void {
+    const reason: string = prompt('Motif du rejet (optionnel) :') || '';
+    this.api.rejectProject(token, reason).subscribe({
+      next: () => {
+        this.snack.open('Projet rejeté.', 'OK', { duration: 3000 });
+        this.loadPendingProjects();
+        this.cdr.markForCheck();
+      },
+      error: (err: any) => {
+        this.snack.open(err.error?.error || 'Erreur lors du rejet.', 'Fermer', { duration: 5000 });
+      }
+    });
+  }
+
+  fmtEur(v: number | null): string {
+    if (v == null) return '—';
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
   }
 
   getStats(projectId: number): any {

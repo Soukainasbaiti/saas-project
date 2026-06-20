@@ -45,6 +45,13 @@ public class AdminController {
     private final ProjectWipRepository      wipRepo;
     private final ProjectRepository         projectRepo;
 
+    // ── GET /admin/pending — liste tous les projets PENDING ──────
+    @GetMapping("/pending")
+    public ResponseEntity<List<Map<String, Object>>> listPending() {
+        List<Map<String, Object>> result = pendingService.listAllPending();
+        return ResponseEntity.ok(result);
+    }
+
     // ── GET /admin/approve/{token} ────────────────────────────────
     @GetMapping("/approve/{token}")
     public ResponseEntity<?> getPendingDetail(@PathVariable String token) {

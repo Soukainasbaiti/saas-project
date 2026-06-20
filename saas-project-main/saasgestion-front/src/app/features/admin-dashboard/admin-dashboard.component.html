@@ -76,6 +76,61 @@
       </div>
     </div>
 
+    <!-- Projets à approuver -->
+    <div class="pending-section" *ngIf="pendingProjects.length > 0 || pendingLoading">
+      <div class="pending-header">
+        <div class="pending-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Projets à approuver
+          <span class="pending-count" *ngIf="pendingProjects.length > 0">{{ pendingProjects.length }}</span>
+        </div>
+      </div>
+
+      <div class="pending-loading" *ngIf="pendingLoading">
+        <div class="spinner"></div><span>Chargement...</span>
+      </div>
+
+      <table class="pending-table" *ngIf="!pendingLoading && pendingProjects.length > 0">
+        <thead>
+          <tr>
+            <th>Activité</th>
+            <th>BU</th>
+            <th>Front Fin.</th>
+            <th>Soumis par</th>
+            <th>Soumis le</th>
+            <th>CA Prévu</th>
+            <th>Coût Prévu</th>
+            <th>Expire le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of pendingProjects">
+            <td><b>{{ p.activity }}</b></td>
+            <td><span class="bu-badge">{{ p.buId }}</span></td>
+            <td>{{ p.frontFinancier }}</td>
+            <td>{{ p.submittedBy }}</td>
+            <td>{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="val-money">{{ fmtEur(p.revenueBudget) }}</td>
+            <td class="val-money">{{ fmtEur(p.costBudget) }}</td>
+            <td class="expiry-cell">{{ p.expiresAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-approve" (click)="approvePending(p.token)" title="Approuver">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                  Approuver
+                </button>
+                <button class="btn-reject" (click)="rejectPending(p.token)" title="Rejeter">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  Rejeter
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- Table -->
     <div class="table-card">
 
