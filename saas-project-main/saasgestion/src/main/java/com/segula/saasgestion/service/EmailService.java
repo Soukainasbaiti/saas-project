@@ -193,6 +193,71 @@ public class EmailService {
         }
     }
 
+    @Async
+    public void sendOnePagerSubmittedToAdmin(
+            String adminEmail, String adminName,
+            String pmName, Long projectId,
+            String projectName, java.math.BigDecimal revenueBudget, java.math.BigDecimal costBudget) {
+
+        try {
+            log.info("=== ENVOI EMAIL One Pager SUBMITTED à admin {} ===", adminEmail);
+
+            double rev  = revenueBudget  != null ? revenueBudget.doubleValue()  : 0;
+            double cost = costBudget     != null ? costBudget.doubleValue()      : 0;
+            String marge = rev > 0
+                ? String.format("%.0f%%", ((rev - cost) / rev) * 100)
+                : "—";
+            String dashboardUrl = baseUrl + "/projects/" + projectId + "/management";
+
+            String tdStyle = "padding:6px 10px;border:1px solid #ccc;";
+            String thStyle = tdStyle + "background:#f1f5f9;font-weight:600;width:200px;";
+
+            String html = """
+                <div style='font-family:Arial,sans-serif;max-width:620px;margin:0 auto'>
+                    <div style='background:#1e3a5f;padding:16px 24px;border-radius:8px 8px 0 0'>
+                        <h2 style='color:#fff;margin:0;font-size:18px'>One Pager soumis pour validation</h2>
+                    </div>
+                    <div style='padding:20px;background:#fff;border:1px solid #e2e8f0;border-top:none'>
+                        <p>Bonjour <b>%s</b>,</p>
+                        <p>Le PM <b>%s</b> a soumis le One Pager du projet suivant pour votre validation :</p>
+                        <table style='border-collapse:collapse;width:100%%'>
+                            <tr><td style='%s'>Projet</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Chef de projet</td><td style='%s'>%s</td></tr>
+                            <tr><td style='%s'>Previsions CA</td><td style='%s'>%.0f EUR</td></tr>
+                            <tr><td style='%s'>Previsions Couts</td><td style='%s'>%.0f EUR</td></tr>
+                            <tr><td style='%s'>Marge Projet</td><td style='%s'>%s</td></tr>
+                        </table>
+                        <br>
+                        <p>Cliquez ci-dessous pour accéder au projet et valider ou rejeter le One Pager :</p>
+                        <div style='margin-top:16px'>
+                            <a href='%s' style='background:#1e3a5f;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600'>
+                                Voir et valider le projet
+                            </a>
+                        </div>
+                        <p style='color:#64748b;font-size:12px;margin-top:16px'>Connectez-vous sur la plateforme SaaS Gestion pour approuver ou rejeter ce One Pager.</p>
+                    </div>
+                </div>
+                """.formatted(
+                    adminName,
+                    pmName,
+                    thStyle, tdStyle, projectName,
+                    thStyle, tdStyle, pmName,
+                    thStyle, tdStyle, rev,
+                    thStyle, tdStyle, cost,
+                    thStyle, tdStyle, marge,
+                    dashboardUrl
+            );
+
+            sendViaBrevo(adminEmail, adminName,
+                "[SEGULA] One Pager à valider — " + projectName, html);
+
+            log.info("=== EMAIL One Pager SUBMITTED envoyé à {} ===", adminEmail);
+
+        } catch (Exception e) {
+            log.error("=== ERREUR EMAIL One Pager SUBMITTED === {}", e.getMessage(), e);
+        }
+    }
+
     private void sendViaBrevo(String toEmail, String toName, String subject, String html) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

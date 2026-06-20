@@ -37,6 +37,8 @@ public class ProjectManagementService {
     private final ProjectWorkTicketRepository workTicketRepo;
     private final ProjectMonthStatusRepository monthStatusRepo;
     private final ProjectMonthlyForecastRepository monthlyForecastRepo;
+    private final AppUserRepository appUserRepository;
+    private final EmailService emailService;
 
 
     // ── Get full management DTO ────────────────────────────────────
@@ -354,6 +356,23 @@ public class ProjectManagementService {
         historyRepo.save(ProjectValidationHistory.builder()
             .projectId(projectId).action("SUBMITTED").actorName(pmName).build());
         log.info("One Pager soumis pour validation : projet={} pm={}", projectId, pmName);
+
+        // Notifier tous les admins actifs par email
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null) {
+            List<AppUser> admins = appUserRepository.findAllActiveAdmins();
+            if (admins.isEmpty()) {
+                log.warn("Aucun admin actif trouvé pour notifier la soumission One Pager projet={}", projectId);
+            }
+            for (AppUser admin : admins) {
+                emailService.sendOnePagerSubmittedToAdmin(
+                    admin.getEmail(), admin.getFullName(),
+                    pmName, projectId,
+                    project.getProjectName() != null ? project.getProjectName() : project.getActivity(),
+                    project.getRevenueBudget(), project.getCostBudget()
+                );
+            }
+        }
     }
 
     @Transactional
