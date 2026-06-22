@@ -1291,7 +1291,7 @@ export class ProjectManagementComponent implements OnInit {
 
   get issueHighCriticalPct(): string {
     const open = this.openIssues;
-    const hc = open.filter(i => i.impacts === 'Critical Impact' || i.impacts === 'High Impact');
+    const hc = open.filter(i => i.severity === 'High' || i.impacts === 'Critical Impact');
     return open.length ? `${Math.round(hc.length / open.length * 100)}% (${hc.length} / ${open.length})` : '—';
   }
 
