@@ -1330,7 +1330,7 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   get oppRealizedBenefit(): string {
-    const t = this.kpiOpps.filter(o => o.status === 'Won').reduce((s, o) => s + (o.estimatedBenefit || 0), 0);
+    const t = this.kpiOpps.filter(o => o.status === 'Won' && o.copilValidation === 'Validated').reduce((s, o) => s + (o.estimatedBenefit || 0), 0);
     return `${Math.round(t / 1000)} k€`;
   }
 
