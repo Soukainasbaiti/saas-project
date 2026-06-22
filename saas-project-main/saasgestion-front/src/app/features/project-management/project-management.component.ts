@@ -1309,10 +1309,10 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   // ── Opportunities ──────────────────────────────────────────────
-  private get pipelineOpps(): any[] { return this.kpiOpps.filter(o => o.status !== 'Lost'); }
+  private get pipelineOpps(): any[] { return this.kpiOpps.filter(o => o.status !== 'Won' && o.status !== 'Lost'); }
 
   get oppPipelineValue(): string {
-    const t = this.pipelineOpps.reduce((s, o) => s + (o.price || 0), 0);
+    const t = this.pipelineOpps.reduce((s, o) => s + (o.estimatedBenefit || 0), 0);
     return `${Math.round(t / 1000)} k€`;
   }
 
