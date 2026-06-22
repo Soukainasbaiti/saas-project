@@ -1317,11 +1317,10 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   get oppAvgMargin(): string {
-    const p = this.pipelineOpps.filter(o => o.price);
-    if (!p.length) return '—';
-    const avgB = p.reduce((s, o) => s + (o.estimatedBenefit || 0), 0) / p.length;
-    const avgP = p.reduce((s, o) => s + ((o.price - (o.costs || 0)) / o.price * 100), 0) / p.length;
-    return `${this.fmt(avgB)} € | ${Math.round(avgP)}%`;
+    const p = this.pipelineOpps;
+    const totalBenefit = p.reduce((s, o) => s + (o.estimatedBenefit || 0), 0);
+    const totalPrice   = p.reduce((s, o) => s + (o.price || 0), 0);
+    return totalPrice > 0 ? `${Math.round(totalBenefit / totalPrice * 100)}%` : '—';
   }
 
   get oppWinRate(): string {
