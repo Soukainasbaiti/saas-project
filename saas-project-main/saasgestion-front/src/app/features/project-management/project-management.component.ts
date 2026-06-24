@@ -505,6 +505,7 @@ export class ProjectManagementComponent implements OnInit {
   kpiOpps:    any[] = [];
   kpiMips:    any[] = [];
   kpiWipRows: any[] = [];
+  tenderMargin: number = 0;
 
   // ── Engagement modules (Revenus — Résultats) ─────────────────────
   engagementModules = { workPackage: false, unitOfWork: false };
@@ -715,6 +716,7 @@ export class ProjectManagementComponent implements OnInit {
     this.api.getOpportunities(this.projectId).subscribe({ next: d => { this.kpiOpps = d; this.cdr.markForCheck(); } });
     this.api.getMips(this.projectId).subscribe({ next: d => { this.kpiMips = d; this.cdr.markForCheck(); } });
     this.api.getWipTable(this.projectId).subscribe({ next: d => { this.kpiWipRows = d; this.cdr.markForCheck(); } });
+    this.api.getProject(this.projectId).subscribe({ next: p => { this.tenderMargin = Number(p.marginBudget) || 0; this.cdr.markForCheck(); } });
   }
 
   goBack(): void {
@@ -1341,14 +1343,13 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   get mipActivePipeline(): string {
-    const t = this.kpiMips.filter(m => m.status === 'In Progress').reduce((s, m) => s + (m.plannedGain || 0), 0);
+    const t = this.kpiMips.filter(m => m.status !== 'Completed' && m.status !== 'Cancelled').reduce((s, m) => s + (m.plannedGain || 0), 0);
     return `${Math.round(t / 1000)} k€`;
   }
 
   get mipContributionPct(): string {
     const secured = this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
-    const rev = this.totalRevenue();
-    return `${rev > 0 ? Math.round(secured / rev * 100) : 0}%`;
+    return this.tenderMargin > 0 ? `${Math.round(secured / this.tenderMargin * 100)}%` : '—';
   }
 
   // ── WIP ────────────────────────────────────────────────────────
