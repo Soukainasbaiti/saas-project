@@ -1359,7 +1359,7 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   get wipTotalDeclared(): string {
-    const t = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const t = this.pastWipRows.reduce((s, r) => s + Math.max((r.delta ?? 0), 0), 0);
     return t ? `${this.fmt(t)} €` : '—';
   }
 
