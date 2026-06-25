@@ -1349,7 +1349,8 @@ export class ProjectManagementComponent implements OnInit {
 
   get mipContributionPct(): string {
     const secured = this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
-    return this.tenderMargin > 0 ? `${Math.round(secured / this.tenderMargin * 100)}%` : '0%';
+    const forecastMargin = this.budgetRevenueTotal() - this.budgetCostTotal();
+    return forecastMargin > 0 ? `${Math.round(secured / forecastMargin * 100)}%` : '0%';
   }
 
   // ── WIP ────────────────────────────────────────────────────────
