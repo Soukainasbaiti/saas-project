@@ -169,42 +169,39 @@
           </div>
         </div>
 
-        <!-- Identity block -->
-        <div class="op-identity">
-          <div class="op-id-item">
-            <span class="op-id-label">Project ID</span>
-            <span class="op-id-value">{{ projectBusinessId || '—' }}</span>
-          </div>
-          <div class="op-id-item">
-            <span class="op-id-label">Project Name</span>
-            <span class="op-id-value">{{ projectName || '—' }}</span>
-          </div>
-          <div class="op-id-item">
-            <span class="op-id-label">PM</span>
-            <span class="op-id-value">{{ projectPmName || '—' }}</span>
-          </div>
-          <div class="op-id-item">
-            <span class="op-id-label">Customer</span>
-            <span class="op-id-value">{{ projectClientName || '—' }}</span>
-          </div>
-          <div class="op-id-item">
-            <span class="op-id-label">Start — End Date</span>
-            <span class="op-id-value">{{ startDate ? (startDate | date:'dd/MM/yyyy') : '—' }} → {{ endDate ? (endDate | date:'dd/MM/yyyy') : '—' }}</span>
-          </div>
-          <div class="op-id-item op-as-of">
-            <span class="op-id-label">{{ i18n.lang()==='fr' ? 'Au' : 'As of' }}</span>
-            <span class="op-id-value">{{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '—' }}</span>
-          </div>
-        </div>
-
-        <!-- KPI table -->
+        <!-- KPI table (identity intégrée dans thead pour alignement parfait) -->
         <div class="matrix-scroll">
           <table class="matrix-table onepager-table">
             <thead>
+              <!-- ── Ligne identité projet ── -->
+              <tr class="op-identity-row">
+                <th class="col-indicator sticky-col op-id-th">
+                  <span class="op-id-label">{{ i18n.t('op.id_label') }}</span>
+                  <span class="op-id-value">{{ projectBusinessId || '—' }}</span>
+                </th>
+                <th class="col-op-val op-id-th">
+                  <span class="op-id-label">{{ i18n.t('op.name_label') }}</span>
+                  <span class="op-id-value op-id-value--name">{{ projectName || '—' }}</span>
+                </th>
+                <th class="col-op-val op-id-th">
+                  <span class="op-id-label">PM</span>
+                  <span class="op-id-value">{{ projectPmName || '—' }}</span>
+                </th>
+                <th class="col-op-val op-id-th">
+                  <span class="op-id-label">{{ i18n.t('op.customer_label') }}</span>
+                  <span class="op-id-value">{{ projectClientName || '—' }}</span>
+                </th>
+                <th class="col-op-val op-id-th op-as-of">
+                  <span class="op-id-label">{{ i18n.t('op.dates_label') }}</span>
+                  <span class="op-id-value">{{ startDate ? (startDate | date:'dd/MM/yyyy') : '—' }} → {{ endDate ? (endDate | date:'dd/MM/yyyy') : '—' }}</span>
+                  <span class="op-id-asof">{{ i18n.t('op.asof') }} {{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '—' }}</span>
+                </th>
+              </tr>
+              <!-- ── Ligne en-têtes colonnes ── -->
               <tr>
-                <th class="col-indicator sticky-col">{{ i18n.lang()==='fr' ? 'Indicateur' : 'Indicator' }}</th>
-                <th class="col-op-val col-op-real">{{ i18n.lang()==='fr' ? 'Réel (cumul)' : 'Real (PtD)' }}</th>
-                <th class="col-op-val col-op-real-month">{{ i18n.lang()==='fr' ? 'Réel' : 'Real' }} {{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '' }}</th>
+                <th class="col-indicator sticky-col">{{ i18n.t('op.indicator') }}</th>
+                <th class="col-op-val col-op-real">{{ i18n.t('op.real_cumul') }}</th>
+                <th class="col-op-val col-op-real-month">{{ i18n.t('op.real_month') }} {{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '' }}</th>
                 <th class="col-op-val col-op-forecast">Forecast</th>
                 <th class="col-op-val col-op-landing">Landing</th>
               </tr>
@@ -225,8 +222,8 @@
         <div class="op-charts">
           <div class="op-chart-card op-chart-cumul">
             <div class="op-chart-title op-chart-title--cumul">
-              <span class="op-chart-badge op-chart-badge--cumul">{{ i18n.lang()==='fr' ? 'CUMULÉ' : 'CUMUL.' }}</span>
-              {{ i18n.lang()==='fr' ? 'KPI Financier Cumulé' : 'Cumulative Financial KPI' }}
+              <span class="op-chart-badge op-chart-badge--cumul">{{ i18n.t('op.badge_cumul') }}</span>
+              {{ i18n.t('op.cumul_kpi') }}
             </div>
             <div class="op-chart-canvas">
               <canvas baseChart [data]="chartMonthlyTrendData" [options]="chartMonthlyTrendOptions" type="bar"></canvas>
@@ -234,34 +231,34 @@
           </div>
           <div class="op-chart-card op-chart-mensuel">
             <div class="op-chart-title op-chart-title--mensuel">
-              <span class="op-chart-badge op-chart-badge--mensuel">{{ i18n.lang()==='fr' ? 'MENSUEL' : 'MONTHLY' }}</span>
-              {{ i18n.lang()==='fr' ? 'KPI Financier Mensuel' : 'Monthly Financial KPI' }}
+              <span class="op-chart-badge op-chart-badge--mensuel">{{ i18n.t('op.badge_monthly') }}</span>
+              {{ i18n.t('op.monthly_kpi') }}
             </div>
             <div class="op-chart-canvas">
               <canvas baseChart [data]="chartMonthlyBreakdownData" [options]="chartMonthlyBreakdownOptions" type="bar"></canvas>
             </div>
           </div>
           <div class="op-chart-card">
-            <div class="op-chart-title">{{ i18n.lang()==='fr' ? 'Budget vs Réel vs Atterrissage' : 'Budget vs Real vs Landing' }}</div>
+            <div class="op-chart-title">{{ i18n.t('op.budget_vs_real') }}</div>
             <div class="op-chart-canvas">
               <canvas baseChart [data]="chartBudgetVsRealVsLandingData" [options]="chartBudgetVsRealVsLandingOptions" type="bar"></canvas>
             </div>
             <div class="op-gauge-legend op-bullet-gaps">
               <span class="op-bullet-gap" [class]="varianceClass(budgetGapRevenue)">
-                {{ i18n.lang()==='fr' ? 'Écart Revenue' : 'Revenue gap' }}: {{ cfmtSigned(budgetGapRevenue) }}
+                {{ i18n.t('op.revenue_gap') }}: {{ cfmtSigned(budgetGapRevenue) }}
               </span>
               <span class="op-bullet-gap" [class]="varianceClass(-budgetGapCost)">
-                {{ i18n.lang()==='fr' ? 'Écart Direct Cost' : 'Direct Cost gap' }}: {{ cfmtSigned(budgetGapCost) }}
+                {{ i18n.t('op.cost_gap') }}: {{ cfmtSigned(budgetGapCost) }}
               </span>
             </div>
           </div>
           <div class="op-chart-card op-gauge-card">
-            <div class="op-chart-title">{{ i18n.lang()==='fr' ? 'Marge % — Réel vs Objectif' : 'Margin % — Real vs Target' }}</div>
+            <div class="op-chart-title">{{ i18n.t('op.margin_target') }}</div>
             <div class="op-gauge-wrap">
               <canvas baseChart [data]="chartMarginGaugeData" [options]="chartMarginGaugeOptions" type="doughnut"></canvas>
               <div class="op-gauge-center">
                 <div class="op-gauge-real" [class]="marginClass(totalMarginPct())">{{ fmtPct(totalMarginPct()) }}</div>
-                <div class="op-gauge-sub">{{ i18n.lang()==='fr' ? 'Objectif' : 'Target' }} {{ fmtPct(budgetMarginPct()) }}</div>
+                <div class="op-gauge-sub">{{ i18n.t('op.target') }} {{ fmtPct(budgetMarginPct()) }}</div>
               </div>
             </div>
             <div class="op-gauge-legend">
@@ -279,11 +276,11 @@
             <div class="op-kpi-card">
               <div class="op-kpi-header op-kpi-header--risks">Risks KPI</div>
               <div class="op-kpi-body">
-                <div class="op-kpi-row"><span>% High &amp; Critical Risks</span><span>{{ riskHighCriticalPct }}</span></div>
-                <div class="op-kpi-row"><span>% Risks with Mitigation Plan</span><span>{{ riskMitigationPct }}</span></div>
-                <div class="op-kpi-row"><span>Overdue Risks (%)</span><span>{{ riskOverduePct }}</span></div>
-                <div class="op-kpi-row"><span>Risk Reduction (%)</span><span>{{ riskReduction }}</span></div>
-                <div class="op-kpi-row"><span>Risk Exposure</span><span>{{ riskExposure }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.risk.hc_pct') }}</span><span>{{ riskHighCriticalPct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.risk.mitigation') }}</span><span>{{ riskMitigationPct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.risk.overdue') }}</span><span>{{ riskOverduePct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.risk.reduction') }}</span><span>{{ riskReduction }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.risk.exposure') }}</span><span>{{ riskExposure }}</span></div>
               </div>
             </div>
 
@@ -291,10 +288,10 @@
             <div class="op-kpi-card">
               <div class="op-kpi-header op-kpi-header--issues">Issues KPI</div>
               <div class="op-kpi-body">
-                <div class="op-kpi-row"><span>Open Issues</span><span>{{ issueOpenPct }}</span></div>
-                <div class="op-kpi-row"><span>High &amp; Critical Issues</span><span>{{ issueHighCriticalPct }}</span></div>
-                <div class="op-kpi-row"><span>Overdue Issues</span><span>{{ issueOverduePct }}</span></div>
-                <div class="op-kpi-row"><span>Net Change 30j</span><span>{{ issueNetChange30j }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.issue.open') }}</span><span>{{ issueOpenPct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.issue.hc') }}</span><span>{{ issueHighCriticalPct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.issue.overdue') }}</span><span>{{ issueOverduePct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.issue.net30j') }}</span><span>{{ issueNetChange30j }}</span></div>
               </div>
             </div>
 
@@ -337,14 +334,14 @@
             <div class="op-hs-left" [style.background]="scoreClass(healthScoreCalc) === 'score-green' ? '#1b8a4f' : scoreClass(healthScoreCalc) === 'score-orange' ? '#f59e0b' : '#dc2626'">
               <div class="op-hs-label">Health Score</div>
               <div class="op-hs-value">{{ healthScoreCalc }}</div>
-              <div class="op-hs-formula">Finance×35% + Risks×20%<br>Issues×15% + Facturation×20%<br>MIP×10%</div>
+              <div class="op-hs-formula" [innerHTML]="i18n.t('op.hs_formula')"></div>
             </div>
             <div class="op-hs-scores">
               <div class="op-hs-row"><span>Score Finance</span><span class="op-hs-badge" [class]="scoreClass(scoreFinance)">{{ scoreFinance }}</span></div>
               <div class="op-hs-row"><span>Score Risks</span><span class="op-hs-badge" [class]="scoreClass(scoreRisks)">{{ scoreRisks }}</span></div>
               <div class="op-hs-row"><span>Score Issues</span><span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span></div>
               <div class="op-hs-row"><span>Score MIP</span><span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span></div>
-              <div class="op-hs-row"><span>Score Facturation</span><span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span></div>
+              <div class="op-hs-row"><span>{{ i18n.t('op.score_billing') }}</span><span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span></div>
             </div>
           </div>
         </div>
@@ -369,25 +366,25 @@
           <div class="op-health-card op-health-metric">
             <div class="op-health-label">DVI (%)</div>
             <div class="op-health-value" [class]="varianceClass(dviPct)">{{ fmtPct(dviPct) }}</div>
-            <div class="op-health-sub">{{ i18n.lang()==='fr' ? 'Marge EAC − Marge Cible' : 'EAC Margin − Target Margin' }}</div>
+            <div class="op-health-sub">{{ i18n.t('op.eac_margin') }}</div>
           </div>
           <div class="op-health-card op-health-metric">
             <div class="op-health-label">DVI (€)</div>
             <div class="op-health-value" [class]="varianceClass(dviEuro)">{{ cfmtSigned(dviEuro) }}</div>
-            <div class="op-health-sub">{{ i18n.lang()==='fr' ? 'DVI % × Revenu (EAC)' : 'DVI % × Revenue (EAC)' }}</div>
+            <div class="op-health-sub">{{ i18n.t('op.dvi_formula') }}</div>
           </div>
           <div class="op-health-card op-health-metric">
             <div class="op-health-label">OverRun</div>
             <div class="op-health-value" [class]="varianceClass(-overRun)">{{ cfmtSigned(overRun) }}</div>
-            <div class="op-health-sub">{{ i18n.lang()==='fr' ? 'Coûts EAC − Coûts budgétés' : 'EAC Costs − Budgeted Costs' }}</div>
+            <div class="op-health-sub">{{ i18n.t('op.overrun_formula') }}</div>
           </div>
         </div>
 
         <!-- PM Remarks -->
         <div class="op-remarks">
-          <div class="op-section-title">{{ i18n.lang()==='fr' ? 'Remarques du PM' : 'PM Remarks' }}</div>
+          <div class="op-section-title">{{ i18n.t('op.remarks_title') }}</div>
           <textarea class="op-remarks-textarea" rows="3" [(ngModel)]="pmRemarks" (blur)="saveOnePagerExtras()"
-                    [placeholder]="i18n.lang()==='fr' ? 'Saisir vos remarques…' : 'Enter your remarks…'"></textarea>
+                    [placeholder]="i18n.t('op.remarks_ph')"></textarea>
         </div>
 
         <!-- Variance table -->
@@ -397,7 +394,7 @@
               <tr>
                 <th class="col-indicator sticky-col">Variance</th>
                 <th class="col-op-variance">Δ R-B</th>
-                <th class="col-op-comment">Commentaires</th>
+                <th class="col-op-comment">{{ i18n.t('op.variance_comments') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -431,12 +428,12 @@
           <div class="op-topflop-card op-top-card">
             <div class="op-topflop-title">TOPs</div>
             <textarea class="op-topflop-textarea" rows="4" [(ngModel)]="tops" (blur)="saveOnePagerExtras()"
-                      [placeholder]="i18n.lang()==='fr' ? 'Points positifs…' : 'Positive highlights…'"></textarea>
+                      [placeholder]="i18n.t('op.tops_ph')"></textarea>
           </div>
           <div class="op-topflop-card op-flop-card">
             <div class="op-topflop-title">FLOPs</div>
             <textarea class="op-topflop-textarea" rows="4" [(ngModel)]="flops" (blur)="saveOnePagerExtras()"
-                      [placeholder]="i18n.lang()==='fr' ? 'Points à améliorer…' : 'Points to improve…'"></textarea>
+                      [placeholder]="i18n.t('op.flops_ph')"></textarea>
           </div>
         </div>
       </div>
@@ -461,7 +458,7 @@
             </button>
             <button class="btn-add-resource" (click)="openAddModal()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add Consultant
+              {{ i18n.t('pm.btn.add_consultant') }}
             </button>
           </div>
         </div>
@@ -574,15 +571,15 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
-              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">No consultant.</td></tr>
+              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">{{ i18n.t('pm.no_consultant_short') }}</td></tr>
             </tbody>
             <tfoot><tr class="total-row">
-              <td class="sticky-col">Total Days</td><td></td>
+              <td class="sticky-col">{{ i18n.t('pm.col.total_days') }}</td><td></td>
               <td *ngFor="let m of months" class="total-cell">{{ fmt(resourceMonthlyTotal('workedDays',m),1) }}</td>
               <td class="total-cell grand">{{ fmt(grandTotal('workedDays'),1) }}</td><td></td>
             </tr>
             <tr class="total-row labor-cost-row">
-              <td class="sticky-col">Labor Cost ({{ currencySymbol }})</td><td></td>
+              <td class="sticky-col">{{ i18n.t('pm.col.labor_cost', currencySymbol) }}</td><td></td>
               <td *ngFor="let m of months" class="total-cell cost-val">{{ cfmt(laborCostForMonth(m)) }}</td>
               <td class="total-cell grand cost-val">{{ cfmt(totalLaborCost()) }}</td><td></td>
             </tr></tfoot>
@@ -597,18 +594,18 @@
         <div class="panel-header">
           <div class="panel-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Other Costs
+            {{ i18n.t('pm.tab.other_costs') }}
           </div>
           <div class="panel-header-right">
             <button class="btn-add-resource" (click)="openAddCategoryModal(false)">
-              + Add Category
+              {{ i18n.t('pm.btn.add_category') }}
             </button>
           </div>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead><tr>
-              <th class="col-name sticky-col">Catégorie</th>
+              <th class="col-name sticky-col">{{ i18n.t('pm.col.category') }}</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Total</th>
               <th class="col-action"></th>
@@ -642,7 +639,7 @@
             </tbody>
             <tfoot>
               <tr class="total-row">
-                <td class="sticky-col">Total Coûts</td>
+                <td class="sticky-col">{{ i18n.t('pm.col.total_costs') }}</td>
                 <td *ngFor="let m of months" class="total-cell">{{ cfmt(nonRebillCostForMonth(m)) }}</td>
                 <td class="total-cell grand">{{ cfmt(nonRebillGrandTotal()) }}</td>
                 <td></td>
@@ -659,26 +656,26 @@
         <div class="panel-header">
           <div class="panel-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-            Rebill — Coûts refacturés au client
+            {{ i18n.t('pm.tab.rebill') }}
           </div>
           <div class="panel-header-right">
             <span class="rebill-legend"><span class="rebill-badge active">R</span> {{ i18n.t('pm.rebill_legend') }}</span>
             <button class="btn-add-resource" (click)="openAddCategoryModal(true)">
-              + Add Rebill Category
+              {{ i18n.t('pm.btn.add_rebill') }}
             </button>
           </div>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead><tr>
-              <th class="col-name sticky-col">Catégorie</th>
+              <th class="col-name sticky-col">{{ i18n.t('pm.col.category') }}</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Total</th>
               <th class="col-action"></th>
             </tr></thead>
             <tbody>
               <tr *ngIf="rebillCostRows.length===0">
-                <td [attr.colspan]="months.length+3" class="empty-msg">Aucune catégorie rebill — cliquez sur "+ Add Rebill Category"</td>
+                <td [attr.colspan]="months.length+3" class="empty-msg">{{ i18n.t('pm.empty.no_rebill_cat') }}</td>
               </tr>
               <tr *ngFor="let c of rebillCostRows" class="row-rebill">
                 <td class="col-name sticky-col category-cell">{{ c.category }}</td>
@@ -731,7 +728,7 @@
               <line x1="12" y1="18" x2="12" y2="12"/>
               <line x1="9" y1="15" x2="15" y2="15"/>
             </svg>
-            Générer BL
+            {{ i18n.t('pm.btn.gen_bl') }}
           </button>
         </div>
         <div class="matrix-scroll">
@@ -774,7 +771,7 @@
               <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">{{ i18n.t('pm.no_consultant_short') }}</td></tr>
             </tbody>
             <tfoot><tr class="total-row">
-              <td class="sticky-col">Total Days</td><td></td>
+              <td class="sticky-col">{{ i18n.t('pm.col.total_days') }}</td><td></td>
               <td *ngFor="let m of months" class="total-cell">{{ fmt(resourceMonthlyTotal('billedDays',m),1) }}</td>
               <td class="total-cell grand">{{ fmt(grandTotal('billedDays'),1) }}</td><td></td>
             </tr></tfoot>
@@ -829,10 +826,10 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
-              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">No consultant.</td></tr>
+              <tr *ngIf="!resources.length"><td [attr.colspan]="months.length+4" class="empty-msg">{{ i18n.t('pm.no_consultant_short') }}</td></tr>
             </tbody>
             <tfoot><tr class="total-row revenue-row">
-              <td class="sticky-col">Facturation ({{ currencySymbol }})</td><td></td>
+              <td class="sticky-col">{{ i18n.t('pm.col.facturation', currencySymbol) }}</td><td></td>
               <td *ngFor="let m of months" class="total-cell rev-val">{{ cfmt(revenueForMonth(m)) }}</td>
               <td class="total-cell grand rev-val">{{ cfmt(totalRevenue()) }}</td><td></td>
             </tr></tfoot>
@@ -847,7 +844,7 @@
         <div class="panel-header">
           <div class="panel-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Revenus Moyens — ADR × Jours Facturés + Refacturés ({{ currencySymbol }})
+            {{ i18n.t('pm.rev.moyens_title') }} ({{ currencySymbol }})
           </div>
           <div class="panel-legend">
             <span class="legend-chip chip-billing">ADR × Billed Days</span>
@@ -926,7 +923,7 @@
                     <div class="person-avatar rm-avatar-rebill">↩</div>
                     <div>
                       <div class="person-name">Rebilled Costs</div>
-                      <div class="person-matric">{{ i18n.lang()==='fr' ? 'Coûts refacturés au client' : 'Costs recharged to client' }}</div>
+                      <div class="person-matric">{{ i18n.t('pm.rev.rebill_label') }}</div>
                     </div>
                   </div>
                 </td>
@@ -954,7 +951,7 @@
               </tr>
               <!-- Total Revenue Moyens -->
               <tr class="rm-grand-total-row">
-                <td class="sticky-col rm-grand-label">Total Revenus Moyens</td><td></td>
+                <td class="sticky-col rm-grand-label">{{ i18n.t('pm.rev.total_moyens') }}</td><td></td>
                 <td *ngFor="let m of months" class="total-cell rm-grand-cell">
                   {{ cfmt(revenueForMonth(m)) }}
                 </td>
@@ -963,7 +960,7 @@
               </tr>
               <!-- Total des Coûts : (Daily Cost × Working Days) + Other Costs = Direct Cost (One Pager) -->
               <tr class="rm-cost-total-row">
-                <td class="sticky-col rm-grand-label">Total des Coûts</td><td></td>
+                <td class="sticky-col rm-grand-label">{{ i18n.t('pm.rev.total_costs') }}</td><td></td>
                 <td *ngFor="let m of months" class="total-cell rm-grand-cell">
                   {{ cfmt(directCostForMonth(m)) }}
                 </td>
@@ -977,22 +974,22 @@
         <!-- Summary cards -->
         <div class="rm-summary-cards">
           <div class="rm-card rm-card-billing">
-            <div class="rm-card-label">{{ i18n.lang()==='fr' ? 'Facturation consultants' : 'Consultant billing' }}</div>
+            <div class="rm-card-label">{{ i18n.t('pm.rev.conf_billing') }}</div>
             <div class="rm-card-value">{{ cfmt(billingGrandTotal()) }}</div>
             <div class="rm-card-sub">ADR × Billed Days</div>
           </div>
           <div class="rm-card rm-card-rebill">
             <div class="rm-card-label">Rebilled</div>
             <div class="rm-card-value">{{ cfmt(rebillRowTotal()) }}</div>
-            <div class="rm-card-sub">{{ i18n.lang()==='fr' ? 'Coûts refacturés' : 'Recharged costs' }}</div>
+            <div class="rm-card-sub">{{ i18n.t('pm.rev.recharged') }}</div>
           </div>
           <div class="rm-card rm-card-total">
-            <div class="rm-card-label">Total Revenus Moyens</div>
+            <div class="rm-card-label">{{ i18n.t('pm.rev.total_moyens') }}</div>
             <div class="rm-card-value">{{ cfmt(moyensGrandTotal()) }}</div>
             <div class="rm-card-sub">= Billing + Rebilled</div>
           </div>
           <div class="rm-card rm-card-cost">
-            <div class="rm-card-label">Total des Coûts</div>
+            <div class="rm-card-label">{{ i18n.t('pm.rev.total_costs') }}</div>
             <div class="rm-card-value">{{ cfmt(totalDirectCost()) }}</div>
             <div class="rm-card-sub">= (Daily Cost × Working Days) + Other Costs</div>
           </div>
@@ -1013,8 +1010,8 @@
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
               <div>
-                <h2 class="ec-title">Configurer les modules d'engagement</h2>
-                <p class="ec-subtitle">Activez un ou plusieurs modules selon le type de facturation de votre projet. Les deux peuvent être actifs simultanément.</p>
+                <h2 class="ec-title">{{ i18n.t('pm.rr.config_title') }}</h2>
+                <p class="ec-subtitle">{{ i18n.t('pm.rr.config_sub') }}</p>
               </div>
             </div>
 
@@ -1029,8 +1026,8 @@
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                 </div>
                 <h3 class="ec-card-title">Unit of Work</h3>
-                <p class="ec-card-desc">Suivi par livrables unitaires — facturation par quantité produite.</p>
-                <div class="ec-card-badge uow-badge">Facturation à l'unité</div>
+                <p class="ec-card-desc">{{ i18n.t('pm.rr.uow_desc') }}</p>
+                <div class="ec-card-badge uow-badge">{{ i18n.t('pm.rr.uow_badge') }}</div>
               </div>
 
               <!-- WORK PACKAGE toggle -->
@@ -1042,19 +1039,19 @@
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
                 </div>
                 <h3 class="ec-card-title">Work Package</h3>
-                <p class="ec-card-desc">Suivi par lots de travaux — facturation au forfait ou périmètre défini.</p>
-                <div class="ec-card-badge wp-badge">Facturation au forfait</div>
+                <p class="ec-card-desc">{{ i18n.t('pm.rr.wp_desc') }}</p>
+                <div class="ec-card-badge wp-badge">{{ i18n.t('pm.rr.wp_badge') }}</div>
               </div>
 
             </div>
 
             <div class="ec-confirm-bar">
-              <span class="ec-hint" *ngIf="!hasAnyModule">Sélectionnez au moins un module</span>
+              <span class="ec-hint" *ngIf="!hasAnyModule">{{ i18n.t('pm.rr.select_module') }}</span>
               <span class="ec-hint active" *ngIf="hasAnyModule">
-                {{ engagementModules.unitOfWork && engagementModules.workPackage ? 'Unit of Work + Work Package activés' : engagementModules.unitOfWork ? 'Unit of Work activé' : 'Work Package activé' }}
+                {{ engagementModules.unitOfWork && engagementModules.workPackage ? i18n.t('pm.rr.both_active') : engagementModules.unitOfWork ? i18n.t('pm.rr.uow_active') : i18n.t('pm.rr.wp_active') }}
               </span>
               <button class="ec-confirm-btn" (click)="confirmModules()" [disabled]="!hasAnyModule">
-                Confirmer →
+                {{ i18n.t('pm.rr.confirm_btn') }}
               </button>
             </div>
           </div>
@@ -1072,11 +1069,11 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 Work Package
               </div>
-              <span class="esh-label">Revenus — Résultats</span>
+              <span class="esh-label">{{ i18n.t('pm.rr.rev_resultats') }}</span>
             </div>
             <button class="esh-change-btn" (click)="openModuleConfig()" *ngIf="!isResultatsEngagement">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              Configurer
+              {{ i18n.t('pm.btn.configure') }}
             </button>
           </div>
 
@@ -1098,11 +1095,11 @@
             <!-- KPI bar -->
             <div class="wp-kpi-bar">
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Revenu Prévu</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.rev_planned') }}</span>
                 <span class="wp-kpi-value">{{ cfmt(wpTotalPlanned()) }} {{ currencySymbol }}</span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Revenu Réel (R/F)</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.rev_real') }}</span>
                 <span class="wp-kpi-value" [class.neg]="wpTotalGap()<0">{{ cfmt(wpTotalRf()) }} {{ currencySymbol }}</span>
               </div>
               <div class="wp-kpi">
@@ -1112,15 +1109,15 @@
                 </span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Taux FTR</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.ftr') }}</span>
                 <span class="wp-kpi-value ftr">{{ wpFtrRate() | number:'1.0-0' }}%</span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Taux OTD</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.otd') }}</span>
                 <span class="wp-kpi-value otd">{{ wpOtdRate() | number:'1.0-0' }}%</span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Livrables</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.deliverables') }}</span>
                 <span class="wp-kpi-value">{{ deliverables.length }}</span>
               </div>
               <button class="btn-add-resource wp-add-btn" (click)="openAddLotModal()">
@@ -1133,7 +1130,7 @@
               <span class="wp-lot-tabs-label">Lots</span>
               <div class="wp-lot-tabs-sep"></div>
               <ng-container *ngIf="lots.length === 0">
-                <span class="wp-no-lots-hint">Aucun lot — créez votre premier lot avec "+ Lot"</span>
+                <span class="wp-no-lots-hint">{{ i18n.t('pm.wp.no_lots') }}</span>
               </ng-container>
               <ng-container *ngFor="let lot of lots; let last = last">
                 <button class="wp-lot-tab" [class.active]="selectedLot === lot" (click)="selectedLot = lot">
@@ -1148,7 +1145,7 @@
             <!-- État : aucun lot sélectionné -->
             <div *ngIf="lots.length > 0 && !selectedLot" class="wp-select-lot-hint">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-              <p>Sélectionnez un lot pour voir et gérer ses livrables</p>
+              <p>{{ i18n.t('pm.wp.select_lot') }}</p>
             </div>
 
             <!-- Tableau du lot sélectionné -->
@@ -1170,7 +1167,7 @@
                   <thead>
                     <tr>
                       <th class="wp-col-id sticky-col">ID</th>
-                      <th class="wp-col-name">Deliverable Name</th>
+                      <th class="wp-col-name">{{ i18n.t('pm.uow.col.name') }}</th>
                       <th class="wp-col-disc">Discipline</th>
                       <th class="wp-col-owner">Owner</th>
                       <th class="wp-col-date">Planned Date</th>
@@ -1188,9 +1185,7 @@
                   </thead>
                   <tbody>
                     <tr *ngIf="deliverablesForLot(selectedLot).length === 0">
-                      <td colspan="15" class="empty-msg">
-                        Aucun livrable dans ce lot — cliquez sur <strong>+ Livrable</strong> pour commencer.
-                      </td>
+                      <td colspan="15" class="empty-msg">{{ i18n.t('pm.wp.no_deliverable') }}</td>
                     </tr>
                     <tr *ngFor="let d of deliverablesForLot(selectedLot)" class="wp-row">
                       <td class="wp-col-id sticky-col wp-id-cell">{{ d.deliverableId }}</td>
@@ -1285,7 +1280,7 @@
                   </tbody>
                   <tfoot *ngIf="months.length">
                     <tr class="wp-period-rev-row">
-                      <td class="sticky-col wp-tfoot-label" colspan="2">Revenu R/F par période</td>
+                      <td class="sticky-col wp-tfoot-label" colspan="2">{{ i18n.t('pm.wp.rev_period') }}</td>
                       <td colspan="5"></td>
                       <td *ngFor="let m of months" class="total-cell wp-period-rev">
                         {{ wpRevenueForPeriod(m) > 0 ? cfmt(wpRevenueForPeriod(m)) : '—' }}
@@ -1305,23 +1300,23 @@
             <!-- KPI bar -->
             <div class="wp-kpi-bar">
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Revenu Prévu</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.rev_planned') }}</span>
                 <span class="wp-kpi-value">{{ cfmt(uowTotalPlanned()) }} {{ currencySymbol }}</span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Revenu Réalisé</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.uow.rev_actual') }}</span>
                 <span class="wp-kpi-value actual">{{ cfmt(uowTotalActual()) }} {{ currencySymbol }}</span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Taux FTR</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.ftr') }}</span>
                 <span class="wp-kpi-value ftr">{{ uowFtrRate() | number:'1.0-0' }}%</span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Taux OTD</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.wp.otd') }}</span>
                 <span class="wp-kpi-value otd">{{ uowOtdRate() | number:'1.0-0' }}%</span>
               </div>
               <div class="wp-kpi">
-                <span class="wp-kpi-label">Types</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.uow.types') }}</span>
                 <span class="wp-kpi-value">{{ workTypes.length }}</span>
               </div>
               <div class="wp-kpi">
@@ -1343,7 +1338,7 @@
               <!-- bouton visible seulement sur la vue Catalogue -->
               <div class="uow-nav-action">
                 <button class="btn-add-resource" *ngIf="uowActiveView==='catalogue'" (click)="openAddWorkTypeModal()">
-                  + Type de livrable
+                  {{ i18n.t('pm.uow.add_type') }}
                 </button>
               </div>
             </div>
@@ -1354,20 +1349,20 @@
                 <div class="ecs-icon">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 </div>
-                <p class="ecs-title">Aucun type de livrable — cliquez sur <strong>+ Type de livrable</strong> pour commencer</p>
+                <p class="ecs-title">{{ i18n.t('pm.uow.no_types') }}</p>
               </div>
               <div class="matrix-scroll" *ngIf="workTypes.length">
                 <table class="matrix-table uow-catalog-table">
                   <thead><tr>
-                    <th class="uow-col-name">Nom du livrable</th>
-                    <th class="uow-col-unit">Unité</th>
-                    <th class="uow-col-price">Prix unitaire</th>
-                    <th class="uow-col-qty">Qté prévue</th>
-                    <th class="uow-col-dur">Durée/unité</th>
-                    <th class="uow-col-qty">Qté réalisée</th>
-                    <th class="uow-col-rev">Rev. Prévu</th>
-                    <th class="uow-col-rev">Rev. Réalisé</th>
-                    <th class="uow-col-pct">Avancement</th>
+                    <th class="uow-col-name">{{ i18n.t('pm.uow.col.name') }}</th>
+                    <th class="uow-col-unit">{{ i18n.t('pm.uow.col.unit') }}</th>
+                    <th class="uow-col-price">{{ i18n.t('pm.uow.col.unit_price') }}</th>
+                    <th class="uow-col-qty">{{ i18n.t('pm.uow.col.qty_planned') }}</th>
+                    <th class="uow-col-dur">{{ i18n.t('pm.uow.col.duration') }}</th>
+                    <th class="uow-col-qty">{{ i18n.t('pm.uow.col.qty_actual') }}</th>
+                    <th class="uow-col-rev">{{ i18n.t('pm.uow.col.rev_planned') }}</th>
+                    <th class="uow-col-rev">{{ i18n.t('pm.uow.col.rev_actual') }}</th>
+                    <th class="uow-col-pct">{{ i18n.t('pm.uow.col.progress') }}</th>
                     <th class="col-action"></th>
                   </tr></thead>
                   <tbody>
@@ -1400,7 +1395,7 @@
             <!-- ── VUE TICKETS (Accordion) ── -->
             <ng-container *ngIf="uowActiveView==='tickets'">
               <div *ngIf="!workTypes.length" class="engagement-coming-soon">
-                <p class="ecs-title">Aucun type de livrable — allez dans <strong>Catalogue</strong> pour en créer un d'abord</p>
+                <p class="ecs-title">{{ i18n.t('pm.uow.no_types_cat') }}</p>
               </div>
 
             <!-- ACCORDION : un bloc par type de livrable -->
@@ -1426,23 +1421,23 @@
               <!-- Corps accordéon : tickets du type -->
               <div class="uow-acc-body" *ngIf="isExpanded(wt.id)">
                 <div *ngIf="!ticketsForType(wt.id).length" class="uow-no-ticket">
-                  Aucun ticket pour ce type — cliquez sur <strong>+ Ticket</strong> pour en ajouter un.
+                  {{ i18n.t('pm.uow.no_tickets') }}
                 </div>
 
                 <div class="matrix-scroll" *ngIf="ticketsForType(wt.id).length">
                   <table class="matrix-table uow-ticket-table">
                     <thead><tr>
                       <th class="uow-col-id">ID</th>
-                      <th class="uow-col-qty">Qté</th>
+                      <th class="uow-col-qty">{{ i18n.t('pm.uow.col.qty_planned') }}</th>
                       <th class="uow-col-owner">Consultant</th>
-                      <th class="uow-col-date">Assigné le</th>
-                      <th class="uow-col-date">Début</th>
-                      <th class="uow-col-date">Fin prévue</th>
-                      <th class="uow-col-date">Livraison</th>
+                      <th class="uow-col-date">{{ i18n.t('pm.uow.col.assigned') }}</th>
+                      <th class="uow-col-date">{{ i18n.t('pm.uow.col.start') }}</th>
+                      <th class="uow-col-date">{{ i18n.t('pm.uow.col.end_planned') }}</th>
+                      <th class="uow-col-date">{{ i18n.t('pm.uow.col.delivery') }}</th>
                       <th class="uow-col-status">Status</th>
                       <th class="uow-col-ftr">FTR</th>
                       <th class="uow-col-otd">On Time</th>
-                      <th class="uow-col-rev">Revenu</th>
+                      <th class="uow-col-rev">{{ i18n.t('pm.uow.col.revenue') }}</th>
                       <th class="uow-col-comment">Comments</th>
                       <th class="col-action"></th>
                     </tr></thead>
