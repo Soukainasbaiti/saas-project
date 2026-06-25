@@ -1364,27 +1364,29 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   get wipInvoicedPct(): string {
-    const decl = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
-    const inv  = this.pastWipRows.reduce((s, r) => s + (r.invoicedAmount || 0), 0);
-    return decl > 0 ? `${Math.round(inv / decl * 100)}%` : '0%';
+    // % Invoiced vs Planned : sum(declaredAmount des périodes facturées) / sum(declaredAmount total)
+    const all  = this.pastWipRows;
+    const decl = all.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const declWithInvoice = all.filter(r => (r.invoicedAmount || 0) > 0)
+                               .reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    return decl > 0 ? `${Math.round(declWithInvoice / decl * 100)}%` : '0%';
   }
 
   get wipOverdueInvoices(): string {
-    const od  = this.pastWipRows.filter(r => (r.delta || 0) < 0);
-    const amt = od.reduce((s, r) => s + Math.abs(r.delta || 0), 0);
-    const tot = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
-    const pct = tot > 0 ? Math.round(amt / tot * 100) : 0;
-    return `${this.fmt(amt)} € / ${pct}%`;
+    // Overdue Invoices : factures émises (invoicedAmount > 0) sur périodes > 30j (proxy délai paiement)
+    const cutoff30 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 7);
+    const od  = this.pastWipRows.filter(r => r.period < cutoff30 && (r.invoicedAmount || 0) > 0);
+    const amt = od.reduce((s, r) => s + (r.invoicedAmount || 0), 0);
+    return amt > 0 ? `${this.fmt(amt)} €` : '—';
   }
 
   get wipAging60j(): string {
-    const cutoff = new Date(Date.now() - 60 * 864e5);
-    const cutoffYM = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}`;
-    const aging = this.pastWipRows.filter(r => r.period <= cutoffYM);
-    const amt   = aging.reduce((s, r) => s + (r.declaredAmount || 0), 0);
-    const tot   = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
-    const pct   = tot > 0 ? Math.round(amt / tot * 100) : 0;
-    return `${this.fmt(amt)} € / ${pct}%`;
+    // WIP Aging >60j : WIP non facturé (invoicedAmount = 0) sur périodes > 60j / Total WIP
+    const cutoff60 = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 7);
+    const aged    = this.pastWipRows.filter(r => r.period < cutoff60 && (r.invoicedAmount || 0) === 0);
+    const agedAmt = aged.reduce((s, r) => s + (r.declaredAmount || 0), 0);
+    const totalWip = this.pastWipRows.reduce((s, r) => s + Math.max((r.delta ?? 0), 0), 0);
+    return totalWip > 0 ? `${Math.round(agedAmt / totalWip * 100)}%` : '—';
   }
 
   // ── Health Score ───────────────────────────────────────────────
