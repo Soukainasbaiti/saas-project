@@ -1403,10 +1403,14 @@ export class ProjectManagementComponent implements OnInit {
   get scoreRisks(): number {
     const open = this.openRisks;
     if (!open.length) return 100;
-    const hcPct = open.filter(r => r.rating === 'High' || r.rating === 'Critical').length / open.length * 100;
-    const odPct = open.filter(r => r.deadline && r.deadline < this.todayStr).length / open.length * 100;
-    return Math.max(0, Math.round(100 - hcPct * 0.6 - odPct * 0.4));
+    if (open.some(r => r.rating === 'Critical')) return 0;   // ROUGE : ≥1 risque Critical
+    if (open.filter(r => r.rating === 'High').length > 2)    // ORANGE : >2 risques High
+      return 50;
+    return 100;                                               // VERT
   }
+
+  get openCriticalCount(): number { return this.openRisks.filter(r => r.rating === 'Critical').length; }
+  get openHighCount():     number { return this.openRisks.filter(r => r.rating === 'High').length; }
 
   get scoreIssues(): number {
     const n = this.kpiIssues.length;
