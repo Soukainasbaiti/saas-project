@@ -2118,13 +2118,14 @@ $op-real-month: #0ea5e9;
 
   &:hover { background: #2f4ac0; }
 
-  // Bulle — s'ouvre AU-DESSUS, alignée à droite de l'icône
+  // Bulle — s'ouvre À DROITE de l'icône, centrée verticalement
   .sf-tooltip {
     display: none;
     position: absolute;
-    bottom: calc(100% + 10px);
-    right: -4px;          // bord droit de la bulle ≈ bord droit de l'icône
-    width: 268px;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 262px;
     background: #0f172a;
     color: #cbd5e1;
     padding: 13px 14px 11px;
@@ -2136,23 +2137,25 @@ $op-real-month: #0ea5e9;
     box-shadow: 0 10px 32px rgba(0,0,0,.55);
     pointer-events: none;
 
-    // Flèche vers le bas (bord extérieur)
+    // Flèche pointant à GAUCHE (vers l'icône) — bordure
     &::before {
       content: '';
       position: absolute;
-      top: 100%;
-      right: 8px;
+      top: 50%;
+      right: 100%;
+      transform: translateY(-50%);
       border: 7px solid transparent;
-      border-top-color: #1e3a5f;
+      border-right-color: #1e3a5f;
     }
-    // Flèche vers le bas (remplissage)
+    // Flèche pointant à GAUCHE — remplissage
     &::after {
       content: '';
       position: absolute;
-      top: calc(100% - 1px);
-      right: 9px;
+      top: 50%;
+      right: calc(100% - 1px);
+      transform: translateY(-50%);
       border: 6px solid transparent;
-      border-top-color: #0f172a;
+      border-right-color: #0f172a;
     }
 
     strong {
@@ -2225,24 +2228,3 @@ $op-real-month: #0ea5e9;
   letter-spacing: .01em;
 }
 
-// ── Tooltip direction : items 1-2 ouvrent vers le BAS ─────────────
-.op-hs-scores .op-hs-row:nth-child(-n+2) {
-  .sf-info .sf-tooltip {
-    bottom: auto;
-    top: calc(100% + 10px);
-
-    // Flèche pointe vers le HAUT (au-dessus de la bulle)
-    &::before {
-      top: auto;
-      bottom: 100%;
-      border-top-color: transparent;
-      border-bottom-color: #1e3a5f;
-    }
-    &::after {
-      top: auto;
-      bottom: calc(100% - 1px);
-      border-top-color: transparent;
-      border-bottom-color: #0f172a;
-    }
-  }
-}
