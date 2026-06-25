@@ -1392,9 +1392,12 @@ export class ProjectManagementComponent implements OnInit {
 
   // ── Health Score ───────────────────────────────────────────────
   get scoreFinance(): number {
-    const target = this.budgetMarginPct();
-    if (!target) return 0;
-    return Math.min(100, Math.max(0, Math.round(this.totalMarginPct() / target * 100)));
+    const tender = this.budgetMarginPct(); // Marge Tender = marge budgétée (target)
+    if (!tender) return 0;
+    const eac = this.totalMarginPct();     // Marge EAC = réel + forecast
+    if (eac >= tender)           return 100; // VERT
+    if (eac >= tender * 0.95)    return 50;  // ORANGE
+    return 0;                               // ROUGE
   }
 
   get scoreRisks(): number {

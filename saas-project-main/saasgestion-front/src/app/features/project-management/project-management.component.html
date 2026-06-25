@@ -337,7 +337,25 @@
               <div class="op-hs-formula" [innerHTML]="i18n.t('op.hs_formula')"></div>
             </div>
             <div class="op-hs-scores">
-              <div class="op-hs-row"><span>Score Finance</span><span class="op-hs-badge" [class]="scoreClass(scoreFinance)">{{ scoreFinance }}</span></div>
+              <div class="op-hs-row">
+                <span class="sf-label-wrap">
+                  Score Finance
+                  <span class="sf-info">ⓘ
+                    <div class="sf-tooltip">
+                      <strong>Calcul du Score Finance</strong>
+                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : Marge EAC ≥ Marge Tender</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50) : Marge EAC ≥ Tender × 95%</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (0) : Marge EAC &lt; Tender × 95%</div>
+                      <div class="sf-divider"></div>
+                      <div class="sf-vals">
+                        <span class="sf-chip">EAC : {{ totalMarginPct() | number:'1.1-1' }}%</span>
+                        <span class="sf-chip">Tender : {{ budgetMarginPct() | number:'1.1-1' }}%</span>
+                      </div>
+                    </div>
+                  </span>
+                </span>
+                <span class="op-hs-badge" [class]="scoreClass(scoreFinance)">{{ scoreFinance }}</span>
+              </div>
               <div class="op-hs-row"><span>{{ i18n.t('op.hs.score_risks') }}</span><span class="op-hs-badge" [class]="scoreClass(scoreRisks)">{{ scoreRisks }}</span></div>
               <div class="op-hs-row"><span>Score Issues</span><span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span></div>
               <div class="op-hs-row"><span>Score MIP</span><span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span></div>

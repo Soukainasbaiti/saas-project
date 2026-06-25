@@ -507,7 +507,7 @@ $gray-800:   #1e293b;
 
 // ── Columns ───────────────────────────────────────────────────────
 .col-name      { width: 200px; min-width: 200px; }
-.col-indicator { width: 210px; min-width: 210px; }
+.col-indicator { width: 150px; min-width: 150px; }
 .col-type      { width: 90px; text-align: center; }
 .col-rebill    { width: 60px; text-align: center; }
 .col-month     { width: 74px; text-align: center; }
@@ -643,6 +643,23 @@ $gray-800:   #1e293b;
     td { font-weight: 700; }
   }
   .synth-separator td { height: 6px; background: $gray-100; padding: 0; }
+
+  // Le Financial Summary a des libellés plus longs ("Revenu (ADR × Jours Facturés)")
+  // → col-indicator spécifiquement plus large que la valeur globale (175px)
+  .col-indicator { width: 220px; min-width: 220px; }
+
+  // Même fix que pour onepager-table : display:flex casse table-layout:fixed
+  // → on repasse en table-cell pour que col-indicator soit respecté
+  .indicator-cell {
+    display: table-cell;
+    vertical-align: middle;
+
+    .ind-dot {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+  }
 }
 
 .indicator-cell {
@@ -697,21 +714,34 @@ $op-real:     #1b8a4f;
 $op-forecast: #f59e0b;
 $op-landing:  #7c3aed;
 
-.op-identity {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
-  border-bottom: 1px solid $gray-100;
-  background: linear-gradient(135deg, var(--pm-accent-muted) 0%, rgba(248,250,252,.8) 100%);
+// ── One Pager : ligne identité projet (dans <thead> du tableau) ───
+// !important nécessaire pour surcharger .panel-gold & thead th { background: var(--pm-accent) }
+.op-identity-row th.op-id-th {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--pm-accent-muted) 0%, rgba(248,250,252,.8) 100%) !important;
+  border-right: 1px solid rgba(0,0,0,.06) !important;
+  border-bottom: 2px solid $gray-200 !important;
+  color: $gray-800 !important;
+  font-weight: normal;
+  vertical-align: top;
+  text-align: left;
+  &:last-child { border-right: none !important; }
+  &.op-as-of { background: var(--pm-accent-soft) !important; }
 }
-.op-id-item {
-  padding: 16px 20px; border-right: 1px solid rgba(0,0,0,.05);
-  display: flex; flex-direction: column; gap: 5px;
-  transition: background 0.15s;
-  &:last-child { border-right: none; }
-  &:hover { background: rgba(255,255,255,.6); }
-  &.op-as-of { background: var(--pm-accent-muted); }
+.op-id-label {
+  display: block;
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: $gray-400; margin-bottom: 4px;
 }
-.op-id-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: $gray-400; }
-.op-id-value { font-size: 13px; font-weight: 700; color: $gray-800; }
+.op-id-value {
+  display: block;
+  font-size: 13px; font-weight: 700; color: $gray-800;
+  &.op-id-value--name { font-size: 11.5px; white-space: normal; line-height: 1.4; }
+}
+.op-id-asof {
+  display: block;
+  font-size: 10px; font-weight: 600; color: var(--pm-accent); margin-top: 4px;
+}
 
 .onepager-table {
   thead th.col-op-val {
@@ -1782,7 +1812,6 @@ $op-real-month: #0ea5e9;
   .pm-tabs    { padding: 0 12px; }
   .pm-panel   { margin: 12px 10px; }
   .synth-kpi-row { grid-template-columns: 1fr; }
-  .op-identity { grid-template-columns: repeat(2, 1fr); }
   .op-charts   { grid-template-columns: 1fr; }
   .op-chart-wide { grid-column: auto; }
   .op-health-row { grid-template-columns: repeat(2, 1fr); }
@@ -2060,4 +2089,84 @@ $op-real-month: #0ea5e9;
   font-weight: 600;
   cursor: pointer;
   &:hover { background: #142a47; }
+}
+
+// ── Score Finance tooltip ──────────────────────────────────────────
+.sf-label-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sf-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  background: #3B5BDB;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 9px;
+  font-style: normal;
+  cursor: default;
+  position: relative;
+  flex-shrink: 0;
+
+  .sf-tooltip {
+    display: none;
+    position: absolute;
+    left: 20px;
+    top: -8px;
+    background: #1e293b;
+    color: #cbd5e1;
+    padding: 10px 13px;
+    border-radius: 9px;
+    font-size: 11px;
+    width: 270px;
+    z-index: 200;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4);
+    line-height: 1.7;
+    pointer-events: none;
+
+    strong { display: block; color: #fff; font-size: 12px; margin-bottom: 6px; }
+  }
+
+  &:hover .sf-tooltip { display: block; }
+}
+
+.sf-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.sf-dot {
+  font-size: 13px;
+  line-height: 1;
+  &.sf-green  { color: #4ade80; }
+  &.sf-orange { color: #fbbf24; }
+  &.sf-red    { color: #f87171; }
+}
+
+.sf-divider {
+  border-top: 1px solid #334155;
+  margin: 7px 0;
+}
+
+.sf-vals {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sf-chip {
+  background: #334155;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #e2e8f0;
 }
