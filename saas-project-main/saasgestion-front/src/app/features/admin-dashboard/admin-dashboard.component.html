@@ -478,10 +478,10 @@
             <tbody>
               <tr *ngFor="let f of selectedProject.monthlyForecasts">
                 <td class="month-cell">{{ monthLabel(f.month) }}</td>
-                <td class="c-green num">{{ fmt(f.revenue) }}</td>
-                <td class="c-red   num">{{ fmt(f.cost) }}</td>
-                <td class="num">{{ fmt(f.cov) }}</td>
-                <td class="num">{{ fmt(f.revenue - f.cost) }}</td>
+                <td class="c-green num">{{ fmt(f.revenue * 1000) }}</td>
+                <td class="c-red   num">{{ fmt(f.cost * 1000) }}</td>
+                <td class="num">{{ fmt(f.cov != null ? f.cov * 1000 : null) }}</td>
+                <td class="num">{{ fmt((f.revenue - f.cost) * 1000) }}</td>
                 <td class="num" [ngClass]="monthMarginClass(f.revenue, f.cost)">
                   {{ monthMarginPct(f.revenue, f.cost) }}
                 </td>
@@ -490,10 +490,10 @@
             <tfoot>
               <tr class="f-total">
                 <td>TOTAL</td>
-                <td class="c-green num">{{ fmt(forecastTotalRevenue) }}</td>
-                <td class="c-red   num">{{ fmt(forecastTotalCost) }}</td>
-                <td class="num">{{ fmt(forecastTotalCov) }}</td>
-                <td class="num">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
+                <td class="c-green num">{{ fmt(forecastTotalRevenue * 1000) }}</td>
+                <td class="c-red   num">{{ fmt(forecastTotalCost * 1000) }}</td>
+                <td class="num">{{ fmt(forecastTotalCov * 1000) }}</td>
+                <td class="num">{{ fmt((forecastTotalRevenue - forecastTotalCost) * 1000) }}</td>
                 <td class="num" [ngClass]="monthMarginClass(forecastTotalRevenue, forecastTotalCost)">
                   {{ monthMarginPct(forecastTotalRevenue, forecastTotalCost) }}
                 </td>

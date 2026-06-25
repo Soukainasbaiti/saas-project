@@ -142,16 +142,16 @@
           <tbody>
             <tr *ngFor="let f of displayMonths">
               <td class="month-name">{{ f.label }}</td>
-              <td class="num-cell">{{ fmt(f.revenue) }}</td>
-              <td class="num-cell">{{ fmt(f.cost) }}</td>
+              <td class="num-cell">{{ fmt(f.revenue * 1000) }}</td>
+              <td class="num-cell">{{ fmt(f.cost * 1000) }}</td>
               <td class="num-cell">
-                <ng-container *ngIf="!editingCov">{{ fmt(f.cov) }}</ng-container>
+                <ng-container *ngIf="!editingCov">{{ fmt(f.cov != null ? f.cov * 1000 : null) }}</ng-container>
                 <input *ngIf="editingCov" type="text" inputmode="decimal" class="cov-input"
                        [value]="covEdits[f.month] ?? ''"
                        (blur)="onCovCellBlur($event, f.month)"
                        (keydown.enter)="$any($event.target).blur()" placeholder="0">
               </td>
-              <td class="num-cell">{{ fmt(f.revenue - f.cost) }}</td>
+              <td class="num-cell">{{ fmt((f.revenue - f.cost) * 1000) }}</td>
               <td class="num-cell">
                 {{ monthMargin(f.revenue, f.cost) }}
               </td>
@@ -160,10 +160,10 @@
           <tfoot>
             <tr class="forecast-total">
               <td>TOTAL</td>
-              <td class="num-cell">{{ fmt(forecastTotalRevenue) }}</td>
-              <td class="num-cell">{{ fmt(forecastTotalCost) }}</td>
-              <td class="num-cell">{{ fmt(forecastTotalCov) }}</td>
-              <td class="num-cell">{{ fmt(forecastTotalRevenue - forecastTotalCost) }}</td>
+              <td class="num-cell">{{ fmt(forecastTotalRevenue * 1000) }}</td>
+              <td class="num-cell">{{ fmt(forecastTotalCost * 1000) }}</td>
+              <td class="num-cell">{{ fmt(forecastTotalCov != null ? forecastTotalCov * 1000 : null) }}</td>
+              <td class="num-cell">{{ fmt((forecastTotalRevenue - forecastTotalCost) * 1000) }}</td>
               <td class="num-cell">
                 {{ monthMargin(forecastTotalRevenue, forecastTotalCost) }}
               </td>
