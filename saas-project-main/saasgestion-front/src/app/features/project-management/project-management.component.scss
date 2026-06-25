@@ -2118,11 +2118,13 @@ $op-real-month: #0ea5e9;
 
   &:hover { background: #2f4ac0; }
 
-  // Bulle — s'ouvre À DROITE de l'icône, centrée verticalement
+  // Bulle — s'ouvre À GAUCHE de l'icône, centrée verticalement
+  // → jamais coupée car il y a toujours de la place à gauche
   .sf-tooltip {
     display: none;
     position: absolute;
-    left: calc(100% + 10px);
+    right: calc(100% + 10px);
+    left: auto;
     top: 50%;
     transform: translateY(-50%);
     width: 210px;
@@ -2137,25 +2139,25 @@ $op-real-month: #0ea5e9;
     box-shadow: 0 8px 24px rgba(0,0,0,.5);
     pointer-events: none;
 
-    // Flèche pointant à GAUCHE (vers l'icône) — bordure
+    // Flèche pointant à DROITE (vers l'icône) — bordure
     &::before {
       content: '';
       position: absolute;
       top: 50%;
-      right: 100%;
+      left: 100%;
       transform: translateY(-50%);
       border: 7px solid transparent;
-      border-right-color: #1e3a5f;
+      border-left-color: #1e3a5f;
     }
-    // Flèche pointant à GAUCHE — remplissage
+    // Flèche pointant à DROITE — remplissage
     &::after {
       content: '';
       position: absolute;
       top: 50%;
-      right: calc(100% - 1px);
+      left: calc(100% - 1px);
       transform: translateY(-50%);
       border: 6px solid transparent;
-      border-right-color: #0f172a;
+      border-left-color: #0f172a;
     }
 
     strong {
