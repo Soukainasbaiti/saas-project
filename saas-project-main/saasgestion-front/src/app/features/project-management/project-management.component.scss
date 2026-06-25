@@ -2091,7 +2091,7 @@ $op-real-month: #0ea5e9;
   &:hover { background: #142a47; }
 }
 
-// ── Score Finance tooltip ──────────────────────────────────────────
+// ── Score tooltips (tous les scores du Health Score) ──────────────
 .sf-label-wrap {
   position: relative;
   display: inline-flex;
@@ -2103,34 +2103,68 @@ $op-real-month: #0ea5e9;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   background: #3B5BDB;
   color: #fff;
   border-radius: 50%;
   font-size: 9px;
   font-style: normal;
-  cursor: default;
+  font-weight: 700;
+  cursor: help;
   position: relative;
   flex-shrink: 0;
+  transition: background .15s;
 
+  &:hover { background: #2f4ac0; }
+
+  // Bulle — s'ouvre AU-DESSUS, alignée à droite de l'icône
   .sf-tooltip {
     display: none;
     position: absolute;
-    left: 20px;
-    top: -8px;
-    background: #1e293b;
+    bottom: calc(100% + 10px);
+    right: -4px;          // bord droit de la bulle ≈ bord droit de l'icône
+    width: 268px;
+    background: #0f172a;
     color: #cbd5e1;
-    padding: 10px 13px;
-    border-radius: 9px;
-    font-size: 11px;
-    width: 270px;
-    z-index: 200;
-    box-shadow: 0 6px 20px rgba(0,0,0,.4);
-    line-height: 1.7;
+    padding: 13px 14px 11px;
+    border-radius: 10px;
+    border: 1px solid #1e3a5f;
+    font-size: 11.5px;
+    line-height: 1.65;
+    z-index: 9999;
+    box-shadow: 0 10px 32px rgba(0,0,0,.55);
     pointer-events: none;
 
-    strong { display: block; color: #fff; font-size: 12px; margin-bottom: 6px; }
+    // Flèche vers le bas (bord extérieur)
+    &::before {
+      content: '';
+      position: absolute;
+      top: 100%;
+      right: 8px;
+      border: 7px solid transparent;
+      border-top-color: #1e3a5f;
+    }
+    // Flèche vers le bas (remplissage)
+    &::after {
+      content: '';
+      position: absolute;
+      top: calc(100% - 1px);
+      right: 9px;
+      border: 6px solid transparent;
+      border-top-color: #0f172a;
+    }
+
+    strong {
+      display: block;
+      color: #f1f5f9;
+      font-size: 12.5px;
+      font-weight: 700;
+      margin-bottom: 9px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid #1e3a5f;
+      letter-spacing: .02em;
+    }
   }
 
   &:hover .sf-tooltip { display: block; }
@@ -2138,13 +2172,17 @@ $op-real-month: #0ea5e9;
 
 .sf-legend-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 4px 0;
   font-size: 11px;
+  color: #94a3b8;
+
+  .sf-dot { flex-shrink: 0; margin-top: 1px; }
 }
 
 .sf-dot {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
   &.sf-green  { color: #4ade80; }
   &.sf-orange { color: #fbbf24; }
@@ -2152,31 +2190,37 @@ $op-real-month: #0ea5e9;
 }
 
 .sf-divider {
-  border-top: 1px solid #334155;
-  margin: 7px 0;
+  border: none;
+  border-top: 1px solid #1e3a5f;
+  margin: 9px 0;
 }
 
 .sf-vals {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  margin-top: 2px;
 }
 
 .sf-chip {
-  background: #334155;
-  padding: 2px 7px;
+  background: #1e3a5f;
+  padding: 3px 8px;
   border-radius: 5px;
-  font-family: monospace;
+  font-family: 'Courier New', monospace;
   font-size: 11px;
-  color: #e2e8f0;
+  color: #93c5fd;
+  font-weight: 600;
+  letter-spacing: .01em;
 }
 
 .sf-formula {
-  font-family: monospace;
-  font-size: 10px;
-  background: #0f172a;
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 10.5px;
+  background: #1e3a5f;
   color: #93c5fd;
-  padding: 3px 7px;
-  border-radius: 4px;
-  margin-bottom: 6px;
+  padding: 5px 9px;
+  border-radius: 5px;
+  margin-bottom: 9px;
+  letter-spacing: .01em;
 }
