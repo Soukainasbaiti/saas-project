@@ -55,9 +55,9 @@
           <div class="card-title">💰 Financier</div>
           <table class="info-table">
             <tr><td>Front Financier</td><td><span class="chip">{{ detail.project.frontFinancier }}</span></td></tr>
-            <tr><td>Revenue Budget</td><td class="val-green">{{ fmt(detail.project.revenueBudget) }}</td></tr>
-            <tr><td>Cost Budget</td><td class="val-red">{{ fmt(detail.project.costBudget) }}</td></tr>
-            <tr><td>Marge estimée</td><td class="val-blue">{{ fmt(detail.project.revenueBudget - detail.project.costBudget) }}</td></tr>
+            <tr><td>Revenue Budget</td><td class="val-green">{{ fmt(detail.project.revenueBudget * 1000) }}</td></tr>
+            <tr><td>Cost Budget</td><td class="val-red">{{ fmt(detail.project.costBudget * 1000) }}</td></tr>
+            <tr><td>Marge estimée</td><td class="val-blue">{{ fmt((detail.project.revenueBudget - detail.project.costBudget) * 1000) }}</td></tr>
           </table>
         </div>
 

@@ -111,8 +111,8 @@
             <td>{{ p.frontFinancier }}</td>
             <td>{{ p.submittedBy }}</td>
             <td>{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td class="val-money">{{ fmtEur(p.revenueBudget) }}</td>
-            <td class="val-money">{{ fmtEur(p.costBudget) }}</td>
+            <td class="val-money">{{ fmtEur(p.revenueBudget * 1000) }}</td>
+            <td class="val-money">{{ fmtEur(p.costBudget * 1000) }}</td>
             <td class="expiry-cell">{{ p.expiresAt | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>
               <div class="action-btns">
@@ -165,9 +165,9 @@
             <td><span class="bu-badge">{{ p.buTrigram }}</span></td>
             <td>{{ p.customerName }}</td>
             <td><span class="badge" [class]="statusClass(p.status)">{{ p.status }}</span></td>
-            <td class="val-money">{{ fmtCompact(p.revenueBudget) }}</td>
+            <td class="val-money">{{ fmtCompact(p.revenueBudget * 1000) }}</td>
             <td class="val-money" [class.neg]="(p.revenueBudget - p.costBudget) < 0">
-              {{ fmtCompact(p.revenueBudget - p.costBudget) }}
+              {{ fmtCompact((p.revenueBudget - p.costBudget) * 1000) }}
             </td>
             <!-- Risk -->
             <td class="td-module">
@@ -392,17 +392,17 @@
       <div class="detail-fin-bar">
         <div class="fin-item">
           <div class="fin-lbl">CA Budget</div>
-          <div class="fin-val c-green">{{ fmt(selectedProject.revenueBudget) }}</div>
+          <div class="fin-val c-green">{{ fmt(selectedProject.revenueBudget * 1000) }}</div>
         </div>
         <div class="fin-sep"></div>
         <div class="fin-item">
           <div class="fin-lbl">Coût Budget</div>
-          <div class="fin-val c-red">{{ fmt(selectedProject.costBudget) }}</div>
+          <div class="fin-val c-red">{{ fmt(selectedProject.costBudget * 1000) }}</div>
         </div>
         <div class="fin-sep"></div>
         <div class="fin-item">
           <div class="fin-lbl">Marge</div>
-          <div class="fin-val c-blue">{{ fmt(selectedProject.marginBudget) }}</div>
+          <div class="fin-val c-blue">{{ fmt(selectedProject.marginBudget * 1000) }}</div>
         </div>
       </div>
 

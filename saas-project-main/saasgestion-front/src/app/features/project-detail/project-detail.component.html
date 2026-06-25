@@ -35,15 +35,15 @@
     <div class="detail-fin-bar">
       <div class="fin-item">
         <div class="fin-lbl">💰 CA Budget</div>
-        <div class="fin-val rev">{{ fmt(project.revenueBudget) }}</div>
+        <div class="fin-val rev">{{ fmt(project.revenueBudget * 1000) }}</div>
       </div>
       <div class="fin-item">
         <div class="fin-lbl">💸 Coût Budget</div>
-        <div class="fin-val cost">{{ fmt(project.costBudget) }}</div>
+        <div class="fin-val cost">{{ fmt(project.costBudget * 1000) }}</div>
       </div>
       <div class="fin-item">
         <div class="fin-lbl">📈 Marge</div>
-        <div class="fin-val marg">{{ fmt(project.marginBudget) }}</div>
+        <div class="fin-val marg">{{ fmt(project.marginBudget * 1000) }}</div>
         <div class="fin-pct" [class]="marginClass(project.projectMargin)">
           {{ fmtPct(project.projectMargin) }} de marge
         </div>
