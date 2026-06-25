@@ -487,6 +487,15 @@ const T: Record<string, Record<Lang, string>> = {
   'pm.uow.col.end_planned':{ fr: 'Fin prévue',           en: 'Planned end' },
   'pm.uow.col.delivery':   { fr: 'Livraison',            en: 'Delivery' },
   'pm.uow.col.revenue':    { fr: 'Revenu',               en: 'Revenue' },
+
+  // ── One Pager — KPI Opportunity / MIP / WIP / Health Score labels ─
+  'op.opp.avg_margin':   { fr: 'Marge Moy. – Pipeline',            en: 'Average Margin – Pipeline' },
+  'op.mip.contribution': { fr: 'Contribution MIP Marge Projet (%)', en: 'MIP Contribution to Project Margin (%)' },
+  'op.wip.total':        { fr: 'Montant Total WIP (€)',             en: 'Total WIP Amount (€)' },
+  'op.wip.invoiced_pct': { fr: '% Facturé vs Planifié',            en: '% Invoiced vs Planned' },
+  'op.wip.overdue':      { fr: 'Factures en Retard (Vol. / %)',     en: 'Overdue Invoices (Volume / %)' },
+  'op.hs.score_risks':   { fr: 'Score Risques',                     en: 'Score Risks' },
+  'op.hs.delivery':      { fr: 'Niveau de Confiance Livraison',     en: 'Delivery Confidence Level' },
 };
 
 @Injectable({ providedIn: 'root' })

@@ -300,7 +300,7 @@
               <div class="op-kpi-header op-kpi-header--opps">Opportunities KPI</div>
               <div class="op-kpi-body">
                 <div class="op-kpi-row"><span>Pipeline Value</span><span>{{ oppPipelineValue }}</span></div>
-                <div class="op-kpi-row"><span>Average Margin – Pipeline</span><span>{{ oppAvgMargin }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.opp.avg_margin') }}</span><span>{{ oppAvgMargin }}</span></div>
                 <div class="op-kpi-row"><span>Win Rate</span><span>{{ oppWinRate }}</span></div>
                 <div class="op-kpi-row"><span>Realized Benefit</span><span>{{ oppRealizedBenefit }}</span></div>
               </div>
@@ -312,7 +312,7 @@
               <div class="op-kpi-body">
                 <div class="op-kpi-row"><span>Secured Gains (€)</span><span>{{ mipSecuredGains }}</span></div>
                 <div class="op-kpi-row"><span>Active Pipeline Gains (€)</span><span>{{ mipActivePipeline }}</span></div>
-                <div class="op-kpi-row"><span>MIP Contribution to Project Margin (%)</span><span>{{ mipContributionPct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.mip.contribution') }}</span><span>{{ mipContributionPct }}</span></div>
               </div>
             </div>
 
@@ -320,9 +320,9 @@
             <div class="op-kpi-card">
               <div class="op-kpi-header op-kpi-header--wip">WIP KPI</div>
               <div class="op-kpi-body">
-                <div class="op-kpi-row"><span>Total WIP Amount (€)</span><span>{{ wipTotalDeclared }}</span></div>
-                <div class="op-kpi-row"><span>% Invoiced vs Planned</span><span>{{ wipInvoicedPct }}</span></div>
-                <div class="op-kpi-row"><span>Overdue Invoices (Volume / %)</span><span>{{ wipOverdueInvoices }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.wip.total') }}</span><span>{{ wipTotalDeclared }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.wip.invoiced_pct') }}</span><span>{{ wipInvoicedPct }}</span></div>
+                <div class="op-kpi-row"><span>{{ i18n.t('op.wip.overdue') }}</span><span>{{ wipOverdueInvoices }}</span></div>
                 <div class="op-kpi-row"><span>WIP Aging Ratio (&gt;60j)</span><span>{{ wipAging60j }}</span></div>
               </div>
             </div>
@@ -338,7 +338,7 @@
             </div>
             <div class="op-hs-scores">
               <div class="op-hs-row"><span>Score Finance</span><span class="op-hs-badge" [class]="scoreClass(scoreFinance)">{{ scoreFinance }}</span></div>
-              <div class="op-hs-row"><span>Score Risks</span><span class="op-hs-badge" [class]="scoreClass(scoreRisks)">{{ scoreRisks }}</span></div>
+              <div class="op-hs-row"><span>{{ i18n.t('op.hs.score_risks') }}</span><span class="op-hs-badge" [class]="scoreClass(scoreRisks)">{{ scoreRisks }}</span></div>
               <div class="op-hs-row"><span>Score Issues</span><span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span></div>
               <div class="op-hs-row"><span>Score MIP</span><span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span></div>
               <div class="op-hs-row"><span>{{ i18n.t('op.score_billing') }}</span><span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span></div>
@@ -354,7 +354,7 @@
             <span class="op-rag-badge" [class]="ragClass(ragFromScore)">{{ ragLabel(ragFromScore) }}</span>
           </div>
           <div class="op-health-card">
-            <div class="op-health-label">Delivery Confidence Level</div>
+            <div class="op-health-label">{{ i18n.t('op.hs.delivery') }}</div>
             <div class="op-health-body">
               <select class="op-health-select op-health-select-wide" [(ngModel)]="deliveryConfidenceLevel" (change)="saveOnePagerExtras()">
                 <option [ngValue]="null">—</option>
