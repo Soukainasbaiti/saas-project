@@ -1283,7 +1283,7 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   // ── Issues ─────────────────────────────────────────────────────
-  private get openIssues(): any[] { return this.kpiIssues.filter(i => i.status === 'Open' || i.status === 'Reopened'); }
+  get openIssues(): any[] { return this.kpiIssues.filter(i => i.status === 'Open' || i.status === 'Reopened'); }
 
   get issueOpenPct(): string {
     const n = this.kpiIssues.length;
@@ -1412,12 +1412,17 @@ export class ProjectManagementComponent implements OnInit {
   get openCriticalCount(): number { return this.openRisks.filter(r => r.rating === 'Critical').length; }
   get openHighCount():     number { return this.openRisks.filter(r => r.rating === 'High').length; }
 
-  get scoreIssues(): number {
+  get openIssuesPct(): number {
     const n = this.kpiIssues.length;
-    if (!n) return 100;
-    const openPct = this.openIssues.length / n * 100;
-    const odPct   = this.openIssues.filter(i => i.deadline && i.deadline < this.todayStr).length / (this.openIssues.length || 1) * 100;
-    return Math.max(0, Math.round(100 - openPct * 0.5 - odPct * 0.5));
+    return n > 0 ? (this.openIssues.length / n) * 100 : 0;
+  }
+
+  get scoreIssues(): number {
+    if (!this.kpiIssues.length) return 100;
+    const pct = this.openIssuesPct;
+    if (pct >= 30) return 0;    // ROUGE : >= 30% issues ouvertes
+    if (pct >= 15) return 50;   // ORANGE : >= 15%
+    return 100;                  // VERT   : < 15%
   }
 
   get scoreFacturation(): number {

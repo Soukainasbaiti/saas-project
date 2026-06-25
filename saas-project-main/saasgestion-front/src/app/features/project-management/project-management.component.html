@@ -375,7 +375,25 @@
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreRisks)">{{ scoreRisks }}</span>
               </div>
-              <div class="op-hs-row"><span>Score Issues</span><span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span></div>
+              <div class="op-hs-row">
+                <span class="sf-label-wrap">
+                  Score Issues
+                  <span class="sf-info">ⓘ
+                    <div class="sf-tooltip">
+                      <strong>Calcul du Score Issues</strong>
+                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : % Issues ouvertes &lt; 15%</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50) : entre 15% et 30%</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (0) : % Issues ouvertes ≥ 30%</div>
+                      <div class="sf-divider"></div>
+                      <div class="sf-vals">
+                        <span class="sf-chip">Ouvertes : {{ openIssues.length }} / {{ kpiIssues.length }}</span>
+                        <span class="sf-chip">Taux : {{ openIssuesPct | number:'1.0-1' }}%</span>
+                      </div>
+                    </div>
+                  </span>
+                </span>
+                <span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span>
+              </div>
               <div class="op-hs-row"><span>Score MIP</span><span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span></div>
               <div class="op-hs-row"><span>{{ i18n.t('op.score_billing') }}</span><span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span></div>
             </div>
