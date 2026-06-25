@@ -1254,32 +1254,32 @@ export class ProjectManagementComponent implements OnInit {
   get riskHighCriticalPct(): string {
     const open = this.openRisks;
     const hc = open.filter(r => r.rating === 'High' || r.rating === 'Critical');
-    return open.length ? `${Math.round(hc.length / open.length * 100)}% (${hc.length} / ${open.length})` : '—';
+    return open.length ? `${Math.round(hc.length / open.length * 100)}% (${hc.length} / ${open.length})` : '0% (0 / 0)';
   }
 
   get riskMitigationPct(): string {
     const open = this.openRisks;
     const with_ = open.filter(r => r.mitigationAction?.trim());
-    return open.length ? `${Math.round(with_.length / open.length * 100)}% (${with_.length} / ${open.length})` : '—';
+    return open.length ? `${Math.round(with_.length / open.length * 100)}% (${with_.length} / ${open.length})` : '0% (0 / 0)';
   }
 
   get riskOverduePct(): string {
     const open = this.openRisks;
     const od = open.filter(r => r.deadline && r.deadline < this.todayStr);
-    return open.length ? `${Math.round(od.length / open.length * 100)}% (${od.length} / ${open.length})` : '—';
+    return open.length ? `${Math.round(od.length / open.length * 100)}% (${od.length} / ${open.length})` : '0% (0 / 0)';
   }
 
   get riskReduction(): string {
     const grossExp = this.openRisks.reduce((s, r) => s + ((r.percentProbability || 0) / 100) * (r.costs || 0), 0);
     const netExp   = this.openRisks.reduce((s, r) => s + (r.net || 0), 0);
     const pct      = grossExp > 0 ? Math.round((grossExp - netExp) / grossExp * 100) : 0;
-    return grossExp > 0 ? `${pct}%` : '—';
+    return grossExp > 0 ? `${pct}%` : '0%';
   }
 
   get riskExposure(): string {
     const gross = this.openRisks.reduce((s, r) => s + (r.probEval || 0) * (r.impactEval || 0), 0);
     const net   = this.openRisks.reduce((s, r) => s + ((r.probabilityResidual || 0) / 100) * (r.impactEval || 0), 0);
-    return gross > 0 ? `${this.fmt(gross, 1)} → ${this.fmt(net, 1)}` : '—';
+    return gross > 0 ? `${Math.round(gross)} → ${Math.round(net)}` : '0 → 0';
   }
 
   // ── Issues ─────────────────────────────────────────────────────
@@ -1288,26 +1288,26 @@ export class ProjectManagementComponent implements OnInit {
   get issueOpenPct(): string {
     const n = this.kpiIssues.length;
     const o = this.openIssues.length;
-    return n ? `${Math.round(o / n * 100)}% (${o} / ${n})` : '—';
+    return n ? `${Math.round(o / n * 100)}% (${o} / ${n})` : '0% (0 / 0)';
   }
 
   get issueHighCriticalPct(): string {
     const open = this.openIssues;
     const hc = open.filter(i => i.severity === 'High' || i.impacts === 'Critical Impact');
-    return open.length ? `${Math.round(hc.length / open.length * 100)}% (${hc.length} / ${open.length})` : '—';
+    return open.length ? `${Math.round(hc.length / open.length * 100)}% (${hc.length} / ${open.length})` : '0% (0 / 0)';
   }
 
   get issueOverduePct(): string {
     const open = this.openIssues;
     const od = open.filter(i => i.deadline && i.deadline < this.todayStr);
-    return open.length ? `${Math.round(od.length / open.length * 100)}% (${od.length} / ${open.length})` : '—';
+    return open.length ? `${Math.round(od.length / open.length * 100)}% (${od.length} / ${open.length})` : '0% (0 / 0)';
   }
 
   get issueNetChange30j(): string {
     const cutoff = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
     const recent = this.kpiIssues.filter(i => (i.identificationDate || i.createdAt || '') >= cutoff).length;
     const n = this.kpiIssues.length;
-    return n ? `${Math.round(recent / n * 100)}% (${recent} / ${n})` : '—';
+    return n ? `${Math.round(recent / n * 100)}% (${recent} / ${n})` : '0% (0 / 0)';
   }
 
   // ── Opportunities ──────────────────────────────────────────────
@@ -1322,13 +1322,13 @@ export class ProjectManagementComponent implements OnInit {
     const p = this.pipelineOpps;
     const totalBenefit = p.reduce((s, o) => s + (o.estimatedBenefit || 0), 0);
     const totalPrice   = p.reduce((s, o) => s + (o.price || 0), 0);
-    return totalPrice > 0 ? `${Math.round(totalBenefit / totalPrice * 100)}%` : '—';
+    return totalPrice > 0 ? `${Math.round(totalBenefit / totalPrice * 100)}%` : '0%';
   }
 
   get oppWinRate(): string {
     const won  = this.kpiOpps.filter(o => o.status === 'Won').length;
     const closed = this.kpiOpps.filter(o => o.status === 'Won' || o.status === 'Lost').length;
-    return closed ? `${Math.round(won / closed * 100)}%` : '—';
+    return closed ? `${Math.round(won / closed * 100)}%` : '0%';
   }
 
   get oppRealizedBenefit(): string {
@@ -1349,7 +1349,7 @@ export class ProjectManagementComponent implements OnInit {
 
   get mipContributionPct(): string {
     const secured = this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
-    return this.tenderMargin > 0 ? `${Math.round(secured / this.tenderMargin * 100)}%` : '—';
+    return this.tenderMargin > 0 ? `${Math.round(secured / this.tenderMargin * 100)}%` : '0%';
   }
 
   // ── WIP ────────────────────────────────────────────────────────
@@ -1360,7 +1360,7 @@ export class ProjectManagementComponent implements OnInit {
 
   get wipTotalDeclared(): string {
     const t = this.pastWipRows.reduce((s, r) => s + Math.max((r.delta ?? 0), 0), 0);
-    return t ? `${this.fmt(t)} €` : '—';
+    return t ? `${this.fmt(t)} €` : '0 €';
   }
 
   get wipInvoicedPct(): string {
@@ -1377,7 +1377,7 @@ export class ProjectManagementComponent implements OnInit {
     const cutoff30 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 7);
     const od  = this.pastWipRows.filter(r => r.period < cutoff30 && (r.invoicedAmount || 0) > 0);
     const amt = od.reduce((s, r) => s + (r.invoicedAmount || 0), 0);
-    return amt > 0 ? `${this.fmt(amt)} €` : '—';
+    return amt > 0 ? `${this.fmt(amt)} €` : '0 €';
   }
 
   get wipAging60j(): string {
@@ -1386,7 +1386,7 @@ export class ProjectManagementComponent implements OnInit {
     const aged    = this.pastWipRows.filter(r => r.period < cutoff60 && (r.invoicedAmount || 0) === 0);
     const agedAmt = aged.reduce((s, r) => s + (r.declaredAmount || 0), 0);
     const totalWip = this.pastWipRows.reduce((s, r) => s + Math.max((r.delta ?? 0), 0), 0);
-    return totalWip > 0 ? `${Math.round(agedAmt / totalWip * 100)}%` : '—';
+    return totalWip > 0 ? `${Math.round(agedAmt / totalWip * 100)}%` : '0%';
   }
 
   // ── Health Score ───────────────────────────────────────────────
