@@ -180,7 +180,7 @@ export class AdminDashboardComponent implements OnInit {
 
   rejectPending(token: string): void {
     const reason: string = prompt('Motif du rejet (optionnel) :') || '';
-    this.api.rejectProject(token, reason).subscribe({
+    this.api.rejectProjectByToken(token, reason).subscribe({
       next: () => {
         this.snack.open('Projet rejeté.', 'OK', { duration: 3000 });
         this.loadPendingProjects();

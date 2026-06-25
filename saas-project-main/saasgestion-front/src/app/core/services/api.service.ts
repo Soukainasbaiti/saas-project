@@ -111,7 +111,7 @@ export class ApiService {
     return this.http.post<any>(`${this.base}/admin/approve/${token}`, { action: 'approve' });
   }
 
-  rejectProject(token: string, reason: string): Observable<any> {
+  rejectProjectByToken(token: string, reason: string): Observable<any> {
     return this.http.post<any>(`${this.base}/admin/approve/${token}`, { action: 'reject', reason });
   }
 
