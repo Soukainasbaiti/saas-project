@@ -1431,10 +1431,17 @@ export class ProjectManagementComponent implements OnInit {
     return decl > 0 ? Math.min(100, Math.round(inv / decl * 100)) : 0;
   }
 
+  get mipSecuredEur(): number {
+    return this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
+  }
+  get mipTargetEur(): number {
+    return (this.budgetRevenueTotal() - this.budgetCostTotal()) * 0.05;
+  }
+
   get scoreMIP(): number {
-    const secured = this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
-    const planned = this.kpiMips.reduce((s, m) => s + (m.plannedGain || 0), 0);
-    return planned > 0 ? Math.min(100, Math.round(secured / planned * 100)) : 0;
+    const target = this.mipTargetEur; // Tender Margin × 5%
+    if (!target) return 0;
+    return Math.min(100, Math.round(this.mipSecuredEur / target * 100));
   }
 
   /** Health Score = Finance×35% + Risks×20% + Issues×15% + Facturation×20% + MIP×10% */
@@ -1450,7 +1457,7 @@ export class ProjectManagementComponent implements OnInit {
 
   scoreClass(s: number): string {
     if (s >= 80) return 'score-green';
-    if (s >= 60) return 'score-orange';
+    if (s >= 50) return 'score-orange';
     return 'score-red';
   }
 

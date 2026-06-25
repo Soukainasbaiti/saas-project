@@ -394,7 +394,26 @@
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span>
               </div>
-              <div class="op-hs-row"><span>Score MIP</span><span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span></div>
+              <div class="op-hs-row">
+                <span class="sf-label-wrap">
+                  Score MIP
+                  <span class="sf-info">ⓘ
+                    <div class="sf-tooltip">
+                      <strong>Calcul du Score MIP</strong>
+                      <div class="sf-formula">Gains Sécurisés / (Tender Margin × 5%)</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : Objectif 5% atteint ou dépassé</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50–99) : En progression</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (&lt;50) : Insuffisant</div>
+                      <div class="sf-divider"></div>
+                      <div class="sf-vals">
+                        <span class="sf-chip">Secured : {{ mipSecuredEur | number:'1.0-0' }} €</span>
+                        <span class="sf-chip">Cible 5% : {{ mipTargetEur | number:'1.0-0' }} €</span>
+                      </div>
+                    </div>
+                  </span>
+                </span>
+                <span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span>
+              </div>
               <div class="op-hs-row"><span>{{ i18n.t('op.score_billing') }}</span><span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span></div>
             </div>
           </div>
