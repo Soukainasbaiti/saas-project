@@ -2224,3 +2224,25 @@ $op-real-month: #0ea5e9;
   margin-bottom: 9px;
   letter-spacing: .01em;
 }
+
+// ── Tooltip direction : items 1-2 ouvrent vers le BAS ─────────────
+.op-hs-scores .op-hs-row:nth-child(-n+2) {
+  .sf-info .sf-tooltip {
+    bottom: auto;
+    top: calc(100% + 10px);
+
+    // Flèche pointe vers le HAUT (au-dessus de la bulle)
+    &::before {
+      top: auto;
+      bottom: 100%;
+      border-top-color: transparent;
+      border-bottom-color: #1e3a5f;
+    }
+    &::after {
+      top: auto;
+      bottom: calc(100% - 1px);
+      border-top-color: transparent;
+      border-bottom-color: #0f172a;
+    }
+  }
+}
