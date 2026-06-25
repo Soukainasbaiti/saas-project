@@ -1364,13 +1364,16 @@ export class ProjectManagementComponent implements OnInit {
     return t ? `${this.fmt(t)} €` : '0 €';
   }
 
-  get wipInvoicedPct(): string {
-    // % Invoiced vs Planned : sum(declaredAmount des périodes facturées) / sum(declaredAmount total)
+  get wipInvoicedPctNum(): number {
     const all  = this.pastWipRows;
     const decl = all.reduce((s, r) => s + (r.declaredAmount || 0), 0);
     const declWithInvoice = all.filter(r => (r.invoicedAmount || 0) > 0)
                                .reduce((s, r) => s + (r.declaredAmount || 0), 0);
-    return decl > 0 ? `${Math.round(declWithInvoice / decl * 100)}%` : '0%';
+    return decl > 0 ? declWithInvoice / decl * 100 : 0;
+  }
+
+  get wipInvoicedPct(): string {
+    return `${Math.round(this.wipInvoicedPctNum)}%`;
   }
 
   get wipOverdueInvoices(): string {
@@ -1426,9 +1429,10 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   get scoreFacturation(): number {
-    const decl = this.pastWipRows.reduce((s, r) => s + (r.declaredAmount || 0), 0);
-    const inv  = this.pastWipRows.reduce((s, r) => s + (r.invoicedAmount || 0), 0);
-    return decl > 0 ? Math.min(100, Math.round(inv / decl * 100)) : 0;
+    const pct = this.wipInvoicedPctNum;
+    if (pct >= 90) return 100;  // VERT
+    if (pct >= 75) return 50;   // ORANGE
+    return 0;                   // ROUGE (inclus cas no-data = 0%)
   }
 
   get mipSecuredEur(): number {

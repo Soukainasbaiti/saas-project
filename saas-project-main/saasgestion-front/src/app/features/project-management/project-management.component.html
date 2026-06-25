@@ -414,7 +414,25 @@
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span>
               </div>
-              <div class="op-hs-row"><span>{{ i18n.t('op.score_billing') }}</span><span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span></div>
+              <div class="op-hs-row">
+                <span class="sf-label-wrap">
+                  {{ i18n.t('op.score_billing') }}
+                  <span class="sf-info">ⓘ
+                    <div class="sf-tooltip">
+                      <strong>Calcul du Score Facturation</strong>
+                      <div class="sf-formula">% Facturé vs Planifié</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : % ≥ 90%</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50) : ≥ 75% et &lt; 90%</div>
+                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (0) : &lt; 75%</div>
+                      <div class="sf-divider"></div>
+                      <div class="sf-vals">
+                        <span class="sf-chip">% Facturé : {{ wipInvoicedPctNum | number:'1.0-1' }}%</span>
+                      </div>
+                    </div>
+                  </span>
+                </span>
+                <span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span>
+              </div>
             </div>
           </div>
         </div>
