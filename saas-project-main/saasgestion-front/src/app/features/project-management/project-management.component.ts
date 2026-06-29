@@ -1,10 +1,10 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { lastValueFrom } from 'rxjs';
-import { ChartConfiguration, ChartData, ChartOptions } from 'chart.js';
+import { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -1393,23 +1393,30 @@ export class ProjectManagementComponent implements OnInit {
     return totalWip > 0 ? `${Math.round(agedAmt / totalWip * 100)}%` : '0%';
   }
 
-  // ── Health Score ───────────────────────────────────────────────
+  // ── Health Score — formules RIO Team Manager Handbook ─────────
+
+  // Score Finance (35%) : Écart PM = PM% EAC − PM% Budget EAC
   get scoreFinance(): number {
-    const tender = this.budgetMarginPct(); // Marge Tender = marge budgétée (target)
-    if (!tender) return 0;
-    const eac = this.totalMarginPct();     // Marge EAC = réel + forecast
-    if (eac >= tender)           return 100; // VERT
-    if (eac >= tender * 0.95)    return 50;  // ORANGE
-    return 0;                               // ROUGE
+    const ecart = this.dviPct;
+    if (ecart >  0)   return 100;
+    if (ecart >= -2)  return 85;
+    if (ecart >= -5)  return 70;
+    if (ecart >= -8)  return 50;
+    if (ecart >= -10) return 30;
+    return 15;
   }
 
+  // Score Risks (20%) : Total = union (High/Critical OU Overdue), chaque risque compté 1 fois
   get scoreRisks(): number {
-    const open = this.openRisks;
-    if (!open.length) return 100;
-    if (open.some(r => r.rating === 'Critical')) return 0;   // ROUGE : ≥1 risque Critical
-    if (open.filter(r => r.rating === 'High').length > 2)    // ORANGE : >2 risques High
-      return 50;
-    return 100;                                               // VERT
+    const flagged = this.openRisks.filter(r =>
+      r.rating === 'High' || r.rating === 'Critical' ||
+      (r.deadline && r.deadline < this.todayStr)
+    ).length;
+    if (flagged === 0)  return 100;
+    if (flagged <= 2)   return 80;
+    if (flagged <= 5)   return 60;
+    if (flagged <= 10)  return 40;
+    return 20;
   }
 
   get openCriticalCount(): number { return this.openRisks.filter(r => r.rating === 'Critical').length; }
@@ -1420,32 +1427,56 @@ export class ProjectManagementComponent implements OnInit {
     return n > 0 ? (this.openIssues.length / n) * 100 : 0;
   }
 
+  // Score Issues (15%) : Total = union (Critical OU Overdue), chaque issue comptée 1 fois
   get scoreIssues(): number {
-    if (!this.kpiIssues.length) return 100;
-    const pct = this.openIssuesPct;
-    if (pct >= 30) return 0;    // ROUGE : >= 30% issues ouvertes
-    if (pct >= 15) return 50;   // ORANGE : >= 15%
-    return 100;                  // VERT   : < 15%
+    const flagged = this.openIssues.filter(i =>
+      i.severity === 'Critical' || (i.deadline && i.deadline < this.todayStr)
+    ).length;
+    if (flagged === 0)  return 100;
+    if (flagged <= 3)   return 80;
+    if (flagged <= 8)   return 60;
+    if (flagged <= 15)  return 40;
+    return 20;
   }
 
+  // Score Facturation (20%) : Collection Rate % = wipInvoicedPctNum
   get scoreFacturation(): number {
     const pct = this.wipInvoicedPctNum;
-    if (pct >= 90) return 100;  // VERT
-    if (pct >= 75) return 50;   // ORANGE
-    return 0;                   // ROUGE (inclus cas no-data = 0%)
+    if (pct >= 95) return 100;
+    if (pct >= 90) return 85;
+    if (pct >= 80) return 70;
+    if (pct >= 70) return 50;
+    if (pct >= 60) return 30;
+    return 15;
   }
 
   get mipSecuredEur(): number {
     return this.kpiMips.filter(m => m.status === 'Completed').reduce((s, m) => s + (m.realizedGain || 0), 0);
   }
   get mipTargetEur(): number {
-    return (this.budgetRevenueTotal() - this.budgetCostTotal()) * 0.05;
+    return this.tenderMargin * 0.05; // 5% de la Tender Margin (marginBudget du projet)
+  }
+
+  // Score MIP (10%) : Completion Rate + Delayed MIPs
+  get mipCompletionRate(): number {
+    if (!this.kpiMips.length) return 0;
+    return (this.kpiMips.filter(m => m.status === 'Completed').length / this.kpiMips.length) * 100;
+  }
+
+  get mipDelayedCount(): number {
+    return this.kpiMips.filter(m =>
+      m.status !== 'Completed' && m.deadline && m.deadline < this.todayStr
+    ).length;
   }
 
   get scoreMIP(): number {
-    const target = this.mipTargetEur; // Tender Margin × 5%
-    if (!target) return 0;
-    return Math.min(100, Math.round(this.mipSecuredEur / target * 100));
+    const rate    = this.mipCompletionRate;
+    const delayed = this.mipDelayedCount;
+    if (rate >= 90 && delayed === 0) return 100;
+    if (rate >= 80 && delayed <= 2)  return 80;
+    if (rate >= 70)                  return 60;
+    if (rate >= 50)                  return 40;
+    return 20;
   }
 
   /** Health Score = Finance×35% + Risks×20% + Issues×15% + Facturation×20% + MIP×10% */
@@ -1463,6 +1494,69 @@ export class ProjectManagementComponent implements OnInit {
     if (s >= 80) return 'score-green';
     if (s >= 50) return 'score-orange';
     return 'score-red';
+  }
+
+  // ── Export PDF ────────────────────────────────────────────────────
+  @ViewChild('onepagerPanel') onepagerPanel!: ElementRef;
+  exportingPdf = false;
+
+  async exportOnePagerPdf(): Promise<void> {
+    if (this.exportingPdf) return;
+    this.exportingPdf = true;
+    this.cdr.markForCheck();
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF }   = await import('jspdf');
+      const el: HTMLElement = this.onepagerPanel.nativeElement;
+
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f8fafc',
+      });
+
+      const imgW  = 297;               // A4 landscape width mm
+      const imgH  = (canvas.height * imgW) / canvas.width;
+      const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pages = Math.ceil(imgH / 210);  // A4 landscape height = 210 mm
+
+      for (let p = 0; p < pages; p++) {
+        if (p > 0) doc.addPage();
+        doc.addImage(
+          canvas.toDataURL('image/jpeg', 0.92),
+          'JPEG', 0, -p * 210, imgW, imgH
+        );
+      }
+
+      const filename = `OnePager_${this.projectBusinessId || 'project'}_${new Date().toISOString().slice(0,10)}.pdf`;
+      doc.save(filename);
+    } finally {
+      this.exportingPdf = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  // ── Fixed tooltip (position: fixed, never clipped by overflow) ────
+  tipId  = '';
+  tipX   = 0;
+  tipY   = 0;
+
+  showTip(event: MouseEvent, id: string): void {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.tipId = id;
+    this.tipX  = rect.left - 228;   // open to the LEFT of the icon
+    this.tipY  = rect.top + rect.height / 2;
+    // Keep tooltip inside the viewport left edge
+    if (this.tipX < 8) {
+      this.tipX = rect.right + 10;  // fallback: open to the RIGHT
+    }
+    this.cdr.markForCheck();
+  }
+
+  hideTip(): void {
+    this.tipId = '';
+    this.cdr.markForCheck();
   }
 
   /** Convertit le Health Score calculé (0-100) en valeur RAYG automatique. */

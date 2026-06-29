@@ -161,7 +161,7 @@
 
     <!-- ═══ TAB: One Pager ═══ -->
     <ng-container *ngIf="activeTab==='onePager'">
-      <div class="pm-panel panel-gold onepager-panel">
+      <div class="pm-panel panel-gold onepager-panel" #onepagerPanel>
         <div class="panel-header">
           <div class="panel-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
@@ -340,96 +340,35 @@
               <div class="op-hs-row">
                 <span class="sf-label-wrap">
                   Score Finance
-                  <span class="sf-info">ⓘ
-                    <div class="sf-tooltip">
-                      <strong>Calcul du Score Finance</strong>
-                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : Marge EAC ≥ Marge Tender</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50) : Marge EAC ≥ Tender × 95%</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (0) : Marge EAC &lt; Tender × 95%</div>
-                      <div class="sf-divider"></div>
-                      <div class="sf-vals">
-                        <span class="sf-chip">EAC : {{ totalMarginPct() | number:'1.1-1' }}%</span>
-                        <span class="sf-chip">Tender : {{ budgetMarginPct() | number:'1.1-1' }}%</span>
-                      </div>
-                    </div>
-                  </span>
+                  <span class="sf-info" (mouseenter)="showTip($event,'finance')" (mouseleave)="hideTip()">ⓘ</span>
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreFinance)">{{ scoreFinance }}</span>
               </div>
               <div class="op-hs-row">
                 <span class="sf-label-wrap">
                   {{ i18n.t('op.hs.score_risks') }}
-                  <span class="sf-info">ⓘ
-                    <div class="sf-tooltip">
-                      <strong>Calcul du Score Risks</strong>
-                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : Aucun risque Critical, ≤ 2 High</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50) : Aucun Critical mais &gt; 2 High</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (0) : ≥ 1 risque Critical ouvert</div>
-                      <div class="sf-divider"></div>
-                      <div class="sf-vals">
-                        <span class="sf-chip">Critical : {{ openCriticalCount }}</span>
-                        <span class="sf-chip">High : {{ openHighCount }}</span>
-                      </div>
-                    </div>
-                  </span>
+                  <span class="sf-info" (mouseenter)="showTip($event,'risks')" (mouseleave)="hideTip()">ⓘ</span>
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreRisks)">{{ scoreRisks }}</span>
               </div>
               <div class="op-hs-row">
                 <span class="sf-label-wrap">
                   Score Issues
-                  <span class="sf-info">ⓘ
-                    <div class="sf-tooltip">
-                      <strong>Calcul du Score Issues</strong>
-                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : % Issues ouvertes &lt; 15%</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50) : entre 15% et 30%</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (0) : % Issues ouvertes ≥ 30%</div>
-                      <div class="sf-divider"></div>
-                      <div class="sf-vals">
-                        <span class="sf-chip">Ouvertes : {{ openIssues.length }} / {{ kpiIssues.length }}</span>
-                        <span class="sf-chip">Taux : {{ openIssuesPct | number:'1.0-1' }}%</span>
-                      </div>
-                    </div>
-                  </span>
+                  <span class="sf-info" (mouseenter)="showTip($event,'issues')" (mouseleave)="hideTip()">ⓘ</span>
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreIssues)">{{ scoreIssues }}</span>
               </div>
               <div class="op-hs-row">
                 <span class="sf-label-wrap">
                   Score MIP
-                  <span class="sf-info">ⓘ
-                    <div class="sf-tooltip">
-                      <strong>Calcul du Score MIP</strong>
-                      <div class="sf-formula">Gains Sécurisés / (Tender Margin × 5%)</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : Objectif 5% atteint ou dépassé</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50–99) : En progression</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (&lt;50) : Insuffisant</div>
-                      <div class="sf-divider"></div>
-                      <div class="sf-vals">
-                        <span class="sf-chip">Secured : {{ mipSecuredEur | number:'1.0-0' }} €</span>
-                        <span class="sf-chip">Cible 5% : {{ mipTargetEur | number:'1.0-0' }} €</span>
-                      </div>
-                    </div>
-                  </span>
+                  <span class="sf-info" (mouseenter)="showTip($event,'mip')" (mouseleave)="hideTip()">ⓘ</span>
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreMIP)">{{ scoreMIP }}</span>
               </div>
               <div class="op-hs-row">
                 <span class="sf-label-wrap">
                   {{ i18n.t('op.score_billing') }}
-                  <span class="sf-info">ⓘ
-                    <div class="sf-tooltip">
-                      <strong>Calcul du Score Facturation</strong>
-                      <div class="sf-formula">% Facturé vs Planifié</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> VERT (100) : % ≥ 90%</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> ORANGE (50) : ≥ 75% et &lt; 90%</div>
-                      <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> ROUGE (0) : &lt; 75%</div>
-                      <div class="sf-divider"></div>
-                      <div class="sf-vals">
-                        <span class="sf-chip">% Facturé : {{ wipInvoicedPctNum | number:'1.0-1' }}%</span>
-                      </div>
-                    </div>
-                  </span>
+                  <span class="sf-info" (mouseenter)="showTip($event,'billing')" (mouseleave)="hideTip()">ⓘ</span>
                 </span>
                 <span class="op-hs-badge" [class]="scoreClass(scoreFacturation)">{{ scoreFacturation }}</span>
               </div>
@@ -2570,5 +2509,91 @@
       Télécharger PDF
     </button>
   </div>
+
+</div>
+
+<!-- ── Global fixed tooltip — position:fixed so it is NEVER clipped ── -->
+<div class="sf-global-tip"
+     *ngIf="tipId"
+     [style.left.px]="tipX"
+     [style.top.px]="tipY">
+
+  <!-- Finance — RIO 10.4.1 : Écart PM = PM% EAC − PM% Budget EAC -->
+  <ng-container *ngIf="tipId === 'finance'">
+    <strong>Score Finance — Écart PM</strong>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : Écart &gt; 0%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 85 : Écart ≥ −2%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 70 : Écart ≥ −5%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 50 : Écart ≥ −8%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 30 : Écart ≥ −10%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 15 : Écart &lt; −10%</div>
+    <div class="sf-divider"></div>
+    <div class="sf-vals">
+      <span class="sf-chip">EAC : {{ totalMarginPct() | number:'1.1-1' }}%</span>
+      <span class="sf-chip">Budget : {{ budgetMarginPct() | number:'1.1-1' }}%</span>
+      <span class="sf-chip">Écart : {{ dviPct | number:'1.1-1' }}%</span>
+    </div>
+  </ng-container>
+
+  <!-- Risks — RIO 10.4.2 : Total = union (High/Critical OU Overdue) -->
+  <ng-container *ngIf="tipId === 'risks'">
+    <strong>Score Risks — Total flaggés</strong>
+    <div class="sf-formula">High/Critical ∪ Overdue (union, 1 risque = 1)</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : 0 risque</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 80 : ≤ 2 risques</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 60 : ≤ 5 risques</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 40 : ≤ 10 risques</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 20 : &gt; 10 risques</div>
+    <div class="sf-divider"></div>
+    <div class="sf-vals">
+      <span class="sf-chip">Critical : {{ openCriticalCount }}</span>
+      <span class="sf-chip">High : {{ openHighCount }}</span>
+    </div>
+  </ng-container>
+
+  <!-- Issues — RIO 10.4.3 : Total = union (Critical OU Overdue) -->
+  <ng-container *ngIf="tipId === 'issues'">
+    <strong>Score Issues — Total flaggées</strong>
+    <div class="sf-formula">Critical ∪ Overdue (union, 1 issue = 1)</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : 0 issue</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 80 : ≤ 3 issues</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 60 : ≤ 8 issues</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 40 : ≤ 15 issues</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 20 : &gt; 15 issues</div>
+    <div class="sf-divider"></div>
+    <div class="sf-vals">
+      <span class="sf-chip">Ouvertes : {{ openIssues.length }} / {{ kpiIssues.length }}</span>
+    </div>
+  </ng-container>
+
+  <!-- MIP — RIO 10.4.5 : Completion Rate + Delayed -->
+  <ng-container *ngIf="tipId === 'mip'">
+    <strong>Score MIP — Completion + Retards</strong>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : ≥ 90% &amp; 0 retard</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 80 : ≥ 80% &amp; ≤ 2 retards</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 60 : ≥ 70%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 40 : ≥ 50%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 20 : &lt; 50%</div>
+    <div class="sf-divider"></div>
+    <div class="sf-vals">
+      <span class="sf-chip">Completion : {{ mipCompletionRate | number:'1.0-1' }}%</span>
+      <span class="sf-chip">Retards : {{ mipDelayedCount }}</span>
+    </div>
+  </ng-container>
+
+  <!-- Facturation — RIO 10.4.4 : Collection Rate % -->
+  <ng-container *ngIf="tipId === 'billing'">
+    <strong>Score Facturation — Collection Rate</strong>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : ≥ 95%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 85 : ≥ 90%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 70 : ≥ 80%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 50 : ≥ 70%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 30 : ≥ 60%</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 15 : &lt; 60%</div>
+    <div class="sf-divider"></div>
+    <div class="sf-vals">
+      <span class="sf-chip">Collection : {{ wipInvoicedPctNum | number:'1.0-1' }}%</span>
+    </div>
+  </ng-container>
 
 </div>
