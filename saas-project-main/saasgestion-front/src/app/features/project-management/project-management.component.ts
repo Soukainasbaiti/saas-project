@@ -393,7 +393,11 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   openAddLotModal(): void {
-    this.newLotName = '';
+    const nums = this.allWpLots
+      .map(l => { const m = l.match(/^Lot\s*(\d+)$/i); return m ? +m[1] : 0; })
+      .filter(n => n > 0);
+    const next = nums.length ? Math.max(...nums) + 1 : 1;
+    this.newLotName = `Lot ${next}`;
     this.showAddLotModal = true;
     this.cdr.markForCheck();
   }
@@ -1225,8 +1229,8 @@ export class ProjectManagementComponent implements OnInit {
       { label: 'Cost - Budget',            real: budgetCostReal,   lastMonth: budgetCostLM, forecast: budgetCostFcst, landing: budgetCostLand, format: 'currency' },
       { label: 'Direct Costs - Real',      real: costReal,         lastMonth: costLM,       forecast: costFcst,       landing: costLand,       format: 'currency' },
       { label: '% BM Target',              real: ratio(budgetMarginReal, budgetRevReal) * 100, lastMonth: ratio(budgetMarginLM, budgetRevLM) * 100, forecast: ratio(budgetMarginFcst, budgetRevFcst) * 100, landing: ratio(budgetMarginLand, budgetRevLand) * 100, format: 'percent' },
-      { label: 'Project Margin - Real',    real: marginReal,       lastMonth: marginLM,     forecast: marginFcst,     landing: marginLand,     format: 'currency', marginRow: true },
-      { label: '% PM Real',                real: ratio(marginReal, revReal) * 100, lastMonth: ratio(marginLM, revLM) * 100, forecast: ratio(marginFcst, revFcst) * 100, landing: ratio(marginLand, revLand) * 100, format: 'percent', marginRow: true },
+      { label: 'BM - Real',                real: marginReal,       lastMonth: marginLM,     forecast: marginFcst,     landing: marginLand,     format: 'currency', marginRow: true },
+      { label: '% BM Real',               real: ratio(marginReal, revReal) * 100, lastMonth: ratio(marginLM, revLM) * 100, forecast: ratio(marginFcst, revFcst) * 100, landing: ratio(marginLand, revLand) * 100, format: 'percent', marginRow: true },
       { label: 'Worked Day',                real: workedReal, lastMonth: workedLM, forecast: workedFcst, landing: workedLand, format: 'days' },
       { label: 'PROR',                      real: ratio(billedReal, workedReal) * 100, lastMonth: ratio(billedLM, workedLM) * 100, forecast: ratio(billedFcst, workedFcst) * 100, landing: ratio(billedLand, workedLand) * 100, format: 'percent' },
       { label: 'ADR',                       real: ratio(revReal, workedReal),  lastMonth: ratio(revLM, workedLM),   forecast: ratio(revFcst, workedFcst),  landing: ratio(revLand, workedLand),  format: 'rate' },
@@ -1853,9 +1857,9 @@ export class ProjectManagementComponent implements OnInit {
     const targetPct = Math.max(0, Math.min(100, this.budgetMarginPct()));
     const realColor = this.marginGaugeColor(this.totalMarginPct());
     return {
-      labels: ['PM Real', 'BM Target'],
+      labels: ['BM Real', 'BM Target'],
       datasets: [
-        { label: 'PM Real',   data: [realPct, 100 - realPct],     backgroundColor: [realColor, '#e2e8f0'], borderWidth: 0 },
+        { label: 'BM Real',   data: [realPct, 100 - realPct],     backgroundColor: [realColor, '#e2e8f0'], borderWidth: 0 },
         { label: 'BM Target', data: [targetPct, 100 - targetPct], backgroundColor: ['#94a3b8', '#f1f5f9'], borderWidth: 0 },
       ]
     };
