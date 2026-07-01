@@ -1600,11 +1600,21 @@
 
     <!-- ═══ TAB: Synthèse Financière ═══ -->
     <ng-container *ngIf="activeTab==='synthese'">
-      <div class="pm-panel panel-gold">
+      <div class="pm-panel panel-gold" #financialSummaryPanel>
         <div class="panel-header">
           <div class="panel-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             Financial Summary — Monthly View
+          </div>
+          <div class="panel-header-right">
+            <button class="btn-export-op" (click)="exportFinancialSummaryPdf()" [disabled]="exportingFinancialPdf">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              {{ exportingFinancialPdf ? 'Export...' : 'Export PDF' }}
+            </button>
           </div>
         </div>
         <div class="matrix-scroll">

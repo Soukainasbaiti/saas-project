@@ -1502,7 +1502,9 @@ export class ProjectManagementComponent implements OnInit {
 
   // ── Export PDF ────────────────────────────────────────────────────
   @ViewChild('onepagerPanel') onepagerPanel!: ElementRef;
+  @ViewChild('financialSummaryPanel') financialSummaryPanel!: ElementRef;
   exportingPdf = false;
+  exportingFinancialPdf = false;
 
   async exportOnePagerPdf(): Promise<void> {
     if (this.exportingPdf) return;
@@ -1537,6 +1539,40 @@ export class ProjectManagementComponent implements OnInit {
       doc.save(filename);
     } finally {
       this.exportingPdf = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async exportFinancialSummaryPdf(): Promise<void> {
+    if (this.exportingFinancialPdf) return;
+    this.exportingFinancialPdf = true;
+    this.cdr.markForCheck();
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF }   = await import('jspdf');
+      const el: HTMLElement = this.financialSummaryPanel.nativeElement;
+
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgW  = 297;
+      const imgH  = (canvas.height * imgW) / canvas.width;
+      const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pages = Math.ceil(imgH / 210);
+
+      for (let p = 0; p < pages; p++) {
+        if (p > 0) doc.addPage();
+        doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, -p * 210, imgW, imgH);
+      }
+
+      const filename = `FinancialSummary_${this.projectBusinessId || 'project'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      doc.save(filename);
+    } finally {
+      this.exportingFinancialPdf = false;
       this.cdr.markForCheck();
     }
   }
