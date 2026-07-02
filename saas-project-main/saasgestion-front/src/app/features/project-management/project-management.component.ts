@@ -1556,13 +1556,11 @@ export class ProjectManagementComponent implements OnInit {
       const pageH  = 210;
       const mg     = 10;
       const navy   = [30, 42, 74]   as [number, number, number];
-      const blue   = [59, 130, 246] as [number, number, number];
-      const green  = [16, 185, 129] as [number, number, number];
       const sym    = this.currencySymbol;
       const today  = new Date().toLocaleDateString('fr-FR');
 
-      // jsPDF ne supporte pas   (espace insecable etroit) ni les fleches Unicode
-      const safe   = (s: string) => s.replace(/[   ]/g, ' ').replace(/[^\x00-\xFF]/g, '?');
+      // jsPDF: seuls les espaces insecables Unicode sont filtres -- euro/dollar/MAD passes
+      const safe   = (s: string) => s.replace(/ | | | |​/g, " ");
       const fmtV   = (v: number) => v === 0 ? '-' : safe(`${this.cfmt(v)} ${sym}`);
       const fmtP   = (v: number) => v === 0 ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
 
@@ -1699,35 +1697,35 @@ export class ProjectManagementComponent implements OnInit {
           [months.length + 1]: { cellWidth: totW, halign: 'right', fontStyle: 'bold' },
         },
         didParseCell: (data) => {
-          if (data.section !== 'body') return;
+          if (data.section !== "body") return;
           const row = rows[data.row.index];
           if (!row) return;
           switch (row.type) {
-            case 'cost':
-              data.cell.styles.fillColor = [239, 246, 255];
-              data.cell.styles.textColor = [30, 80, 160];
+            case "cost":
+              data.cell.styles.fillColor = [240, 244, 252];
+              data.cell.styles.textColor = [30, 42, 74];
               break;
-            case 'cost-sub':
-              data.cell.styles.fillColor = blue;
+            case "cost-sub":
+              data.cell.styles.fillColor = [30, 42, 74];
               data.cell.styles.textColor = [255, 255, 255];
-              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.fontStyle = "bold";
               break;
-            case 'rev':
-              data.cell.styles.fillColor = [240, 253, 244];
-              data.cell.styles.textColor = [6, 95, 70];
+            case "rev":
+              data.cell.styles.fillColor = [234, 238, 248];
+              data.cell.styles.textColor = [30, 42, 74];
               break;
-            case 'rev-sub':
-              data.cell.styles.fillColor = green;
+            case "rev-sub":
+              data.cell.styles.fillColor = [50, 70, 120];
               data.cell.styles.textColor = [255, 255, 255];
-              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.fontStyle = "bold";
               break;
-            case 'margin':
-              data.cell.styles.fillColor = isPositive ? [240, 253, 244] : [255, 241, 242];
-              data.cell.styles.textColor = isPositive ? [6, 95, 70]     : [185, 28, 28];
-              data.cell.styles.fontStyle = 'bold';
+            case "margin":
+              data.cell.styles.fillColor = [220, 228, 248];
+              data.cell.styles.textColor = [30, 42, 74];
+              data.cell.styles.fontStyle = "bold";
               break;
-            case 'sep':
-              data.cell.styles.fillColor   = [248, 250, 252];
+            case "sep":
+              data.cell.styles.fillColor   = [248, 250, 253];
               data.cell.styles.minCellHeight = 2;
               break;
           }
@@ -1737,32 +1735,38 @@ export class ProjectManagementComponent implements OnInit {
 
       const tableEndY = (doc as any).lastAutoTable.finalY + 8;
 
-      // ── KPI CARDS ─────────────────────────────────────────────────
-      if (tableEndY + 26 < pageH - 12) {
+      // ── KPI CARDS (couleur navy homogene) ────────────────────
+      if (tableEndY + 28 < pageH - 12) {
+        const navyLight = [240, 244, 252] as [number, number, number];
         const kpis = [
-          { label: 'Total Direct Cost', value: safe(`${this.cfmt(this.totalDirectCost())} ${sym}`),  color: blue,  light: [239, 246, 255] as [number, number, number] },
-          { label: 'Revenu Total',      value: safe(`${this.cfmt(this.totalRevenue())} ${sym}`),      color: green, light: [240, 253, 244] as [number, number, number] },
-          { label: 'Margin',            value: safe(`${this.cfmt(this.totalMargin())} ${sym}`) + `  (${this.totalMarginPct().toFixed(1)}%)`, color: (isPositive ? green : [239, 68, 68]) as [number, number, number], light: (isPositive ? [240, 253, 244] : [255, 241, 242]) as [number, number, number] },
+          { label: "TOTAL DIRECT COST", value: safe(this.cfmt(this.totalDirectCost()) + " " + sym) },
+          { label: "REVENU TOTAL",      value: safe(this.cfmt(this.totalRevenue())     + " " + sym) },
+          { label: "MARGIN",            value: safe(this.cfmt(this.totalMargin())      + " " + sym) + " (" + this.totalMarginPct().toFixed(1) + "%)" },
         ];
         const kW = (pageW - mg * 2 - 8) / 3;
         kpis.forEach((kpi, i) => {
           const x = mg + i * (kW + 4);
-          doc.setFillColor(...kpi.light);
-          doc.roundedRect(x, tableEndY, kW, 24, 3, 3, 'F');
-          doc.setFillColor(...kpi.color);
-          doc.roundedRect(x, tableEndY, kW, 5, 2, 2, 'F');
-          doc.rect(x, tableEndY + 3, kW, 2, 'F');
-          doc.setDrawColor(...kpi.color);
+          // fond light navy
+          doc.setFillColor(...navyLight);
+          doc.roundedRect(x, tableEndY, kW, 26, 3, 3, "F");
+          // barre navy en haut
+          doc.setFillColor(...navy);
+          doc.roundedRect(x, tableEndY, kW, 5, 2, 2, "F");
+          doc.rect(x, tableEndY + 3, kW, 2, "F");
+          // bordure navy
+          doc.setDrawColor(...navy);
           doc.setLineWidth(0.4);
-          doc.roundedRect(x, tableEndY, kW, 24, 3, 3, 'S');
-          doc.setFont('helvetica', 'bold');
+          doc.roundedRect(x, tableEndY, kW, 26, 3, 3, "S");
+          // label
+          doc.setFont("helvetica", "bold");
           doc.setFontSize(6.5);
-          doc.setTextColor(80, 100, 130);
-          doc.text(kpi.label.toUpperCase(), x + kW / 2, tableEndY + 12, { align: 'center' });
-          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(80, 100, 140);
+          doc.text(kpi.label, x + kW / 2, tableEndY + 13, { align: "center" });
+          // valeur
+          doc.setFont("helvetica", "bold");
           doc.setFontSize(10);
           doc.setTextColor(30, 42, 74);
-          doc.text(kpi.value, x + kW / 2, tableEndY + 21, { align: 'center' });
+          doc.text(kpi.value, x + kW / 2, tableEndY + 22, { align: "center" });
         });
       }
 
