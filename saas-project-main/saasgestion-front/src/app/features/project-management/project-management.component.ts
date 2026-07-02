@@ -1561,8 +1561,10 @@ export class ProjectManagementComponent implements OnInit {
       const sym    = this.currencySymbol;
       const today  = new Date().toLocaleDateString('fr-FR');
 
-      const fmtV   = (v: number) => v === 0 ? '—' : `${this.cfmt(v)} ${sym}`;
-      const fmtP   = (v: number) => v === 0 ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+      // jsPDF ne supporte pas   (espace insecable etroit) ni les fleches Unicode
+      const safe   = (s: string) => s.replace(/[   ]/g, ' ').replace(/[^\x00-\xFF]/g, '?');
+      const fmtV   = (v: number) => v === 0 ? '-' : safe(`${this.cfmt(v)} ${sym}`);
+      const fmtP   = (v: number) => v === 0 ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
 
       // ── HEADER ────────────────────────────────────────────────────
       doc.setFillColor(...navy);
@@ -1635,13 +1637,13 @@ export class ProjectManagementComponent implements OnInit {
       const rows: { label: string; vals: string[]; total: string; type: RowType }[] = [
         { label: 'Labor Cost (Payroll)',         vals: months.map(m => fmtV(this.laborCostForMonth(m))),                          total: fmtV(this.totalLaborCost()),   type: 'cost'    },
         { label: 'Other Costs (excl. rebill)',   vals: months.map(m => fmtV(this.nonRebillCostForMonth(m))),                      total: fmtV(this.totalOtherCost()),   type: 'cost'    },
-        { label: '➡ Total Direct Cost',         vals: months.map(m => fmtV(this.directCostForMonth(m))),                         total: fmtV(this.totalDirectCost()),  type: 'cost-sub'},
+        { label: '>> Total Direct Cost',         vals: months.map(m => fmtV(this.directCostForMonth(m))),                         total: fmtV(this.totalDirectCost()),  type: 'cost-sub'},
         { label: '',                             vals: months.map(() => ''), total: '', type: 'sep' },
-        { label: 'Revenu (ADR × Jours Facturés)',vals: months.map(m => fmtV(this.revenueForMonth(m) - this.rebillForMonth(m))),   total: fmtV(this.totalRevenue() - this.totalRebill()), type: 'rev' },
+        { label: 'Revenu (ADR x Jours Factures)',vals: months.map(m => fmtV(this.revenueForMonth(m) - this.rebillForMonth(m))),   total: fmtV(this.totalRevenue() - this.totalRebill()), type: 'rev' },
         { label: 'Rebill (Client Re-billing)',   vals: months.map(m => fmtV(this.rebillForMonth(m))),                             total: fmtV(this.totalRebill()),      type: 'rev'     },
-        { label: '➡ Revenu Total',              vals: months.map(m => fmtV(this.revenueForMonth(m))),                            total: fmtV(this.totalRevenue()),     type: 'rev-sub' },
+        { label: '>> Revenu Total',              vals: months.map(m => fmtV(this.revenueForMonth(m))),                            total: fmtV(this.totalRevenue()),     type: 'rev-sub' },
         { label: '',                             vals: months.map(() => ''), total: '', type: 'sep' },
-        { label: 'Margin (€)',                   vals: months.map(m => fmtV(this.marginForMonth(m))),                             total: fmtV(this.totalMargin()),      type: 'margin'  },
+        { label: 'Margin (EUR)',                  vals: months.map(m => fmtV(this.marginForMonth(m))),                             total: fmtV(this.totalMargin()),      type: 'margin'  },
         { label: 'Margin (%)',                   vals: months.map(m => fmtP(this.marginPctForMonth(m))),                          total: fmtP(this.totalMarginPct()),   type: 'margin'  },
       ];
       const body = rows.map(r => [r.label, ...r.vals, r.total]);
@@ -1715,9 +1717,9 @@ export class ProjectManagementComponent implements OnInit {
       // ── KPI CARDS ─────────────────────────────────────────────────
       if (tableEndY + 26 < pageH - 12) {
         const kpis = [
-          { label: 'Total Direct Cost', value: `${this.cfmt(this.totalDirectCost())} ${sym}`,  color: blue,  light: [239, 246, 255] as [number, number, number] },
-          { label: 'Revenu Total',      value: `${this.cfmt(this.totalRevenue())} ${sym}`,      color: green, light: [240, 253, 244] as [number, number, number] },
-          { label: 'Margin',            value: `${this.cfmt(this.totalMargin())} ${sym}  (${this.totalMarginPct().toFixed(1)}%)`, color: (isPositive ? green : [239, 68, 68]) as [number, number, number], light: (isPositive ? [240, 253, 244] : [255, 241, 242]) as [number, number, number] },
+          { label: 'Total Direct Cost', value: safe(`${this.cfmt(this.totalDirectCost())} ${sym}`),  color: blue,  light: [239, 246, 255] as [number, number, number] },
+          { label: 'Revenu Total',      value: safe(`${this.cfmt(this.totalRevenue())} ${sym}`),      color: green, light: [240, 253, 244] as [number, number, number] },
+          { label: 'Margin',            value: safe(`${this.cfmt(this.totalMargin())} ${sym}`) + `  (${this.totalMarginPct().toFixed(1)}%)`, color: (isPositive ? green : [239, 68, 68]) as [number, number, number], light: (isPositive ? [240, 253, 244] : [255, 241, 242]) as [number, number, number] },
         ];
         const kW = (pageW - mg * 2 - 8) / 3;
         kpis.forEach((kpi, i) => {
