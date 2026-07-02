@@ -1548,29 +1548,217 @@ export class ProjectManagementComponent implements OnInit {
     this.exportingFinancialPdf = true;
     this.cdr.markForCheck();
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF }   = await import('jspdf');
-      const el: HTMLElement = this.financialSummaryPanel.nativeElement;
+      const { jsPDF }  = await import('jspdf');
+      const autoTable  = (await import('jspdf-autotable')).default;
 
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
+      const doc    = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageW  = 297;
+      const pageH  = 210;
+      const mg     = 10;
+      const navy   = [30, 42, 74]   as [number, number, number];
+      const blue   = [59, 130, 246] as [number, number, number];
+      const green  = [16, 185, 129] as [number, number, number];
+      const sym    = this.currencySymbol;
+      const today  = new Date().toLocaleDateString('fr-FR');
+
+      const fmtV   = (v: number) => v === 0 ? '—' : `${this.cfmt(v)} ${sym}`;
+      const fmtP   = (v: number) => v === 0 ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+
+      // ── HEADER ────────────────────────────────────────────────────
+      doc.setFillColor(...navy);
+      doc.rect(0, 0, pageW, 26, 'F');
+
+      // Accent bar
+      doc.setFillColor(0, 162, 255);
+      doc.rect(mg, 21, 36, 1.8, 'F');
+
+      // SEGULA wordmark
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.text('SEGULA', mg, 13);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(160, 195, 230);
+      doc.text('TECHNOLOGIES', mg, 19);
+
+      // Centre — document title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(255, 255, 255);
+      doc.text('FINANCIAL SUMMARY', pageW / 2, 13, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(160, 200, 240);
+      doc.text('Monthly Project Performance Report', pageW / 2, 20, { align: 'center' });
+
+      // Right — address + date
+      doc.setFontSize(6.5);
+      doc.setTextColor(160, 200, 240);
+      doc.text('Segula Maroc Africa SA', pageW - mg, 8,  { align: 'right' });
+      doc.text('Shore 26, Sidi Maarouf – Casablanca',    pageW - mg, 13, { align: 'right' });
+      doc.text(`Generated: ${today}`,                    pageW - mg, 19, { align: 'right' });
+
+      // ── PROJECT INFO BAND ─────────────────────────────────────────
+      doc.setFillColor(240, 244, 255);
+      doc.rect(0, 26, pageW, 17, 'F');
+      doc.setDrawColor(200, 215, 245);
+      doc.setLineWidth(0.3);
+      doc.line(0, 43, pageW, 43);
+
+      const infos = [
+        { label: 'Project',     value: this.projectName        || '—' },
+        { label: 'Project ID',  value: this.projectBusinessId  || '—' },
+        { label: 'BU',          value: this.projectBuTrigram   || '—' },
+        { label: 'Client',      value: this.projectClientName  || '—' },
+        { label: 'PM',          value: this.projectPmName      || '—' },
+        { label: 'Currency',    value: sym },
+      ];
+      const colW = (pageW - mg * 2) / infos.length;
+      infos.forEach((info, i) => {
+        const x = mg + i * colW;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6);
+        doc.setTextColor(100, 120, 165);
+        doc.text(info.label.toUpperCase(), x, 32);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(30, 42, 74);
+        doc.text((info.value || '—').slice(0, 30), x, 39);
       });
 
-      const imgW  = 297;
-      const imgH  = (canvas.height * imgW) / canvas.width;
-      const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const pages = Math.ceil(imgH / 210);
+      // ── TABLE ─────────────────────────────────────────────────────
+      const months = this.months;
+      const head   = [['Indicator', ...months.map(m => this.formatMonth(m)), 'TOTAL']];
 
-      for (let p = 0; p < pages; p++) {
-        if (p > 0) doc.addPage();
-        doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, -p * 210, imgW, imgH);
+      type RowType = 'cost' | 'cost-sub' | 'rev' | 'rev-sub' | 'margin' | 'sep';
+      const rows: { label: string; vals: string[]; total: string; type: RowType }[] = [
+        { label: 'Labor Cost (Payroll)',         vals: months.map(m => fmtV(this.laborCostForMonth(m))),                          total: fmtV(this.totalLaborCost()),   type: 'cost'    },
+        { label: 'Other Costs (excl. rebill)',   vals: months.map(m => fmtV(this.nonRebillCostForMonth(m))),                      total: fmtV(this.totalOtherCost()),   type: 'cost'    },
+        { label: '➡ Total Direct Cost',         vals: months.map(m => fmtV(this.directCostForMonth(m))),                         total: fmtV(this.totalDirectCost()),  type: 'cost-sub'},
+        { label: '',                             vals: months.map(() => ''), total: '', type: 'sep' },
+        { label: 'Revenu (ADR × Jours Facturés)',vals: months.map(m => fmtV(this.revenueForMonth(m) - this.rebillForMonth(m))),   total: fmtV(this.totalRevenue() - this.totalRebill()), type: 'rev' },
+        { label: 'Rebill (Client Re-billing)',   vals: months.map(m => fmtV(this.rebillForMonth(m))),                             total: fmtV(this.totalRebill()),      type: 'rev'     },
+        { label: '➡ Revenu Total',              vals: months.map(m => fmtV(this.revenueForMonth(m))),                            total: fmtV(this.totalRevenue()),     type: 'rev-sub' },
+        { label: '',                             vals: months.map(() => ''), total: '', type: 'sep' },
+        { label: 'Margin (€)',                   vals: months.map(m => fmtV(this.marginForMonth(m))),                             total: fmtV(this.totalMargin()),      type: 'margin'  },
+        { label: 'Margin (%)',                   vals: months.map(m => fmtP(this.marginPctForMonth(m))),                          total: fmtP(this.totalMarginPct()),   type: 'margin'  },
+      ];
+      const body = rows.map(r => [r.label, ...r.vals, r.total]);
+
+      const usable     = pageW - mg * 2;
+      const indW       = 50;
+      const totW       = 22;
+      const mW         = Math.max(14, (usable - indW - totW) / months.length);
+      const isPositive = this.totalMarginPct() >= 0;
+
+      autoTable(doc, {
+        startY: 46,
+        head,
+        body,
+        styles: {
+          fontSize:    months.length > 10 ? 6 : 7,
+          cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
+          valign: 'middle',
+        },
+        headStyles: {
+          fillColor: navy,
+          textColor: 255,
+          fontStyle: 'bold',
+          halign:    'center',
+          fontSize:  months.length > 10 ? 5.5 : 6.5,
+        },
+        columnStyles: {
+          0: { cellWidth: indW, fontStyle: 'bold', halign: 'left' },
+          ...Object.fromEntries(months.map((_, i) => [i + 1, { cellWidth: mW, halign: 'right' }])),
+          [months.length + 1]: { cellWidth: totW, halign: 'right', fontStyle: 'bold' },
+        },
+        didParseCell: (data) => {
+          if (data.section !== 'body') return;
+          const row = rows[data.row.index];
+          if (!row) return;
+          switch (row.type) {
+            case 'cost':
+              data.cell.styles.fillColor = [239, 246, 255];
+              data.cell.styles.textColor = [30, 80, 160];
+              break;
+            case 'cost-sub':
+              data.cell.styles.fillColor = blue;
+              data.cell.styles.textColor = [255, 255, 255];
+              data.cell.styles.fontStyle = 'bold';
+              break;
+            case 'rev':
+              data.cell.styles.fillColor = [240, 253, 244];
+              data.cell.styles.textColor = [6, 95, 70];
+              break;
+            case 'rev-sub':
+              data.cell.styles.fillColor = green;
+              data.cell.styles.textColor = [255, 255, 255];
+              data.cell.styles.fontStyle = 'bold';
+              break;
+            case 'margin':
+              data.cell.styles.fillColor = isPositive ? [240, 253, 244] : [255, 241, 242];
+              data.cell.styles.textColor = isPositive ? [6, 95, 70]     : [185, 28, 28];
+              data.cell.styles.fontStyle = 'bold';
+              break;
+            case 'sep':
+              data.cell.styles.fillColor   = [248, 250, 252];
+              data.cell.styles.minCellHeight = 2;
+              break;
+          }
+        },
+        margin: { left: mg, right: mg },
+      });
+
+      const tableEndY = (doc as any).lastAutoTable.finalY + 8;
+
+      // ── KPI CARDS ─────────────────────────────────────────────────
+      if (tableEndY + 26 < pageH - 12) {
+        const kpis = [
+          { label: 'Total Direct Cost', value: `${this.cfmt(this.totalDirectCost())} ${sym}`,  color: blue,  light: [239, 246, 255] as [number, number, number] },
+          { label: 'Revenu Total',      value: `${this.cfmt(this.totalRevenue())} ${sym}`,      color: green, light: [240, 253, 244] as [number, number, number] },
+          { label: 'Margin',            value: `${this.cfmt(this.totalMargin())} ${sym}  (${this.totalMarginPct().toFixed(1)}%)`, color: (isPositive ? green : [239, 68, 68]) as [number, number, number], light: (isPositive ? [240, 253, 244] : [255, 241, 242]) as [number, number, number] },
+        ];
+        const kW = (pageW - mg * 2 - 8) / 3;
+        kpis.forEach((kpi, i) => {
+          const x = mg + i * (kW + 4);
+          doc.setFillColor(...kpi.light);
+          doc.roundedRect(x, tableEndY, kW, 24, 3, 3, 'F');
+          doc.setFillColor(...kpi.color);
+          doc.roundedRect(x, tableEndY, kW, 5, 2, 2, 'F');
+          doc.rect(x, tableEndY + 3, kW, 2, 'F');
+          doc.setDrawColor(...kpi.color);
+          doc.setLineWidth(0.4);
+          doc.roundedRect(x, tableEndY, kW, 24, 3, 3, 'S');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(80, 100, 130);
+          doc.text(kpi.label.toUpperCase(), x + kW / 2, tableEndY + 12, { align: 'center' });
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(30, 42, 74);
+          doc.text(kpi.value, x + kW / 2, tableEndY + 21, { align: 'center' });
+        });
       }
 
-      const filename = `FinancialSummary_${this.projectBusinessId || 'project'}_${new Date().toISOString().slice(0, 10)}.pdf`;
-      doc.save(filename);
+      // ── FOOTER (toutes les pages) ─────────────────────────────────
+      const totalPages = (doc as any).internal.getNumberOfPages();
+      for (let pg = 1; pg <= totalPages; pg++) {
+        doc.setPage(pg);
+        doc.setFillColor(245, 247, 252);
+        doc.rect(0, pageH - 9, pageW, 9, 'F');
+        doc.setDrawColor(200, 210, 235);
+        doc.setLineWidth(0.3);
+        doc.line(0, pageH - 9, pageW, pageH - 9);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(120, 140, 170);
+        doc.text('SEGULA Technologies — Financial Summary Report — Confidential', mg, pageH - 3.5);
+        doc.text(`Page ${pg} / ${totalPages}`, pageW - mg, pageH - 3.5, { align: 'right' });
+        doc.text(`Generated on ${today}`, pageW / 2, pageH - 3.5, { align: 'center' });
+      }
+
+      doc.save(`FinancialSummary_${this.projectBusinessId || 'project'}_${new Date().toISOString().slice(0, 10)}.pdf`);
     } finally {
       this.exportingFinancialPdf = false;
       this.cdr.markForCheck();
