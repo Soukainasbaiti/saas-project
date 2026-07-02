@@ -12,6 +12,9 @@ export interface ProjectListDto {
   buTrigram: string;
   customerName: string;
   customerTrigram: string;
+  customerGroup: string;
+  industryId: number;
+  industryName: string;
   industryTrigram: string;
   projectManager: string;
   engagementType: string;

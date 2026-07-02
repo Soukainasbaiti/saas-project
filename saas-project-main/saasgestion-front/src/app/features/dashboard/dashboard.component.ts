@@ -41,7 +41,9 @@ export class DashboardComponent implements OnInit {
 
   bus: ReferenceDto[] = [];
   customers: ReferenceDto[] = [];
+  industries: ReferenceDto[] = [];
   frontFinanciers: ReferenceDto[] = [];
+  allProjects: ProjectListDto[] = [];
 
   filterForm: FormGroup;
 
@@ -89,10 +91,12 @@ export class DashboardComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {
     this.filterForm = this.fb.group({
-      year:       [null],
-      buId:       [null],
-      status:     [null],
-      customerId: [null]
+      year:          [null],
+      buId:          [null],
+      status:        [null],
+      customerId:    [null],
+      industryId:    [null],
+      customerGroup: [null]
     });
   }
 
@@ -107,7 +111,14 @@ export class DashboardComponent implements OnInit {
     this.loadProjects();
     if (this.isBum) { this.loadBumPendingProjects(); this.loadBumHistory(); }
     if (this.isPm)  { this.loadPmRejectedProjects(); }
-    this.filterForm.valueChanges.subscribe(() => this.loadProjects());
+    // Filtres backend → rechargement complet
+    ['buId', 'status', 'customerId', 'year'].forEach(k =>
+      this.filterForm.get(k)!.valueChanges.subscribe(() => this.loadProjects())
+    );
+    // Filtres client → filtrage local uniquement
+    ['industryId', 'customerGroup'].forEach(k =>
+      this.filterForm.get(k)!.valueChanges.subscribe(() => this.applyClientFilters())
+    );
   }
 
   logout(): void {
@@ -117,7 +128,12 @@ export class DashboardComponent implements OnInit {
   loadRefData(): void {
     this.api.getBus().subscribe(d => { this.bus = d; this.cdr.detectChanges(); });
     this.api.getCustomers().subscribe(d => { this.customers = d; this.cdr.detectChanges(); });
+    this.api.getIndustries().subscribe(d => { this.industries = d; this.cdr.detectChanges(); });
     this.api.getFrontFinanciers().subscribe(d => { this.frontFinanciers = d; this.cdr.detectChanges(); });
+  }
+
+  get customerGroups(): string[] {
+    return [...new Set(this.allProjects.map(p => p.customerGroup).filter(Boolean))].sort();
   }
 
   loadStats(): void {
@@ -139,9 +155,9 @@ export class DashboardComponent implements OnInit {
       size: 1000
     }).subscribe({
       next: r => {
-        this.projects      = r.content;
-        this.totalElements = r.totalElements;
-        this.loading       = false;
+        this.allProjects = r.content;
+        this.applyClientFilters();
+        this.loading = false;
         this.cdr.detectChanges();
       },
       error: () => {
@@ -149,6 +165,16 @@ export class DashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  applyClientFilters(): void {
+    const f = this.filterForm.value;
+    let filtered = this.allProjects;
+    if (f.industryId)    filtered = filtered.filter(p => p.industryId    === +f.industryId);
+    if (f.customerGroup) filtered = filtered.filter(p => p.customerGroup === f.customerGroup);
+    this.projects      = filtered;
+    this.totalElements = filtered.length;
+    this.cdr.detectChanges();
   }
 
   openModal(id: number): void {

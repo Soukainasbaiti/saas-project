@@ -191,6 +191,20 @@
             <mat-option *ngFor="let c of customers" [value]="c.id">{{ c.label }}</mat-option>
           </mat-select>
         </div>
+        <div class="filter-group">
+          <label>Customer Group</label>
+          <mat-select formControlName="customerGroup" class="mat-filter-select" placeholder="Tous les groupes">
+            <mat-option [value]="null">Tous les groupes</mat-option>
+            <mat-option *ngFor="let g of customerGroups" [value]="g">{{ g }}</mat-option>
+          </mat-select>
+        </div>
+        <div class="filter-group">
+          <label>Industry</label>
+          <mat-select formControlName="industryId" class="mat-filter-select" placeholder="Toutes les industries">
+            <mat-option [value]="null">Toutes les industries</mat-option>
+            <mat-option *ngFor="let ind of industries" [value]="ind.id">{{ ind.label }}</mat-option>
+          </mat-select>
+        </div>
       </form>
     </div>
 
