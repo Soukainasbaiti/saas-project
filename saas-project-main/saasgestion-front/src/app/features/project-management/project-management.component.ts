@@ -1566,6 +1566,23 @@ export class ProjectManagementComponent implements OnInit {
       const fmtV   = (v: number) => v === 0 ? '-' : safe(`${this.cfmt(v)} ${sym}`);
       const fmtP   = (v: number) => v === 0 ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
 
+      // ── Chargement logo SEGULA en base64 ─────────────────────────
+      const logoBase64 = await new Promise<string | null>(resolve => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width  = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d')!.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } catch { resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = '/assets/logo_segula.png';
+      });
+
       // ── HEADER ────────────────────────────────────────────────────
       doc.setFillColor(...navy);
       doc.rect(0, 0, pageW, 26, 'F');
@@ -1574,15 +1591,21 @@ export class ProjectManagementComponent implements OnInit {
       doc.setFillColor(0, 162, 255);
       doc.rect(mg, 21, 36, 1.8, 'F');
 
-      // SEGULA wordmark
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(22);
-      doc.text('SEGULA', mg, 13);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(160, 195, 230);
-      doc.text('TECHNOLOGIES', mg, 19);
+      // Logo SEGULA (fond blanc arrondi si logo charge, sinon texte fallback)
+      if (logoBase64) {
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(mg, 3, 42, 18, 2, 2, 'F');
+        doc.addImage(logoBase64, 'PNG', mg + 1, 4, 40, 16);
+      } else {
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.text('SEGULA', mg, 13);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(160, 195, 230);
+        doc.text('TECHNOLOGIES', mg, 19);
+      }
 
       // Centre — document title
       doc.setFont('helvetica', 'bold');
