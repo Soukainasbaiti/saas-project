@@ -1432,15 +1432,17 @@ export class ProjectManagementComponent implements OnInit {
     return n > 0 ? (this.openIssues.length / n) * 100 : 0;
   }
 
-  // Score Issues (15%) : Total = Critical Issues + Overdue Issues (comptés séparément)
+  // Score Issues (15%) : issues High/CriticalImpact ET overdue (deadline passée)
+  // severity n'a pas de valeur 'Critical' (High|Medium|Low) — le critique est impacts='Critical Impact'
   get scoreIssues(): number {
-    const critical = this.openIssues.filter(i => i.severity === 'Critical').length;
-    const overdue  = this.openIssues.filter(i => i.deadline && i.deadline < this.todayStr).length;
-    const total    = critical + overdue;
-    if (total === 0)  return 100;
-    if (total <= 3)   return 80;
-    if (total <= 8)   return 60;
-    if (total <= 15)  return 40;
+    const flagged = this.openIssues.filter(i =>
+      (i.severity === 'High' || i.impacts === 'Critical Impact') &&
+      (i.deadline && i.deadline < this.todayStr)
+    ).length;
+    if (flagged === 0)  return 100;
+    if (flagged <= 3)   return 80;
+    if (flagged <= 8)   return 60;
+    if (flagged <= 15)  return 40;
     return 20;
   }
 

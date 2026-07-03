@@ -2561,10 +2561,10 @@
     </div>
   </ng-container>
 
-  <!-- Issues — RIO 10.4.3 : Total = union (Critical OU Overdue) -->
+  <!-- Issues — RIO 10.4.3 : (High|Critical Impact) ET Overdue -->
   <ng-container *ngIf="tipId === 'issues'">
     <strong>Score Issues — Total flaggées</strong>
-    <div class="sf-formula">Total = Critical Issues + Overdue Issues (comptés séparément)</div>
+    <div class="sf-formula">Issues (High sévérité ou Critical Impact) avec deadline dépassée</div>
     <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : 0 issue</div>
     <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 80 : ≤ 3 issues</div>
     <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 60 : ≤ 8 issues</div>
