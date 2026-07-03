@@ -1232,6 +1232,7 @@ export class ProjectManagementComponent implements OnInit {
       { label: 'BM - Real',                real: marginReal,       lastMonth: marginLM,     forecast: marginFcst,     landing: marginLand,     format: 'currency', marginRow: true },
       { label: '% BM Real',               real: ratio(marginReal, revReal) * 100, lastMonth: ratio(marginLM, revLM) * 100, forecast: ratio(marginFcst, revFcst) * 100, landing: ratio(marginLand, revLand) * 100, format: 'percent', marginRow: true },
       { label: 'Worked Day',                real: workedReal, lastMonth: workedLM, forecast: workedFcst, landing: workedLand, format: 'days' },
+      { label: 'Billed Day',                 real: billedReal, lastMonth: billedLM, forecast: billedFcst, landing: billedLand, format: 'days' },
       { label: 'PROR',                      real: ratio(billedReal, workedReal) * 100, lastMonth: ratio(billedLM, workedLM) * 100, forecast: ratio(billedFcst, workedFcst) * 100, landing: ratio(billedLand, workedLand) * 100, format: 'percent' },
       { label: 'ADR',                       real: ratio(revReal, workedReal),  lastMonth: ratio(revLM, workedLM),   forecast: ratio(revFcst, workedFcst),  landing: ratio(revLand, workedLand),  format: 'rate' },
       { label: 'ADC',                       real: ratio(costReal, workedReal), lastMonth: ratio(costLM, workedLM), forecast: ratio(costFcst, workedFcst), landing: ratio(costLand, workedLand), format: 'rate' },
@@ -1431,15 +1432,15 @@ export class ProjectManagementComponent implements OnInit {
     return n > 0 ? (this.openIssues.length / n) * 100 : 0;
   }
 
-  // Score Issues (15%) : Total = issues Critical ET Overdue simultanément
+  // Score Issues (15%) : Total = Critical Issues + Overdue Issues (comptés séparément)
   get scoreIssues(): number {
-    const flagged = this.openIssues.filter(i =>
-      i.severity === 'Critical' && (i.deadline && i.deadline < this.todayStr)
-    ).length;
-    if (flagged === 0)  return 100;
-    if (flagged <= 3)   return 80;
-    if (flagged <= 8)   return 60;
-    if (flagged <= 15)  return 40;
+    const critical = this.openIssues.filter(i => i.severity === 'Critical').length;
+    const overdue  = this.openIssues.filter(i => i.deadline && i.deadline < this.todayStr).length;
+    const total    = critical + overdue;
+    if (total === 0)  return 100;
+    if (total <= 3)   return 80;
+    if (total <= 8)   return 60;
+    if (total <= 15)  return 40;
     return 20;
   }
 
