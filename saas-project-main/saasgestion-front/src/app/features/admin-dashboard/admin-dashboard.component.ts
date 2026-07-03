@@ -27,7 +27,10 @@ export class AdminDashboardComponent implements OnInit {
   loading = true;
   searchTerm = '';
   filterStatus = '';
-  filterBu = '';
+  filterBu            = '';
+  filterClient        = '';
+  filterCustomerGroup = '';
+  filterIndustry      = '';
 
   // Détail modal
   selectedProject: ProjectDetailDto | null = null;
@@ -216,14 +219,29 @@ export class AdminDashboardComponent implements OnInit {
         p.projectName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         p.activity?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         p.customerName?.toLowerCase().includes(this.searchTerm.toLowerCase());
-      const matchStatus = !this.filterStatus || p.status === this.filterStatus;
-      const matchBu = !this.filterBu || p.buTrigram === this.filterBu;
-      return matchSearch && matchStatus && matchBu;
+      const matchStatus        = !this.filterStatus        || p.status        === this.filterStatus;
+      const matchBu            = !this.filterBu            || p.buTrigram     === this.filterBu;
+      const matchClient        = !this.filterClient        || p.customerName  === this.filterClient;
+      const matchCustomerGroup = !this.filterCustomerGroup || p.customerGroup === this.filterCustomerGroup;
+      const matchIndustry      = !this.filterIndustry      || p.industryName  === this.filterIndustry;
+      return matchSearch && matchStatus && matchBu && matchClient && matchCustomerGroup && matchIndustry;
     });
   }
 
   get uniqueBus(): string[] {
     return [...new Set(this.projects.map(p => p.buTrigram).filter(Boolean))].sort();
+  }
+
+  get uniqueClients(): string[] {
+    return [...new Set(this.projects.map(p => p.customerName).filter(Boolean))].sort();
+  }
+
+  get uniqueCustomerGroups(): string[] {
+    return [...new Set(this.projects.map(p => p.customerGroup).filter(Boolean))].sort();
+  }
+
+  get uniqueIndustries(): string[] {
+    return [...new Set(this.projects.map(p => p.industryName).filter(Boolean))].sort();
   }
 
   get onGoingCount(): number {

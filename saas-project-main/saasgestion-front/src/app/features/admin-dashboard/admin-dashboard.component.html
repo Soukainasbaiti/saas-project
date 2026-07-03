@@ -24,6 +24,18 @@
           <option value="On Hold">On Hold</option>
           <option value="Canceled">Canceled</option>
         </select>
+        <select class="filter-select filter-select--new" [(ngModel)]="filterClient">
+          <option value="">Client</option>
+          <option *ngFor="let c of uniqueClients" [value]="c">{{ c }}</option>
+        </select>
+        <select class="filter-select filter-select--new" [(ngModel)]="filterCustomerGroup">
+          <option value="">Groupe Client</option>
+          <option *ngFor="let g of uniqueCustomerGroups" [value]="g">{{ g }}</option>
+        </select>
+        <select class="filter-select filter-select--new" [(ngModel)]="filterIndustry">
+          <option value="">Industrie</option>
+          <option *ngFor="let ind of uniqueIndustries" [value]="ind">{{ ind }}</option>
+        </select>
         <button class="btn-export" (click)="openExportModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
