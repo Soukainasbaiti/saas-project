@@ -17,6 +17,9 @@ public class ProjectListDto {
     private String     customerName;
     private String     customerTrigram;
     private String     industryTrigram;
+    private Long       industryId;
+    private String     industryName;
+    private String     customerGroup;
     private String     projectManager;
     private String     engagementType;
     private String     technicalOffice;
