@@ -173,6 +173,10 @@ export class ProjectManagementComponent implements OnInit {
   // ── Génération BL ─────────────────────────────────────────────
   showBlModal = false;
   blSelectedPeriod = '';
+  blIsDrawing   = false;
+  blSigLastX    = 0;
+  blSigLastY    = 0;
+  blHasSig      = false;
   blForm = {
     blDate: '',
     blNumber: '',
@@ -1506,6 +1510,7 @@ export class ProjectManagementComponent implements OnInit {
   // ── Export PDF ────────────────────────────────────────────────────
   @ViewChild('onepagerPanel') onepagerPanel!: ElementRef;
   @ViewChild('financialSummaryPanel') financialSummaryPanel!: ElementRef;
+  @ViewChild('blSignatureCanvas') blSignatureCanvas?: ElementRef<HTMLCanvasElement>;
   exportingPdf = false;
   exportingFinancialPdf = false;
 
@@ -2540,6 +2545,78 @@ export class ProjectManagementComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  get blPeriodLabel(): string {
+    if (!this.blSelectedPeriod) return '';
+    const months = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+    const [y, m] = this.blSelectedPeriod.split('-');
+    return months[+m - 1] + ' ' + y;
+  }
+
+  clearBlSignature(): void {
+    const c = this.blSignatureCanvas?.nativeElement;
+    if (!c) return;
+    c.getContext('2d')!.clearRect(0, 0, c.width, c.height);
+    this.blHasSig = false;
+    this.cdr.markForCheck();
+  }
+
+  private blSigPos(canvas: HTMLCanvasElement, clientX: number, clientY: number): { x: number; y: number } {
+    const r = canvas.getBoundingClientRect();
+    return { x: (clientX - r.left) * (canvas.width / r.width),
+             y: (clientY - r.top)  * (canvas.height / r.height) };
+  }
+
+  onBlSigDown(e: MouseEvent): void {
+    e.preventDefault();
+    const c = this.blSignatureCanvas?.nativeElement; if (!c) return;
+    const p = this.blSigPos(c, e.clientX, e.clientY);
+    const ctx = c.getContext('2d')!;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
+    this.blSigLastX = p.x; this.blSigLastY = p.y;
+    this.blIsDrawing = true; this.blHasSig = true;
+  }
+
+  onBlSigMove(e: MouseEvent): void {
+    if (!this.blIsDrawing) return;
+    e.preventDefault();
+    const c = this.blSignatureCanvas?.nativeElement; if (!c) return;
+    const p = this.blSigPos(c, e.clientX, e.clientY);
+    const ctx = c.getContext('2d')!;
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1e2a4a';
+    ctx.beginPath(); ctx.moveTo(this.blSigLastX, this.blSigLastY);
+    ctx.lineTo(p.x, p.y); ctx.stroke();
+    this.blSigLastX = p.x; this.blSigLastY = p.y;
+  }
+
+  onBlSigUp(): void { this.blIsDrawing = false; }
+
+  onBlSigTouchStart(e: TouchEvent): void {
+    e.preventDefault();
+    if (!e.touches.length) return;
+    const t = e.touches[0];
+    const c = this.blSignatureCanvas?.nativeElement; if (!c) return;
+    const p = this.blSigPos(c, t.clientX, t.clientY);
+    const ctx = c.getContext('2d')!;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
+    this.blSigLastX = p.x; this.blSigLastY = p.y;
+    this.blIsDrawing = true; this.blHasSig = true;
+  }
+
+  onBlSigTouchMove(e: TouchEvent): void {
+    e.preventDefault();
+    if (!this.blIsDrawing || !e.touches.length) return;
+    const t = e.touches[0];
+    const c = this.blSignatureCanvas?.nativeElement; if (!c) return;
+    const p = this.blSigPos(c, t.clientX, t.clientY);
+    const ctx = c.getContext('2d')!;
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1e2a4a';
+    ctx.beginPath(); ctx.moveTo(this.blSigLastX, this.blSigLastY);
+    ctx.lineTo(p.x, p.y); ctx.stroke();
+    this.blSigLastX = p.x; this.blSigLastY = p.y;
+  }
+
   async generateBlPdf(): Promise<void> {
     const { jsPDF } = await import('jspdf');
     const autoTable  = (await import('jspdf-autotable')).default;
@@ -2553,6 +2630,13 @@ export class ProjectManagementComponent implements OnInit {
       return int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ',' + frac;
     };
     const fmtAmt = (eur: number) => fmtN(Math.round(eur * rate * 100) / 100) + ' ' + sym;
+
+    // Capture drawn signature from canvas
+    let blSigImg: string | null = null;
+    const blSigCanvas = this.blSignatureCanvas?.nativeElement;
+    if (blSigCanvas && this.blHasSig) {
+      blSigImg = blSigCanvas.toDataURL('image/png');
+    }
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageW  = 210;
@@ -2605,7 +2689,8 @@ export class ProjectManagementComponent implements OnInit {
     doc.roundedRect(mg, 30, pageW - mg * 2, 11, 2, 2, 'S');
     doc.setTextColor(...navy);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-    doc.text('BON DE LIVRAISON  -  N' + String.fromCharCode(176) + ' : ' + this.blForm.blNumber,
+    const periodSuffix = this.blPeriodLabel ? '   |   ' + this.blPeriodLabel : '';
+    doc.text('BON DE LIVRAISON  -  N' + String.fromCharCode(176) + ' : ' + this.blForm.blNumber + periodSuffix,
              pageW / 2, 37.2, { align: 'center' });
 
     // ── Date ──────────────────────────────────────────────────────
@@ -2709,7 +2794,7 @@ export class ProjectManagementComponent implements OnInit {
 
     // ── Signatures ────────────────────────────────────────────────
     const sigW = (pageW - mg * 2 - 8) / 2;
-    const drawSigBox = (x: number, title: string, sub: string, sigName: string, date: string) => {
+    const drawSigBox = (x: number, title: string, sub: string, sigName: string, date: string, sigImg?: string | null) => {
       doc.setFillColor(...navyL);
       doc.roundedRect(x, finalY, sigW, 32, 2, 2, 'F');
       doc.setDrawColor(...navy); doc.setLineWidth(0.4);
@@ -2725,8 +2810,12 @@ export class ProjectManagementComponent implements OnInit {
       doc.setTextColor(60, 60, 70);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
       doc.text('Signature :', x + 4, finalY + 16);
-      doc.setFont('helvetica', 'normal');
-      doc.text(sigName || '...', x + 24, finalY + 16);
+      if (sigImg) {
+        doc.addImage(sigImg, 'PNG', x + 4, finalY + 11, sigW - 8, 14);
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.text(sigName || '...', x + 24, finalY + 16);
+      }
       doc.setFont('helvetica', 'bold');
       doc.text('Date :', x + 4, finalY + 23);
       doc.setFont('helvetica', 'normal');
@@ -2734,7 +2823,7 @@ export class ProjectManagementComponent implements OnInit {
     };
 
     drawSigBox(mg,            'Fournisseur', 'Pour Segula Maroc Africa',
-               this.blForm.supplierContact, this.blForm.blDate);
+               this.blForm.supplierContact, this.blForm.blDate, blSigImg);
     drawSigBox(mg + sigW + 8, 'Client',      'Pour ' + (this.blForm.clientName || 'CLIENT'), '', '');
 
     // ── Footer (toutes les pages) ──────────────────────────────────
