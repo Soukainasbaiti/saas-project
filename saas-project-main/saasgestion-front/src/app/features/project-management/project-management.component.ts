@@ -2542,145 +2542,218 @@ export class ProjectManagementComponent implements OnInit {
 
   async generateBlPdf(): Promise<void> {
     const { jsPDF } = await import('jspdf');
-    const autoTable = (await import('jspdf-autotable')).default;
+    const autoTable  = (await import('jspdf-autotable')).default;
+
+    const sym  = this.currencySymbol;
+    const rate = this.exchangeRate;
+
+    // Safe number formatter — no Unicode whitespace (jsPDF Helvetica can't render U+202F)
+    const fmtN = (v: number, dec = 2) => {
+      const [int, frac] = v.toFixed(dec).split('.');
+      return int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ',' + frac;
+    };
+    const fmtAmt = (eur: number) => fmtN(Math.round(eur * rate * 100) / 100) + ' ' + sym;
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = 210;
-    const margin = 15;
+    const pageW  = 210;
+    const mg     = 14;
+    const navy: [number,number,number]  = [30, 42, 74];
+    const navyL: [number,number,number] = [240, 244, 252];
 
-    // ── En-tête SEGULA ──────────────────────────────────────────
-    doc.setFillColor(30, 42, 74); // dark navy
-    doc.rect(0, 0, pageW, 28, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text('SEGULA', margin, 12);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('TECHNOLOGIES', margin, 18);
+    // ── Logo ──────────────────────────────────────────────────────
+    const logoBase64 = await new Promise<string | null>(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth; c.height = img.naturalHeight;
+          c.getContext('2d')!.drawImage(img, 0, 0);
+          resolve(c.toDataURL('image/png'));
+        } catch { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/assets/logo_segula.png';
+    });
 
-    // Adresse à droite
-    doc.setFontSize(7.5);
-    doc.setTextColor(200, 210, 230);
-    doc.text('Segula Maroc Africa SA', pageW - margin, 8, { align: 'right' });
-    doc.text('Casablanca Nearshore Park, 1100 Bd. Al Qods,', pageW - margin, 13, { align: 'right' });
-    doc.text('Shore 26, Sidi Maarouf – Casablanca', pageW - margin, 18, { align: 'right' });
+    // ── Header navy ───────────────────────────────────────────────
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, pageW, 26, 'F');
 
-    // ── Titre BL ────────────────────────────────────────────────
-    doc.setFillColor(240, 244, 255);
-    doc.rect(margin, 32, pageW - margin * 2, 10, 'F');
-    doc.setDrawColor(100, 130, 200);
-    doc.rect(margin, 32, pageW - margin * 2, 10, 'S');
-    doc.setTextColor(20, 40, 100);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text(`BON DE LIVRAISON — N° : ${this.blForm.blNumber}`, pageW / 2, 38.5, { align: 'center' });
+    if (logoBase64) {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(mg, 3, 40, 18, 2, 2, 'F');
+      doc.addImage(logoBase64, 'PNG', mg + 1, 4, 38, 16);
+    } else {
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+      doc.text('SEGULA', mg, 11);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+      doc.text('TECHNOLOGIES', mg, 17);
+    }
 
-    // ── Informations ────────────────────────────────────────────
-    let y = 48;
-    doc.setTextColor(50, 50, 50);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.text(`Date : ${this.blForm.blDate}`, margin, y);
+    doc.setTextColor(200, 215, 235);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+    doc.text('Segula Maroc Africa SA',                       pageW - mg, 7,  { align: 'right' });
+    doc.text('Casablanca Nearshore Park, 1100 Bd. Al Qods,',pageW - mg, 12, { align: 'right' });
+    doc.text('Shore 26, Sidi Maarouf - Casablanca',         pageW - mg, 17, { align: 'right' });
 
-    y += 7;
-    const col1x = margin, col2x = 80, col3x = 145;
+    // ── Titre BL ──────────────────────────────────────────────────
+    doc.setFillColor(...navyL);
+    doc.roundedRect(mg, 30, pageW - mg * 2, 11, 2, 2, 'F');
+    doc.setDrawColor(...navy);
+    doc.roundedRect(mg, 30, pageW - mg * 2, 11, 2, 2, 'S');
+    doc.setTextColor(...navy);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.text('BON DE LIVRAISON  -  N' + String.fromCharCode(176) + ' : ' + this.blForm.blNumber,
+             pageW / 2, 37.2, { align: 'center' });
 
-    const infoRow = (label: string, value: string, x: number, yy: number) => {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    // ── Date ──────────────────────────────────────────────────────
+    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(50, 50, 60);
+    doc.text('Date : ' + this.blForm.blDate, mg, 47);
+
+    // ── Infos (3 colonnes) ────────────────────────────────────────
+    let y = 52;
+    const colW = (pageW - mg * 2) / 3;
+    const c1 = mg, c2 = mg + colW, c3 = mg + colW * 2;
+
+    const infoBlock = (label: string, value: string, x: number, yy: number) => {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...navy);
       doc.text(label, x, yy);
-      doc.setFont('helvetica', 'normal');
-      doc.text(value || '—', x, yy + 4);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 70);
+      const wrapped = doc.splitTextToSize(value || '-', colW - 5);
+      doc.text(wrapped.slice(0, 2), x, yy + 4.5);
     };
 
-    infoRow('Période :', this.blForm.period, col1x, y);
-    infoRow('Business Unit :', this.blForm.buCode, col2x, y);
-    infoRow('Description Projet :', this.blForm.projectDescription, col3x, y);
-
-    y += 13;
-    infoRow('Fournisseur :', 'SEGULA Maroc Africa', col1x, y);
-    infoRow('Client Facturé :', this.blForm.clientName, col2x, y);
-    infoRow('Code Projet :', this.blForm.projectCode, col3x, y);
-
-    y += 13;
-    infoRow('Interlocuteur fournisseur :', this.blForm.supplierContact, col1x, y);
-    infoRow('Interlocuteur client :', this.blForm.clientContact, col2x, y);
-    infoRow('Interlocuteur additionnel :', this.blForm.additionalContact, col3x, y);
-
-    y += 13;
-    infoRow('Numéro de commande :', this.blForm.orderNumber, col1x, y);
-    infoRow('ID Projet Client :', this.blForm.clientProjectId, col2x, y);
-
-    // ── Tableau des prestations ──────────────────────────────────
+    infoBlock('Periode :', this.blForm.period,             c1, y);
+    infoBlock('Business Unit :', this.blForm.buCode,       c2, y);
+    infoBlock('Description Projet :', this.blForm.projectDescription, c3, y);
     y += 14;
+    infoBlock('Fournisseur :', 'SEGULA Maroc Africa',      c1, y);
+    infoBlock('Client Facture :', this.blForm.clientName,  c2, y);
+    infoBlock('Code Projet :', this.blForm.projectCode,    c3, y);
+    y += 14;
+    infoBlock('Interlocuteur fournisseur :', this.blForm.supplierContact,  c1, y);
+    infoBlock('Interlocuteur client :',      this.blForm.clientContact,    c2, y);
+    infoBlock('Interlocuteur additionnel :', this.blForm.additionalContact, c3, y);
+    y += 14;
+    infoBlock('Numero de commande :', this.blForm.orderNumber,    c1, y);
+    infoBlock('ID Projet Client :',   this.blForm.clientProjectId, c2, y);
+
+    // ── Separateur ────────────────────────────────────────────────
+    y += 13;
+    doc.setDrawColor(210, 220, 240); doc.setLineWidth(0.3);
+    doc.line(mg, y, pageW - mg, y);
+    y += 4;
+
+    // ── Tableau ───────────────────────────────────────────────────
+    const usableW = pageW - mg * 2;
+    const col0 = 50, col1 = 28, col2 = 30, col3 = 22, col4 = 24;
+    const col5 = usableW - col0 - col1 - col2 - col3 - col4;
+
     autoTable(doc, {
       startY: y,
       head: [[
-        'Désignation des prestations',
-        'Numéro de commande',
+        'Designation des prestations',
+        'N de commande',
         'ID Projet Client',
-        'Quantité (ETP × Jours)',
-        'Prix unitaire (MAD)',
-        'TOTAL (MAD HT)'
+        'Quantite (Jours)',
+        'Prix unitaire (' + sym + ')',
+        'TOTAL (' + sym + ' HT)'
       ]],
       body: this.blLines.map(l => [
         l.designation,
         this.blForm.orderNumber,
         this.blForm.clientProjectId,
-        l.quantity.toLocaleString('fr-FR', { minimumFractionDigits: 2 }),
-        this.fmtBlAmount(l.unitPrice),
-        this.fmtBlAmount(l.total)
+        fmtN(l.quantity),
+        fmtAmt(l.unitPrice),
+        fmtAmt(l.total)
       ]),
-      foot: [['', '', '', '', 'TOTAL', this.fmtBlAmount(this.blTotal)]],
-      styles: { fontSize: 8, cellPadding: 3 },
-      headStyles: { fillColor: [30, 42, 74], textColor: 255, fontStyle: 'bold', fontSize: 8 },
-      footStyles: { fillColor: [30, 42, 74], textColor: 255, fontStyle: 'bold', fontSize: 9 },
-      columnStyles: {
-        0: { cellWidth: 45 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 25 },
-        3: { halign: 'center', cellWidth: 25 },
-        4: { halign: 'right', cellWidth: 28 },
-        5: { halign: 'right', cellWidth: 27 }
+      foot: [['', '', '', '', 'TOTAL', fmtAmt(this.blTotal)]],
+      styles: {
+        fontSize: 7.5,
+        cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+        valign: 'middle',
+        overflow: 'linebreak',
+        textColor: [40, 45, 55]
       },
-      alternateRowStyles: { fillColor: [245, 247, 255] },
-      margin: { left: margin, right: margin }
+      headStyles: {
+        fillColor: navy,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 7.5,
+        halign: 'center',
+        valign: 'middle',
+        cellPadding: { top: 3, bottom: 3, left: 3, right: 3 }
+      },
+      footStyles: {
+        fillColor: navy,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 9
+      },
+      columnStyles: {
+        0: { cellWidth: col0, halign: 'left'   },
+        1: { cellWidth: col1, halign: 'center' },
+        2: { cellWidth: col2, halign: 'center' },
+        3: { cellWidth: col3, halign: 'center' },
+        4: { cellWidth: col4, halign: 'right'  },
+        5: { cellWidth: col5, halign: 'right'  }
+      },
+      alternateRowStyles: { fillColor: [246, 248, 255] },
+      margin: { left: mg, right: mg }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 12;
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
 
-    // ── Signatures ───────────────────────────────────────────────
-    const sigW = (pageW - margin * 2 - 10) / 2;
-    doc.setFillColor(248, 250, 255);
-    doc.rect(margin, finalY, sigW, 30, 'F');
-    doc.setDrawColor(200, 210, 230);
-    doc.rect(margin, finalY, sigW, 30, 'S');
-    doc.setFillColor(248, 250, 255);
-    doc.rect(margin + sigW + 10, finalY, sigW, 30, 'F');
-    doc.rect(margin + sigW + 10, finalY, sigW, 30, 'S');
+    // ── Signatures ────────────────────────────────────────────────
+    const sigW = (pageW - mg * 2 - 8) / 2;
+    const drawSigBox = (x: number, title: string, sub: string, sigName: string, date: string) => {
+      doc.setFillColor(...navyL);
+      doc.roundedRect(x, finalY, sigW, 32, 2, 2, 'F');
+      doc.setDrawColor(...navy); doc.setLineWidth(0.4);
+      doc.roundedRect(x, finalY, sigW, 32, 2, 2, 'S');
+      doc.setFillColor(...navy);
+      doc.roundedRect(x, finalY, sigW, 7, 2, 2, 'F');
+      doc.rect(x, finalY + 4, sigW, 3, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      doc.text(title, x + sigW / 2, finalY + 3, { align: 'center' });
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+      doc.text(sub, x + sigW / 2, finalY + 7, { align: 'center' });
+      doc.setTextColor(60, 60, 70);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+      doc.text('Signature :', x + 4, finalY + 16);
+      doc.setFont('helvetica', 'normal');
+      doc.text(sigName || '...', x + 24, finalY + 16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Date :', x + 4, finalY + 23);
+      doc.setFont('helvetica', 'normal');
+      doc.text(date || '...', x + 16, finalY + 23);
+    };
 
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(30, 42, 74);
-    doc.text('Fournisseur', margin + sigW / 2, finalY + 6, { align: 'center' });
-    doc.text('Pour Segula Maroc Africa', margin + sigW / 2, finalY + 11, { align: 'center' });
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(80, 80, 80);
-    doc.text(`Signature : ${this.blForm.supplierContact}`, margin + 4, finalY + 18);
-    doc.text(`Date : ${this.blForm.blDate}`, margin + 4, finalY + 24);
+    drawSigBox(mg,            'Fournisseur', 'Pour Segula Maroc Africa',
+               this.blForm.supplierContact, this.blForm.blDate);
+    drawSigBox(mg + sigW + 8, 'Client',      'Pour ' + (this.blForm.clientName || 'CLIENT'), '', '');
 
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(30, 42, 74);
-    doc.text('Client', margin + sigW + 10 + sigW / 2, finalY + 6, { align: 'center' });
-    doc.text(`Pour ${this.blForm.clientName || 'CLIENT'}`, margin + sigW + 10 + sigW / 2, finalY + 11, { align: 'center' });
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(80, 80, 80);
-    doc.text(`Signature :`, margin + sigW + 14, finalY + 18);
-    doc.text(`Date :`, margin + sigW + 14, finalY + 24);
+    // ── Footer (toutes les pages) ──────────────────────────────────
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(200, 210, 230); doc.setLineWidth(0.2);
+      doc.line(mg, 288, pageW - mg, 288);
+      doc.setFontSize(6.5); doc.setTextColor(170, 175, 190);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Document genere par SaaS Project Management - SEGULA Technologies - Non signe',
+               pageW / 2, 292, { align: 'center' });
+      doc.text('Page ' + p + ' / ' + totalPages, pageW - mg, 292, { align: 'right' });
+    }
 
-    // ── Footer page ──────────────────────────────────────────────
-    doc.setFontSize(7); doc.setTextColor(160, 160, 160);
-    doc.text('Document généré par SaaS Project Management – SEGULA Technologies – Non signé', pageW / 2, 292, { align: 'center' });
-
-    doc.save(`${this.blForm.blNumber}.pdf`);
+    doc.save(this.blForm.blNumber + '.pdf');
   }
 
-  private fmtBlAmount(v: number): string {
+    private fmtBlAmount(v: number): string {
     return v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   }
 
