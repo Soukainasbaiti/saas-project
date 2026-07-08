@@ -28,6 +28,7 @@ export interface ProjectListDto {
   costBudget: number;
   marginBudget: number;
   projectMargin: number;
+  countries?: ProjectCountryDto[];
 }
 
 export interface MonthlyForecastDto {
@@ -114,4 +115,17 @@ export interface ProjectCreateRequest {
   projectNameLegacy?: string;
   projectId?: string;
   monthlyForecasts?: MonthlyForecastDto[];
+  frontOfficeCountryId: number;
+  backOfficeCountries?: { countryId: number; pmId: number | null }[];
+}
+
+export interface ProjectCountryDto {
+  id: number;
+  countryId: number;
+  countryName: string;
+  countryIsoCode: string;
+  pmId: number | null;
+  pmName: string | null;
+  isLead: boolean;
+  displayOrder: number;
 }

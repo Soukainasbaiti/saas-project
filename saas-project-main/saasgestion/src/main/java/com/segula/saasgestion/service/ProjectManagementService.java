@@ -38,7 +38,27 @@ public class ProjectManagementService {
     private final ProjectMonthStatusRepository monthStatusRepo;
     private final ProjectMonthlyForecastRepository monthlyForecastRepo;
     private final AppUserRepository appUserRepository;
+    private final CountryRepository countryRepository;
+    private final ProjectCountryRepository projectCountryRepository;
     private final EmailService emailService;
+
+    // ── Autorisation multi-pays ──────────────────────────────────────
+    // Un PM voit toutes les donnees du projet mais ne modifie que les lignes de son pays.
+    // L'ADMIN n'est jamais restreint.
+    private void assertCanEditResource(ProjectResource resource, Long userId) {
+        if (userId == null) return; // appels systeme / sans contexte utilisateur
+        String role = appUserRepository.findById(userId).map(AppUser::getRole).orElse("");
+        if ("ADMIN".equals(role)) return;
+
+        boolean allowed = projectCountryRepository
+                .findByProjectIdAndPmId(resource.getProject().getId(), userId)
+                .stream()
+                .anyMatch(pc -> pc.getCountry().getId().equals(resource.getCountry().getId()));
+
+        if (!allowed) {
+            throw new RuntimeException("Vous ne pouvez modifier que les lignes de votre pays sur ce projet.");
+        }
+    }
 
 
     // ── Get full management DTO ────────────────────────────────────
@@ -81,7 +101,9 @@ public class ProjectManagementService {
                 .id(r.getId())
                 .matricule(r.getMatricule())
                 .personName(r.getPersonName())
-                .contractType(r.getContractType())
+                .countryId(r.getCountry() != null ? r.getCountry().getId() : null)
+                .countryName(r.getCountry() != null ? r.getCountry().getName() : null)
+                .countryIsoCode(r.getCountry() != null ? r.getCountry().getIsoCode() : null)
                 .isActive(r.isActive())
                 .dailyCosts(dailyCosts)
                 .workedDays(workedDays)
@@ -245,42 +267,52 @@ public class ProjectManagementService {
 
     // ── Resources ──────────────────────────────────────────────────
     @Transactional
-    public void addResource(AddResourceRequest req) {
+    public void addResource(AddResourceRequest req, Long userId) {
         Project project = projectRepository.findById(req.getProjectId())
             .orElseThrow(() -> new RuntimeException("Project not found"));
         if (req.getMatricule() != null && !req.getMatricule().isBlank()) {
             boolean exists = resourceRepo.findByProjectIdAndMatricule(req.getProjectId(), req.getMatricule()).isPresent();
             if (exists) throw new RuntimeException("Un collaborateur avec le matricule '" + req.getMatricule() + "' existe déjà sur ce projet.");
         }
+        Country country = countryRepository.findById(req.getCountryId())
+            .orElseThrow(() -> new RuntimeException("Country not found"));
         ProjectResource resource = ProjectResource.builder()
             .project(project)
             .matricule(req.getMatricule())
             .personName(req.getPersonName())
-            .contractType(req.getContractType())
+            .country(country)
             .isActive(true)
             .build();
+        assertCanEditResource(resource, userId);
         resourceRepo.save(resource);
         log.info("Ressource ajoutée : projet={} nom={}", req.getProjectId(), req.getPersonName());
     }
 
     @Transactional
-    public void deleteResource(Long resourceId) {
+    public void deleteResource(Long resourceId, Long userId) {
+        ProjectResource resource = resourceRepo.findById(resourceId)
+            .orElseThrow(() -> new RuntimeException("Resource not found"));
+        assertCanEditResource(resource, userId);
         resourceRepo.deleteById(resourceId);
         log.info("Ressource supprimée : id={}", resourceId);
     }
 
     @Transactional
-    public void updateResourceContractType(Long resourceId, String contractType) {
+    public void updateResourceCountry(Long resourceId, Long countryId, Long userId) {
         ProjectResource resource = resourceRepo.findById(resourceId)
             .orElseThrow(() -> new RuntimeException("Resource not found"));
-        resource.setContractType(contractType);
+        assertCanEditResource(resource, userId);
+        Country country = countryRepository.findById(countryId)
+            .orElseThrow(() -> new RuntimeException("Country not found"));
+        resource.setCountry(country);
         resourceRepo.save(resource);
     }
 
     @Transactional
-    public void saveResourceEntry(SaveResourceEntryRequest req) {
+    public void saveResourceEntry(SaveResourceEntryRequest req, Long userId) {
         ProjectResource resource = resourceRepo.findById(req.getResourceId())
             .orElseThrow(() -> new RuntimeException("Resource not found"));
+        assertCanEditResource(resource, userId);
         ProjectResourceEntry entry = entryRepo
             .findByResourceIdAndMonth(req.getResourceId(), req.getMonth())
             .orElse(ProjectResourceEntry.builder().resource(resource).month(req.getMonth()).build());
@@ -486,16 +518,28 @@ public class ProjectManagementService {
     }
 
     // ── SDH File import ────────────────────────────────────────────
-    @Transactional
-    public Map<String, Object> importSdhFile(Long projectId, MultipartFile file) {
-        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
-        if (filename.endsWith(".xlsx") || filename.endsWith(".xls")) {
-            return importSdhExcel(projectId, file);
-        }
-        return importSdhCsv(projectId, file);
+    // Chaque PM importe son propre SDH : les lignes hors de son pays sont ignorees.
+    // Pour l'ADMIN, aucune restriction (allowedCountryIds = null).
+    private Set<Long> resolveAllowedCountryIds(Long projectId, Long userId) {
+        if (userId == null) return null;
+        String role = appUserRepository.findById(userId).map(AppUser::getRole).orElse("");
+        if ("ADMIN".equals(role)) return null;
+        return projectCountryRepository.findByProjectIdAndPmId(projectId, userId).stream()
+            .map(pc -> pc.getCountry().getId())
+            .collect(Collectors.toSet());
     }
 
-    private Map<String, Object> importSdhCsv(Long projectId, MultipartFile file) {
+    @Transactional
+    public Map<String, Object> importSdhFile(Long projectId, MultipartFile file, Long userId) {
+        Set<Long> allowedCountryIds = resolveAllowedCountryIds(projectId, userId);
+        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
+        if (filename.endsWith(".xlsx") || filename.endsWith(".xls")) {
+            return importSdhExcel(projectId, file, allowedCountryIds);
+        }
+        return importSdhCsv(projectId, file, allowedCountryIds);
+    }
+
+    private Map<String, Object> importSdhCsv(Long projectId, MultipartFile file, Set<Long> allowedCountryIds) {
         int imported = 0; int skipped = 0;
         List<String> errors = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
@@ -505,7 +549,7 @@ public class ProjectManagementService {
                 if (line.isBlank()) continue;
                 String[] cols = line.split("[;,\t]");
                 if (cols.length < 3) { skipped++; continue; }
-                var result = processSdhRow(projectId, cols[0].trim(), cols[1].trim(), cols[2].trim(), errors);
+                var result = processSdhRow(projectId, cols[0].trim(), cols[1].trim(), cols[2].trim(), errors, allowedCountryIds);
                 if (result) imported++; else skipped++;
             }
         } catch (Exception e) {
@@ -515,7 +559,7 @@ public class ProjectManagementService {
         return Map.of("imported", imported, "skipped", skipped, "errors", errors);
     }
 
-    private Map<String, Object> importSdhExcel(Long projectId, MultipartFile file) {
+    private Map<String, Object> importSdhExcel(Long projectId, MultipartFile file, Set<Long> allowedCountryIds) {
         int imported = 0; int skipped = 0;
         List<String> errors = new ArrayList<>();
         try (org.apache.poi.ss.usermodel.Workbook wb =
@@ -553,8 +597,11 @@ public class ProjectManagementService {
             }
 
             // Pre-load project matricules to silently skip unrelated employees
+            // (scope au pays du PM important le fichier, sauf pour l'ADMIN)
             Set<String> projectMatricules = resourceRepo.findByProjectIdOrderByIdAsc(projectId)
-                .stream().map(ProjectResource::getMatricule).filter(Objects::nonNull)
+                .stream()
+                .filter(r -> allowedCountryIds == null || allowedCountryIds.contains(r.getCountry().getId()))
+                .map(ProjectResource::getMatricule).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
             // Detect project granularity to format period keys correctly
@@ -628,7 +675,7 @@ public class ProjectManagementService {
                         continue;
                     }
                     String hoursStr = String.valueOf(monthEntry.getValue());
-                    boolean ok = processSdhRow(projectId, matricule, periodKey2, hoursStr, errors);
+                    boolean ok = processSdhRow(projectId, matricule, periodKey2, hoursStr, errors, allowedCountryIds);
                     if (ok) imported++; else skipped++;
                 }
             }
@@ -665,7 +712,7 @@ public class ProjectManagementService {
     }
 
     private boolean processSdhRow(Long projectId, String matricule, String month, String hoursStr,
-                                   List<String> errors) {
+                                   List<String> errors, Set<Long> allowedCountryIds) {
         try {
             double hours = Double.parseDouble(hoursStr.replace(",", "."));
             double days  = Math.round(hours / 8.8 * 100.0) / 100.0;
@@ -674,6 +721,10 @@ public class ProjectManagementService {
                 .orElse(null);
             if (resource == null) {
                 errors.add("Matricule introuvable : " + matricule);
+                return false;
+            }
+            if (allowedCountryIds != null && !allowedCountryIds.contains(resource.getCountry().getId())) {
+                errors.add("Matricule " + matricule + " hors de votre pays — ligne ignorée.");
                 return false;
             }
             ProjectResourceEntry entry = entryRepo

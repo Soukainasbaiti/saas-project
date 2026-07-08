@@ -44,10 +44,10 @@
         <tbody>
           <tr *ngFor="let item of items" [class.row-inactive]="!item.isActive">
             <td *ngFor="let col of columns">
-              <span *ngIf="col === 'trigram' || col === 'engagementType' || col === 'code'" class="code-badge">
+              <span *ngIf="col === 'trigram' || col === 'engagementType' || col === 'code' || col === 'isoCode'" class="code-badge">
                 {{ item[col] || '—' }}
               </span>
-              <span *ngIf="col !== 'trigram' && col !== 'engagementType' && col !== 'code'">
+              <span *ngIf="col !== 'trigram' && col !== 'engagementType' && col !== 'code' && col !== 'isoCode'">
                 {{ item[col] || '—' }}
               </span>
             </td>
@@ -139,6 +139,15 @@
         <div class="form-group" *ngIf="showField('customerGroup')">
           <label>Groupe client</label>
           <input class="fi" formControlName="customerGroup" placeholder="Ex: EDF Group (optionnel)">
+        </div>
+
+        <!-- Code ISO (Pays) -->
+        <div class="form-group" *ngIf="showField('isoCode')">
+          <label>Code ISO <span class="req">*</span></label>
+          <input class="fi" formControlName="isoCode" placeholder="Ex: FR, ES, MA..." maxlength="2"
+                 [class.invalid]="form.get('isoCode')?.invalid && form.get('isoCode')?.touched"
+                 style="text-transform:uppercase">
+          <span class="err" *ngIf="form.get('isoCode')?.invalid && form.get('isoCode')?.touched">Champ requis (2 lettres)</span>
         </div>
 
         <!-- Type d'engagement -->

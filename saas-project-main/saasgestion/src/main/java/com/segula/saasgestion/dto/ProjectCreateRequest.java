@@ -28,4 +28,8 @@ public class ProjectCreateRequest {
                                      private Short      projectYear;
                                      private String     projectNameLegacy;
                                      private List<MonthlyForecastDto> monthlyForecasts;
+
+    // ── Multi-pays ──────────────────────────────────────────────────
+    @NotNull                        private Long       frontOfficeCountryId;
+                                     private List<BackOfficeCountryRequest> backOfficeCountries;
 }

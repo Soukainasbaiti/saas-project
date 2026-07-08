@@ -20,8 +20,9 @@ public class ProjectResource {
     @Column(name = "person_name", length = 200, nullable = false)
     private String personName;
 
-    @Column(name = "contract_type", length = 50)
-    private String contractType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "country_id", nullable = false)
+    private Country country;
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;

@@ -30,15 +30,19 @@ public class ProjectManagementController {
         return userRepo.findById(userId).map(AppUser::getFullName).orElse("Unknown");
     }
 
+    private Long userId(Authentication auth) {
+        return (Long) auth.getPrincipal();
+    }
+
     @GetMapping("/{id}/management")
     public ResponseEntity<ProjectManagementDto> getManagement(@PathVariable Long id) {
         return ResponseEntity.ok(managementService.getProjectManagement(id));
     }
 
     @PostMapping("/management/resource")
-    public ResponseEntity<?> addResource(@RequestBody AddResourceRequest req) {
+    public ResponseEntity<?> addResource(@RequestBody AddResourceRequest req, Authentication auth) {
         try {
-            managementService.addResource(req);
+            managementService.addResource(req, userId(auth));
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -46,21 +50,33 @@ public class ProjectManagementController {
     }
 
     @DeleteMapping("/management/resource/{resourceId}")
-    public ResponseEntity<Void> deleteResource(@PathVariable Long resourceId) {
-        managementService.deleteResource(resourceId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> deleteResource(@PathVariable Long resourceId, Authentication auth) {
+        try {
+            managementService.deleteResource(resourceId, userId(auth));
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
-    @PatchMapping("/management/resource/{resourceId}/contract")
-    public ResponseEntity<Void> updateContractType(@PathVariable Long resourceId, @RequestBody Map<String, String> req) {
-        managementService.updateResourceContractType(resourceId, req.get("contractType"));
-        return ResponseEntity.ok().build();
+    @PatchMapping("/management/resource/{resourceId}/country")
+    public ResponseEntity<?> updateResourceCountry(@PathVariable Long resourceId, @RequestBody Map<String, Long> req, Authentication auth) {
+        try {
+            managementService.updateResourceCountry(resourceId, req.get("countryId"), userId(auth));
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/management/entry")
-    public ResponseEntity<Void> saveEntry(@RequestBody SaveResourceEntryRequest req) {
-        managementService.saveResourceEntry(req);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> saveEntry(@RequestBody SaveResourceEntryRequest req, Authentication auth) {
+        try {
+            managementService.saveResourceEntry(req, userId(auth));
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/management/cost")
@@ -177,9 +193,10 @@ public class ProjectManagementController {
     // ── SDH Import ─────────────────────────────────────────────────
     @PostMapping("/{id}/management/import-sdh")
     public ResponseEntity<?> importSdh(@PathVariable Long id,
-                                        @RequestParam("file") MultipartFile file) {
+                                        @RequestParam("file") MultipartFile file,
+                                        Authentication auth) {
         try {
-            return ResponseEntity.ok(managementService.importSdhFile(id, file));
+            return ResponseEntity.ok(managementService.importSdhFile(id, file, userId(auth)));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

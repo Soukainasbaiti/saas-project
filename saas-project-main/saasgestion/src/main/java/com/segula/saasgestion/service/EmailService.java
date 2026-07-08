@@ -258,6 +258,118 @@ public class EmailService {
         }
     }
 
+    // Template 1 — notifie le PM nouvellement assigné a un pays sur un projet
+    @Async
+    public void sendCountryPmAssigned(
+            String pmEmail, String pmName,
+            String projectName, String projectCode, String countryName, String countryIsoCode,
+            String addedByName, String frontOfficePmEmail, Long projectId) {
+
+        try {
+            log.info("=== ENVOI EMAIL PM assigne pays {} a {} ===", countryName, pmEmail);
+
+            String projectUrl = baseUrl + "/projects/" + projectId;
+
+            String html = """
+                <div style='font-family:Arial,sans-serif;max-width:620px;margin:0 auto'>
+                    <div style='background:#1e3a5f;padding:16px 24px;border-radius:8px 8px 0 0'>
+                        <h2 style='color:#fff;margin:0;font-size:18px'>Vous avez ete designe Chef de Projet</h2>
+                    </div>
+                    <div style='padding:20px;background:#fff;border:1px solid #e2e8f0;border-top:none'>
+                        <p>Bonjour <b>%s</b>,</p>
+                        <p>Vous avez ete designe <b>Chef de Projet pour %s</b> sur le projet suivant :</p>
+                        <p><b>Projet :</b> %s (%s-%s)<br>
+                           <b>Ajoute par :</b> %s (Chef de Projet Front Office)</p>
+                        <p>En tant que Chef de Projet pour ce pays, vous pouvez consulter l'ensemble des donnees du projet
+                           et saisir/modifier les donnees specifiques a %s (consultants, jours factures, SDH).</p>
+                        <div style='margin-top:16px'>
+                            <a href='%s' style='background:#16a34a;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600'>
+                                Acceder au projet
+                            </a>
+                        </div>
+                        <p style='color:#64748b;font-size:12px;margin-top:16px'>Pour toute question, contactez %s.</p>
+                    </div>
+                </div>
+                """.formatted(
+                    pmName, countryName,
+                    projectName, projectCode, countryIsoCode,
+                    addedByName,
+                    countryName,
+                    projectUrl,
+                    frontOfficePmEmail
+            );
+
+            sendViaBrevo(pmEmail, pmName,
+                "[SEGULA] Chef de Projet " + countryName + " — " + projectName, html);
+
+            log.info("=== EMAIL PM assigne pays ENVOYE a {} ===", pmEmail);
+
+        } catch (Exception e) {
+            log.error("=== ERREUR EMAIL PM assigne pays === {}", e.getMessage(), e);
+        }
+    }
+
+    // Template 2 — notifie l'admin a chaque ajout de pays (PM assigne ou "a assigner")
+    @Async
+    public void sendCountryAddedToAdmin(
+            String adminEmail, String adminName,
+            String projectName, String projectCode, String countryName,
+            String addedByName, String pmName, Long projectId) {
+
+        try {
+            log.info("=== ENVOI EMAIL ADMIN pays ajoute {} ===", countryName);
+
+            boolean pmAssigned = pmName != null && !pmName.isBlank();
+            String projectUrl = baseUrl + (pmAssigned ? "/projects/" + projectId : "/admin/projects/" + projectId);
+
+            String warningBlock = pmAssigned ? "" : """
+                <p style='background:#fef3c7;border:1px solid #f59e0b;padding:10px;border-radius:6px'>
+                    ⚠️ Aucun Chef de Projet n'a ete designe pour ce pays. Merci de completer l'assignation
+                    depuis l'espace Administration.
+                </p>
+                """;
+
+            String html = """
+                <div style='font-family:Arial,sans-serif;max-width:620px;margin:0 auto'>
+                    <div style='background:#1e3a5f;padding:16px 24px;border-radius:8px 8px 0 0'>
+                        <h2 style='color:#fff;margin:0;font-size:18px'>Nouveau pays ajoute sur un projet</h2>
+                    </div>
+                    <div style='padding:20px;background:#fff;border:1px solid #e2e8f0;border-top:none'>
+                        <p>Bonjour <b>%s</b>,</p>
+                        <p>Un nouveau pays a ete ajoute sur un projet existant :</p>
+                        <p><b>Projet :</b> %s (%s)<br>
+                           <b>Pays ajoute :</b> %s<br>
+                           <b>Ajoute par :</b> %s (Chef de Projet Front Office)<br>
+                           <b>Chef de Projet assigne :</b> %s</p>
+                        %s
+                        <div style='margin-top:16px'>
+                            <a href='%s' style='background:#1e3a5f;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600'>
+                                %s
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                """.formatted(
+                    adminName,
+                    projectName, projectCode,
+                    countryName,
+                    addedByName,
+                    pmAssigned ? pmName : "— a assigner",
+                    warningBlock,
+                    projectUrl,
+                    pmAssigned ? "Voir le projet" : "Assigner un Chef de Projet"
+            );
+
+            sendViaBrevo(adminEmail, adminName,
+                "[SEGULA] Nouveau pays ajoute — " + projectName, html);
+
+            log.info("=== EMAIL ADMIN pays ajoute ENVOYE ===");
+
+        } catch (Exception e) {
+            log.error("=== ERREUR EMAIL ADMIN pays ajoute === {}", e.getMessage(), e);
+        }
+    }
+
     private void sendViaBrevo(String toEmail, String toName, String subject, String html) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

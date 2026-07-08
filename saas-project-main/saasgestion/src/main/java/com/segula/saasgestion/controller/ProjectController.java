@@ -2,6 +2,7 @@ package com.segula.saasgestion.controller;
 
 import com.segula.saasgestion.dto.*;
 import com.segula.saasgestion.repository.AppUserRepository;
+import com.segula.saasgestion.service.ProjectCountryService;
 import com.segula.saasgestion.service.ProjectPendingService;
 import com.segula.saasgestion.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,7 @@ public class ProjectController {
 
     private final ProjectService        projectService;
     private final ProjectPendingService pendingService;
+    private final ProjectCountryService projectCountryService;
     private final AppUserRepository     userRepo;
 
     @Operation(summary = "Lister les projets", description = "Pagination + filtres BU, client, statut, année, recherche texte")
@@ -102,6 +104,42 @@ public class ProjectController {
     public ResponseEntity<Void> archive(@PathVariable Long id) {
         projectService.archive(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Pays du projet (multi-pays) ──────────────────────────────────
+    @Operation(summary = "Lister les pays rattachés à un projet")
+    @GetMapping("/{id}/countries")
+    public ResponseEntity<java.util.List<ProjectCountryDto>> listCountries(@PathVariable Long id) {
+        return ResponseEntity.ok(projectCountryService.listByProject(id));
+    }
+
+    @Operation(summary = "Ajouter un pays à un projet existant",
+            description = "Déclenchable par l'Admin ou le PM Front Office. Pas de validation bloquante : notifie le PM assigné et l'Admin par email.")
+    @PostMapping("/{id}/countries")
+    public ResponseEntity<?> addCountry(
+            @PathVariable Long id,
+            @RequestBody AddProjectCountryRequest req,
+            Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(projectCountryService.addCountry(id, req, userId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(422).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Assigner/changer le Chef de Projet d'un pays du projet")
+    @PatchMapping("/{id}/countries/{countryId}/pm")
+    public ResponseEntity<?> assignCountryPm(
+            @PathVariable Long id,
+            @PathVariable Long countryId,
+            @RequestBody Map<String, Long> body) {
+        try {
+            return ResponseEntity.ok(projectCountryService.assignPm(id, countryId, body.get("pmId")));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(422).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @Operation(summary = "Stats dashboard", description = "KPIs globaux : budget total, CA réalisé, taux de rentabilité, répartition statuts")

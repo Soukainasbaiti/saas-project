@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -37,6 +37,7 @@ export class ProjectFormComponent implements OnInit {
   functions:       ReferenceDto[] = [];
   frontFinanciers: ReferenceDto[] = [];
   pms:             ReferenceDto[] = [];
+  countries:       ReferenceDto[] = [];
   years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 + i);
 
   // ── Modale prévisions mensuelles ──────────────────────────────
@@ -102,8 +103,46 @@ export class ProjectFormComponent implements OnInit {
       endDate:                 [null, Validators.required],
       revenueBudget:           [0, [Validators.required, Validators.min(0)]],
       costBudget:              [0, [Validators.required, Validators.min(0)]],
-      projectNameLegacy:       ['']
+      projectNameLegacy:       [''],
+      frontOfficeCountryId:    [null, Validators.required],
+      backOfficeCountries:     this.fb.array([])
     }, { validators: this.dateValidator });
+  }
+
+  // ── Pays (multi-pays) ──────────────────────────────────────────
+  get backOfficeCountries(): FormArray {
+    return this.form.get('backOfficeCountries') as FormArray;
+  }
+
+  addBackOfficeCountry(): void {
+    this.backOfficeCountries.push(this.fb.group({
+      countryId: [null, Validators.required],
+      pmId:      [null] // null = "à assigner" (l'Admin complètera)
+    }));
+    this.cdr.markForCheck();
+  }
+
+  removeBackOfficeCountry(index: number): void {
+    this.backOfficeCountries.removeAt(index);
+    this.cdr.markForCheck();
+  }
+
+  // Pays déjà pris (front office + autres back offices) — exclus des selects suivants
+  takenCountryIds(exceptIndex?: number): number[] {
+    const ids: number[] = [];
+    const front = this.form.get('frontOfficeCountryId')?.value;
+    if (front) ids.push(front);
+    this.backOfficeCountries.controls.forEach((c, i) => {
+      if (i === exceptIndex) return;
+      const v = c.get('countryId')?.value;
+      if (v) ids.push(v);
+    });
+    return ids;
+  }
+
+  availableCountriesFor(exceptIndex?: number): ReferenceDto[] {
+    const taken = this.takenCountryIds(exceptIndex);
+    return this.countries.filter(c => !taken.includes(Number(c.id)));
   }
 
   ngOnInit(): void {
@@ -115,6 +154,7 @@ export class ProjectFormComponent implements OnInit {
     this.api.getFunctions().subscribe(d => { this.functions = d; this.cdr.markForCheck(); });
     this.api.getFrontFinanciers().subscribe(d => { this.frontFinanciers = d; this.cdr.markForCheck(); });
     this.api.getPMs().subscribe(d => { this.pms = d; this.cdr.markForCheck(); });
+    this.api.getCountries().subscribe(d => { this.countries = d; this.cdr.markForCheck(); });
   }
 
   dateValidator(group: AbstractControl): ValidationErrors | null {

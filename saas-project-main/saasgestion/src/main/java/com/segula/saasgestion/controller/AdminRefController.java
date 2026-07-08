@@ -25,6 +25,7 @@ public class AdminRefController {
     private final EngineeringDisciplineRepository disciplineRepo;
     private final EngagementRepository            engagementRepo;
     private final FrontFinancierRepository        frontFinancierRepo;
+    private final CountryRepository               countryRepo;
 
     // ══════════════════════════════════════════════════════════════
     // BU  (id = String fourni par l'admin)
@@ -342,6 +343,58 @@ public class AdminRefController {
         f.setActive(!f.isActive());
         frontFinancierRepo.save(f);
         return ResponseEntity.ok(ok(f.isActive() ? "Front Financier activé." : "Front Financier désactivé."));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // COUNTRY
+    // ══════════════════════════════════════════════════════════════
+
+    @GetMapping("/countries")
+    public ResponseEntity<List<Map<String, Object>>> listCountries() {
+        return ResponseEntity.ok(countryRepo.findAll().stream()
+            .sorted(Comparator.comparing(Country::getName))
+            .map(c -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",       c.getId());
+                m.put("name",     c.getName());
+                m.put("isoCode",  c.getIsoCode());
+                m.put("isActive", c.isActive());
+                return m;
+            }).toList());
+    }
+
+    @PostMapping("/countries")
+    public ResponseEntity<?> createCountry(@RequestBody Map<String, Object> body) {
+        Country c = Country.builder()
+            .name(str(body, "name"))
+            .isoCode(str(body, "isoCode").toUpperCase())
+            .isActive(true)
+            .build();
+        try { countryRepo.save(c); } catch (Exception e) {
+            return ResponseEntity.status(409).body(err("Nom ou code pays déjà existant."));
+        }
+        return ResponseEntity.status(201).body(ok("Pays créé."));
+    }
+
+    @PutMapping("/countries/{id}")
+    public ResponseEntity<?> updateCountry(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Country c = countryRepo.findById(id).orElse(null);
+        if (c == null) return ResponseEntity.notFound().build();
+        if (body.containsKey("name"))    c.setName(str(body, "name"));
+        if (body.containsKey("isoCode")) c.setIsoCode(str(body, "isoCode").toUpperCase());
+        try { countryRepo.save(c); } catch (Exception e) {
+            return ResponseEntity.status(409).body(err("Nom ou code pays déjà existant."));
+        }
+        return ResponseEntity.ok(ok("Pays modifié."));
+    }
+
+    @PatchMapping("/countries/{id}/toggle")
+    public ResponseEntity<?> toggleCountry(@PathVariable Long id) {
+        Country c = countryRepo.findById(id).orElse(null);
+        if (c == null) return ResponseEntity.notFound().build();
+        c.setActive(!c.isActive());
+        countryRepo.save(c);
+        return ResponseEntity.ok(ok(c.isActive() ? "Pays activé." : "Pays désactivé."));
     }
 
     // ── Helpers ───────────────────────────────────────────────────

@@ -32,6 +32,7 @@ public class ProjectService {
     private final EngagementRepository               engagementRepo;
     private final FrontFinancierRepository           frontFinancierRepo;
     private final ProjectMonthlyForecastRepository   monthlyForecastRepo;
+    private final ProjectCountryService              projectCountryService;
 
     // ────────────────────────────────────────────────────────────────
     // LISTE DES PROJETS AVEC FILTRES
@@ -167,6 +168,9 @@ public class ProjectService {
 
         Project saved = projectRepo.save(p);
         saveMonthlyForecasts(saved.getId(), req);
+        projectCountryService.initializeCountries(
+                saved, req.getFrontOfficeCountryId(), req.getBackOfficeCountries(), createdById
+        );
         log.info("Projet créé : id={} code={} pm={}", saved.getId(), saved.getProjectId(), pm.getFullName());
         return toDetailDto(saved);
     }
@@ -423,7 +427,24 @@ public class ProjectService {
                 .costBudget(p.getCostBudget())
                 .marginBudget(p.getMarginBudget())
                 .projectMargin(p.getProjectMargin())
+                .countries(toCountryDtos(p))
                 .build();
+    }
+
+    private List<ProjectCountryDto> toCountryDtos(Project p) {
+        return p.getCountries().stream()
+                .sorted(java.util.Comparator.comparingInt(ProjectCountry::getDisplayOrder))
+                .map(pc -> ProjectCountryDto.builder()
+                        .id(pc.getId())
+                        .countryId(pc.getCountry().getId())
+                        .countryName(pc.getCountry().getName())
+                        .countryIsoCode(pc.getCountry().getIsoCode())
+                        .pmId(pc.getPm() != null ? pc.getPm().getId() : null)
+                        .pmName(pc.getPm() != null ? pc.getPm().getFullName() : null)
+                        .isLead(pc.isLead())
+                        .displayOrder(pc.getDisplayOrder())
+                        .build())
+                .toList();
     }
 
     private ProjectDetailDto toDetailDto(Project p) {
@@ -493,6 +514,7 @@ public class ProjectService {
                                 .build())
                         .toList()
                 )
+                .countries(toCountryDtos(p))
                 .build();
     }
 }

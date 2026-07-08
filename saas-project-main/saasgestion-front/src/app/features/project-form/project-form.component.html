@@ -162,6 +162,39 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Pays Front Office (chef de file) <span class="req">*</span></label>
+          <select class="form-select" formControlName="frontOfficeCountryId"
+                  [class.invalid]="form.get('frontOfficeCountryId')?.invalid && form.get('frontOfficeCountryId')?.touched">
+            <option [ngValue]="null" disabled>Sélectionner un pays</option>
+            <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.label }} ({{ c.code }})</option>
+          </select>
+          <span class="error-msg" *ngIf="form.get('frontOfficeCountryId')?.invalid && form.get('frontOfficeCountryId')?.touched">
+            Champ requis
+          </span>
+        </div>
+
+        <div class="form-group full-width" formArrayName="backOfficeCountries">
+          <label class="form-label">Pays Back Office (optionnel)</label>
+
+          <div *ngFor="let group of backOfficeCountries.controls; let i = index"
+               [formGroupName]="i" style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+            <select class="form-select" formControlName="countryId" style="flex:1">
+              <option [ngValue]="null" disabled>Pays</option>
+              <option *ngFor="let c of availableCountriesFor(i)" [ngValue]="c.id">{{ c.label }} ({{ c.code }})</option>
+            </select>
+            <select class="form-select" formControlName="pmId" style="flex:1">
+              <option [ngValue]="null">À assigner (l'Admin complètera)</option>
+              <option *ngFor="let p of pms" [ngValue]="p.id">{{ p.label }}</option>
+            </select>
+            <button type="button" class="btn-secondary" (click)="removeBackOfficeCountry(i)">✕</button>
+          </div>
+
+          <button type="button" class="btn-secondary" (click)="addBackOfficeCountry()">
+            + Ajouter un pays Back Office
+          </button>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Engineering Discipline <span class="req">*</span></label>
           <select class="form-select" formControlName="engineeringDisciplineId"
                   [class.invalid]="form.get('engineeringDisciplineId')?.invalid && form.get('engineeringDisciplineId')?.touched">

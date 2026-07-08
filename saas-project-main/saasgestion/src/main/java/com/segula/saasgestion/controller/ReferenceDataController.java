@@ -25,6 +25,7 @@ public class ReferenceDataController {
     private final ProjectFunctionRepository       functionRepo;
     private final FrontFinancierRepository        frontFinancierRepo;
     private final AppUserRepository               userRepo;
+    private final CountryRepository               countryRepo;
 
     @GetMapping("/bus")
     public ResponseEntity<List<ReferenceDto>> bus() {
@@ -76,5 +77,11 @@ public class ReferenceDataController {
     public ResponseEntity<List<ReferenceDto>> pms() {
         return ResponseEntity.ok(userRepo.findAllActivePMs().stream()
             .map(u -> ReferenceDto.builder().id(u.getId()).label(u.getFullName()).code(u.getEmail()).build()).toList());
+    }
+
+    @GetMapping("/countries")
+    public ResponseEntity<List<ReferenceDto>> countries() {
+        return ResponseEntity.ok(countryRepo.findAllByIsActiveTrueOrderByNameAsc().stream()
+            .map(c -> ReferenceDto.builder().id(c.getId()).label(c.getName()).code(c.getIsoCode()).build()).toList());
     }
 }

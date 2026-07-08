@@ -134,19 +134,31 @@ export class ApiService {
   }
   getFrontFinanciers(): Observable<ReferenceDto[]> { return this.http.get<ReferenceDto[]>(`${this.base}/ref/front-financiers`); }
   getPMs():             Observable<ReferenceDto[]> { return this.http.get<ReferenceDto[]>(`${this.base}/ref/pms`); }
+  getCountries():       Observable<ReferenceDto[]> { return this.http.get<ReferenceDto[]>(`${this.base}/ref/countries`); }
+
+  // ── Pays d'un projet (multi-pays) ─────────────────────────────
+  getProjectCountries(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/projects/${projectId}/countries`);
+  }
+  addProjectCountry(projectId: number, req: { countryId: number; pmId?: number | null }): Observable<any> {
+    return this.http.post<any>(`${this.base}/projects/${projectId}/countries`, req);
+  }
+  assignCountryPm(projectId: number, countryId: number, pmId: number): Observable<any> {
+    return this.http.patch<any>(`${this.base}/projects/${projectId}/countries/${countryId}/pm`, { pmId });
+  }
 
   // ── Project Management ────────────────────────────────────────
   getProjectManagement(projectId: number): Observable<any> {
     return this.http.get<any>(`${this.base}/projects/${projectId}/management`);
   }
-  addResource(req: { projectId: number; matricule: string; personName: string; contractType: string }): Observable<void> {
+  addResource(req: { projectId: number; matricule: string; personName: string; countryId: number }): Observable<void> {
     return this.http.post<void>(`${this.base}/projects/management/resource`, req);
   }
   deleteResource(resourceId: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/projects/management/resource/${resourceId}`);
   }
-  updateResourceContractType(resourceId: number, contractType: string): Observable<void> {
-    return this.http.patch<void>(`${this.base}/projects/management/resource/${resourceId}/contract`, { contractType });
+  updateResourceCountry(resourceId: number, countryId: number): Observable<void> {
+    return this.http.patch<void>(`${this.base}/projects/management/resource/${resourceId}/country`, { countryId });
   }
   saveResourceEntry(req: { resourceId: number; month: string; dailyCost?: number; workedDays?: number; billedDays?: number; dailyRate?: number }): Observable<void> {
     return this.http.post<void>(`${this.base}/projects/management/entry`, req);

@@ -6,7 +6,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { AdminSidebarComponent } from '../admin-sidebar/admin-sidebar.component';
 
-export type RefTab = 'bus' | 'industries' | 'customers' | 'disciplines' | 'engagements';
+export type RefTab = 'bus' | 'industries' | 'customers' | 'disciplines' | 'engagements' | 'countries';
 
 @Component({
   selector: 'app-admin-ref-data',
@@ -34,6 +34,7 @@ export class AdminRefDataComponent implements OnInit {
     { key: 'customers',        label: 'Clients',               icon: '👥' },
     { key: 'disciplines',      label: 'Disciplines',           icon: '⚙️' },
     { key: 'engagements',      label: 'Engagements',           icon: '📋' },
+    { key: 'countries',        label: 'Pays',                  icon: '🌍' },
   ];
 
   constructor(
@@ -51,6 +52,8 @@ export class AdminRefDataComponent implements OnInit {
       customerGroup:   [''],
       // Engagement
       engagementType:  [''],
+      // Pays
+      isoCode:         [''],
       // Commun
       name:            [''],
     });
@@ -84,6 +87,7 @@ export class AdminRefDataComponent implements OnInit {
       'customers':        ['name', 'trigram', 'customerGroup'],
       'disciplines':      ['name'],
       'engagements':      ['name', 'engagementType'],
+      'countries':        ['name', 'isoCode'],
     };
     return map[this.activeTab];
   }
@@ -92,7 +96,8 @@ export class AdminRefDataComponent implements OnInit {
     return {
       id: 'ID BU', name: 'Nom', trigram: 'Trigramme',
       bumName: 'BU Manager', customerGroup: 'Groupe client',
-      engagementType: 'Type', code: 'Code', label: 'Libellé'
+      engagementType: 'Type', code: 'Code', label: 'Libellé',
+      isoCode: 'Code ISO'
     };
   }
 
@@ -155,6 +160,10 @@ export class AdminRefDataComponent implements OnInit {
         this.form.get('name')?.setValidators([req]);
         this.form.get('engagementType')?.setValidators([req]);
         break;
+      case 'countries':
+        this.form.get('name')?.setValidators([req]);
+        this.form.get('isoCode')?.setValidators([req, Validators.maxLength(2)]);
+        break;
     }
     Object.keys(this.form.controls).forEach(k => this.form.get(k)?.updateValueAndValidity());
   }
@@ -178,6 +187,8 @@ export class AdminRefDataComponent implements OnInit {
         body = { name: v.name }; break;
       case 'engagements':
         body = { name: v.name, engagementType: v.engagementType }; break;
+      case 'countries':
+        body = { name: v.name, isoCode: v.isoCode }; break;
     }
 
     this.saving = true;
@@ -222,6 +233,7 @@ export class AdminRefDataComponent implements OnInit {
       'customers':   'Ajouter un nouveau client',
       'disciplines': 'Ajouter une nouvelle discipline',
       'engagements': 'Ajouter un nouvel engagement',
+      'countries':   'Ajouter un nouveau pays',
     };
     const editLabels: Record<RefTab, string> = {
       'bus':         'Modifier la BU',
@@ -229,6 +241,7 @@ export class AdminRefDataComponent implements OnInit {
       'customers':   'Modifier le client',
       'disciplines': 'Modifier la discipline',
       'engagements': 'Modifier l\'engagement',
+      'countries':   'Modifier le pays',
     };
     return this.editTarget ? editLabels[this.activeTab] : addLabels[this.activeTab];
   }

@@ -19,7 +19,9 @@ interface ResourceRow {
   id: number;
   matricule: string;
   personName: string;
-  contractType: string;
+  countryId: number | null;
+  countryName: string | null;
+  countryIsoCode: string | null;
   isActive: boolean;
   dailyCosts: Record<string, number>;
   workedDays: Record<string, number>;
@@ -662,8 +664,8 @@ export class ProjectManagementComponent implements OnInit {
 
   // Add resource modal
   showAddModal = false;
-  newResource = { matricule: '', personName: '', contractType: 'Internal subco' };
-  contractTypes = ['Anapec', 'External subco', 'Internal subco'];
+  newResource: { matricule: string; personName: string; countryId: number | null } = { matricule: '', personName: '', countryId: null };
+  countries: { id: number; label: string; code: string | null }[] = [];
 
   // Matricule warning
   showMatriculeWarning = false;
@@ -672,7 +674,7 @@ export class ProjectManagementComponent implements OnInit {
   // Bulk paste mode
   addMode: 'single' | 'bulk' = 'single';
   bulkPasteText = '';
-  bulkPreview: { personName: string; matricule: string; contractType: string; error?: string }[] = [];
+  bulkPreview: { personName: string; matricule: string; countryId: number | null; countryLabel: string; error?: string }[] = [];
   bulkAdding = false;
 
   get bulkValidCount(): number { return this.bulkPreview.filter(r => !r.error).length; }
@@ -725,6 +727,7 @@ export class ProjectManagementComponent implements OnInit {
     this.api.getMips(this.projectId).subscribe({ next: d => { this.kpiMips = d; this.cdr.markForCheck(); } });
     this.api.getWipTable(this.projectId).subscribe({ next: d => { this.kpiWipRows = d; this.cdr.markForCheck(); } });
     this.api.getProject(this.projectId).subscribe({ next: p => { this.tenderMargin = Number(p.marginBudget) || 0; this.cdr.markForCheck(); } });
+    this.api.getCountries().subscribe({ next: d => { this.countries = d as any; this.cdr.markForCheck(); } });
   }
 
   goBack(): void {
@@ -2298,7 +2301,7 @@ export class ProjectManagementComponent implements OnInit {
 
   // ── Add/Delete resource ──────────────────────────────────────────
   openAddModal(): void {
-    this.newResource = { matricule: '', personName: '', contractType: 'CDI' };
+    this.newResource = { matricule: '', personName: '', countryId: null };
     this.addMode = 'single';
     this.addResourceError = '';
     this.bulkPasteText = '';
@@ -2314,8 +2317,16 @@ export class ProjectManagementComponent implements OnInit {
       this.cdr.markForCheck();
       return;
     }
+    if (!this.newResource.countryId) {
+      this.addResourceError = 'Veuillez sélectionner un pays.';
+      this.cdr.markForCheck();
+      return;
+    }
     this.addResourceError = '';
-    this.api.addResource({ projectId: this.projectId, ...this.newResource }).subscribe({
+    this.api.addResource({
+      projectId: this.projectId, personName: this.newResource.personName,
+      matricule: this.newResource.matricule, countryId: this.newResource.countryId
+    }).subscribe({
       next: () => { this.showAddModal = false; this.load(); },
       error: (err) => {
         this.addResourceError = err?.error?.error || 'Erreur lors de l\'ajout.';
@@ -2324,14 +2335,11 @@ export class ProjectManagementComponent implements OnInit {
     });
   }
 
-  private matchContractType(raw: string): string {
+  private matchCountry(raw: string): { id: number | null; label: string } {
     const norm = raw.toLowerCase().trim();
-    const exact = this.contractTypes.find(c => c.toLowerCase() === norm);
-    if (exact) return exact;
-    if (norm.includes('anapec')) return 'Anapec';
-    if (norm.includes('extern')) return 'External subco';
-    if (norm.includes('intern')) return 'Internal subco';
-    return 'Internal subco';
+    const exact = this.countries.find(c =>
+      c.label.toLowerCase() === norm || (c.code || '').toLowerCase() === norm);
+    return exact ? { id: exact.id, label: exact.label } : { id: null, label: raw || '—' };
   }
 
   parseBulkPaste(): void {
@@ -2343,12 +2351,13 @@ export class ProjectManagementComponent implements OnInit {
         const cols = line.split('\t');
         const personName = (cols[0] || '').trim();
         const matricule  = (cols[1] || '').trim();
-        const rawContract = (cols[2] || '').trim();
-        const contractType = this.matchContractType(rawContract);
+        const rawCountry = (cols[2] || '').trim();
+        const matched = this.matchCountry(rawCountry);
         let error: string | undefined;
         if (!personName) error = 'Nom manquant';
         else if (!matricule) error = 'Matricule manquant';
-        return { personName, matricule, contractType, error };
+        else if (matched.id === null) error = 'Pays inconnu : ' + rawCountry;
+        return { personName, matricule, countryId: matched.id, countryLabel: matched.label, error };
       });
     this.cdr.markForCheck();
   }
@@ -2359,7 +2368,9 @@ export class ProjectManagementComponent implements OnInit {
     this.bulkAdding = true;
     this.cdr.markForCheck();
     const calls = valid.map(r =>
-      lastValueFrom(this.api.addResource({ projectId: this.projectId, ...r }))
+      lastValueFrom(this.api.addResource({
+        projectId: this.projectId, personName: r.personName, matricule: r.matricule, countryId: r.countryId!
+      }))
     );
     Promise.allSettled(calls).then(() => {
       this.bulkAdding = false;
@@ -2434,9 +2445,12 @@ export class ProjectManagementComponent implements OnInit {
     this.pendingDelete = null;
   }
 
-  onContractTypeChange(resource: ResourceRow, newType: string): void {
-    resource.contractType = newType;
-    this.api.updateResourceContractType(resource.id, newType).subscribe();
+  onCountryChange(resource: ResourceRow, newCountryId: number): void {
+    resource.countryId = newCountryId;
+    const c = this.countries.find(c => c.id === newCountryId);
+    resource.countryName = c?.label ?? null;
+    resource.countryIsoCode = c?.code ?? null;
+    this.api.updateResourceCountry(resource.id, newCountryId).subscribe();
   }
 
   // ── Formatting ───────────────────────────────────────────────────

@@ -2,6 +2,7 @@ package com.segula.saasgestion.dto;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ProjectListDto {
@@ -32,4 +33,5 @@ public class ProjectListDto {
     private BigDecimal costBudget;
     private BigDecimal marginBudget;
     private BigDecimal projectMargin;
+    private List<ProjectCountryDto> countries;
 }

@@ -25,6 +25,7 @@
     "@angular/ssr": "^21.2.2",
     "chart.js": "^4.5.1",
     "express": "^5.1.0",
+    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "ng2-charts": "^10.0.0",

@@ -11,7 +11,7 @@
         <span class="header-count">{{ filteredProjects.length }} projets</span>
       </div>
       <div class="header-right">
-        <input class="search-input" [(ngModel)]="searchTerm" placeholder="Rechercher un projet...">
+        <input class="search-input" [(ngModel)]="searchTerm" placeholder="Rechercher...">
         <select class="filter-select" [(ngModel)]="filterBu">
           <option value="">Toutes les BU</option>
           <option *ngFor="let bu of uniqueBus" [value]="bu">{{ bu }}</option>
@@ -36,8 +36,16 @@
           <option value="">Industrie</option>
           <option *ngFor="let ind of uniqueIndustries" [value]="ind">{{ ind }}</option>
         </select>
+        <select class="filter-select filter-select--new" [(ngModel)]="filterPm">
+          <option value="">Chef de Projet</option>
+          <option *ngFor="let pm of uniquePms" [value]="pm">{{ pm }}</option>
+        </select>
+        <select class="filter-select filter-select--new" [(ngModel)]="filterCountry">
+          <option value="">Pays</option>
+          <option *ngFor="let c of uniqueCountries" [value]="c">{{ c }}</option>
+        </select>
         <button class="btn-export" (click)="openExportModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
@@ -88,61 +96,6 @@
       </div>
     </div>
 
-    <!-- Projets à approuver -->
-    <div class="pending-section" *ngIf="pendingProjects.length > 0 || pendingLoading">
-      <div class="pending-header">
-        <div class="pending-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Projets à approuver
-          <span class="pending-count" *ngIf="pendingProjects.length > 0">{{ pendingProjects.length }}</span>
-        </div>
-      </div>
-
-      <div class="pending-loading" *ngIf="pendingLoading">
-        <div class="spinner"></div><span>Chargement...</span>
-      </div>
-
-      <table class="pending-table" *ngIf="!pendingLoading && pendingProjects.length > 0">
-        <thead>
-          <tr>
-            <th>Activité</th>
-            <th>BU</th>
-            <th>Front Fin.</th>
-            <th>Soumis par</th>
-            <th>Soumis le</th>
-            <th>CA Prévu</th>
-            <th>Coût Prévu</th>
-            <th>Expire le</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of pendingProjects">
-            <td><b>{{ p.activity }}</b></td>
-            <td><span class="bu-badge">{{ p.buId }}</span></td>
-            <td>{{ p.frontFinancier }}</td>
-            <td>{{ p.submittedBy }}</td>
-            <td>{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td class="val-money">{{ fmtEur(p.revenueBudget * 1000) }}</td>
-            <td class="val-money">{{ fmtEur(p.costBudget * 1000) }}</td>
-            <td class="expiry-cell">{{ p.expiresAt | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td>
-              <div class="action-btns">
-                <button class="btn-approve" (click)="approvePending(p.token)" title="Approuver">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
-                  Approuver
-                </button>
-                <button class="btn-reject" (click)="rejectPending(p.token)" title="Rejeter">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  Rejeter
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
     <!-- Table -->
     <div class="table-card">
 
@@ -157,6 +110,7 @@
             <th>Projet</th>
             <th>BU</th>
             <th>Client</th>
+            <th>Pays</th>
             <th>Statut</th>
             <th>Revenu</th>
             <th>Marge</th>
@@ -176,6 +130,12 @@
             </td>
             <td><span class="bu-badge">{{ p.buTrigram }}</span></td>
             <td>{{ p.customerName }}</td>
+            <td>
+              <span *ngFor="let c of p.countries" class="bu-badge" style="margin-right:4px"
+                    [title]="c.pmName || 'PM à assigner'">
+                {{ c.countryIsoCode }}<ng-container *ngIf="c.isLead"> ★</ng-container>
+              </span>
+            </td>
             <td><span class="badge" [class]="statusClass(p.status)">{{ p.status }}</span></td>
             <td class="val-money">{{ fmtCompact(p.revenueBudget * 1000) }}</td>
             <td class="val-money" [class.neg]="(p.revenueBudget - p.costBudget) < 0">
@@ -230,7 +190,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredProjects.length === 0">
-            <td colspan="11" class="empty-row">Aucun projet trouvé</td>
+            <td colspan="12" class="empty-row">Aucun projet trouvé</td>
           </tr>
         </tbody>
       </table>

@@ -7,6 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity @Table(name = "project")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
@@ -106,6 +108,10 @@ public class Project {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
+    private List<ProjectCountry> countries = new ArrayList<>();
 
     public boolean isArchived() { return deletedAt != null; }
 }

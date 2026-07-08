@@ -512,8 +512,8 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [(ngModel)]="r.contractType" (change)="onContractTypeChange(r, r.contractType)">
-                    <option *ngFor="let ct of contractTypes" [value]="ct">{{ ct }}</option>
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                    <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
                 <td *ngFor="let m of months" class="data-cell"
@@ -578,8 +578,8 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [(ngModel)]="r.contractType" (change)="onContractTypeChange(r, r.contractType)">
-                    <option *ngFor="let ct of contractTypes" [value]="ct">{{ ct }}</option>
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                    <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
                 <td *ngFor="let m of months" class="data-cell"
@@ -775,8 +775,8 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [(ngModel)]="r.contractType" (change)="onContractTypeChange(r, r.contractType)">
-                    <option *ngFor="let ct of contractTypes" [value]="ct">{{ ct }}</option>
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                    <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
                 <td *ngFor="let m of months" class="data-cell"
@@ -833,8 +833,8 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [(ngModel)]="r.contractType" (change)="onContractTypeChange(r, r.contractType)">
-                    <option *ngFor="let ct of contractTypes" [value]="ct">{{ ct }}</option>
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                    <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
                 <td *ngFor="let m of months" class="data-cell"
@@ -927,7 +927,7 @@
                   </div>
                 </td>
                 <td class="col-type">
-                  <span class="contract-badge">{{ r.contractType }}</span>
+                  <span class="contract-badge">{{ r.countryName || '—' }}</span>
                 </td>
                 <td *ngFor="let m of months" class="data-cell rm-billing-cell"
                     [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)">
@@ -2294,9 +2294,10 @@
           <input type="text" [(ngModel)]="newResource.matricule" placeholder="Ex: M12345" />
         </div>
         <div class="form-group">
-          <label>{{ i18n.t('pm.add.contract') }}</label>
-          <select [(ngModel)]="newResource.contractType">
-            <option *ngFor="let ct of contractTypes" [value]="ct">{{ ct }}</option>
+          <label>Pays</label>
+          <select [(ngModel)]="newResource.countryId">
+            <option [ngValue]="null" disabled>Sélectionner un pays</option>
+            <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.label }}</option>
           </select>
         </div>
       </div>
@@ -2332,7 +2333,7 @@
                 <tr *ngFor="let r of bulkPreview" [class.bulk-row-error]="r.error">
                   <td>{{ r.personName || '—' }}</td>
                   <td>{{ r.matricule || '—' }}</td>
-                  <td>{{ r.contractType }}</td>
+                  <td>{{ r.countryLabel }}</td>
                   <td class="bulk-status">
                     <span *ngIf="!r.error" class="bulk-ok">✓</span>
                     <span *ngIf="r.error" class="bulk-err" [title]="r.error">✕</span>

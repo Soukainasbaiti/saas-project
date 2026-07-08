@@ -23,7 +23,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "AND (:buId IS NULL OR :buId = '' OR p.bu.id = :buId) " +
            "AND (:customerId IS NULL OR p.customer.id = :customerId) " +
            "AND (:status IS NULL OR p.status = :status) " +
-           "AND (:createdById IS NULL OR p.createdById = :createdById)")
+           "AND (:createdById IS NULL OR p.createdById = :createdById " +
+           "     OR EXISTS (SELECT 1 FROM ProjectCountry pc WHERE pc.project = p AND pc.pm.id = :createdById))")
     Page<Project> findWithFiltersNoYear(
         @Param("buId")        String buId,
         @Param("customerId")  Long   customerId,
@@ -40,7 +41,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "AND (:buId IS NULL OR :buId = '' OR p.bu.id = :buId) " +
            "AND (:customerId IS NULL OR p.customer.id = :customerId) " +
            "AND (:status IS NULL OR p.status = :status) " +
-           "AND (:createdById IS NULL OR p.createdById = :createdById) " +
+           "AND (:createdById IS NULL OR p.createdById = :createdById " +
+           "     OR EXISTS (SELECT 1 FROM ProjectCountry pc WHERE pc.project = p AND pc.pm.id = :createdById)) " +
            "AND p.projectYear = :year")
     Page<Project> findWithFiltersWithYear(
         @Param("buId")        String buId,

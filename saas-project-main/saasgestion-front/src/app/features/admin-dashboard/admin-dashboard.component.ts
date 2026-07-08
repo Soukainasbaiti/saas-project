@@ -31,6 +31,8 @@ export class AdminDashboardComponent implements OnInit {
   filterClient        = '';
   filterCustomerGroup = '';
   filterIndustry      = '';
+  filterPm            = '';
+  filterCountry       = '';
 
   // Détail modal
   selectedProject: ProjectDetailDto | null = null;
@@ -224,7 +226,13 @@ export class AdminDashboardComponent implements OnInit {
       const matchClient        = !this.filterClient        || p.customerName  === this.filterClient;
       const matchCustomerGroup = !this.filterCustomerGroup || p.customerGroup === this.filterCustomerGroup;
       const matchIndustry      = !this.filterIndustry      || p.industryName  === this.filterIndustry;
-      return matchSearch && matchStatus && matchBu && matchClient && matchCustomerGroup && matchIndustry;
+      const matchPm            = !this.filterPm            ||
+        p.projectManager === this.filterPm ||
+        (p.countries || []).some(c => c.pmName === this.filterPm);
+      const matchCountry       = !this.filterCountry       ||
+        (p.countries || []).some(c => c.countryName === this.filterCountry);
+      return matchSearch && matchStatus && matchBu && matchClient && matchCustomerGroup
+        && matchIndustry && matchPm && matchCountry;
     });
   }
 
@@ -242,6 +250,21 @@ export class AdminDashboardComponent implements OnInit {
 
   get uniqueIndustries(): string[] {
     return [...new Set(this.projects.map(p => p.industryName).filter(Boolean))].sort();
+  }
+
+  get uniquePms(): string[] {
+    const names = new Set<string>();
+    this.projects.forEach(p => {
+      if (p.projectManager) names.add(p.projectManager);
+      (p.countries || []).forEach(c => { if (c.pmName) names.add(c.pmName); });
+    });
+    return [...names].sort();
+  }
+
+  get uniqueCountries(): string[] {
+    const names = new Set<string>();
+    this.projects.forEach(p => (p.countries || []).forEach(c => names.add(c.countryName)));
+    return [...names].sort();
   }
 
   get onGoingCount(): number {

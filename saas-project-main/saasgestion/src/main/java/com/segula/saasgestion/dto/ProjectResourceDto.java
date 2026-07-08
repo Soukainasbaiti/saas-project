@@ -9,7 +9,9 @@ public class ProjectResourceDto {
     private Long id;
     private String matricule;
     private String personName;
-    private String contractType;
+    private Long countryId;
+    private String countryName;
+    private String countryIsoCode;
     private boolean isActive;
 
     // month -> value  (for each tab)
