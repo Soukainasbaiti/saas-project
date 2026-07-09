@@ -146,7 +146,7 @@ public class AdminController {
                 "error", "L'email doit se terminer par @segulagrp.com, @segula.com ou @segula.fr"
             ));
         }
-        if (userRepo.findByEmailIgnoreCaseAndDeletedAtIsNull(req.getEmail()).isPresent()) {
+        if (userRepo.existsByEmailIgnoreCase(email)) {
             return ResponseEntity.status(409).body(Map.of("error", "Cet email est déjà utilisé."));
         }
         Long creatorId = (auth != null && auth.getPrincipal() instanceof Long)
@@ -184,7 +184,7 @@ public class AdminController {
                     "error", "L'email doit se terminer par @segulagrp.com, @segula.com ou @segula.fr"
                 ));
             }
-            boolean taken = userRepo.findByEmailIgnoreCaseAndDeletedAtIsNull(newEmail)
+            boolean taken = userRepo.findByEmailIgnoreCase(newEmail)
                 .map(u -> !u.getId().equals(id)).orElse(false);
             if (taken) {
                 return ResponseEntity.status(409).body(Map.of("error", "Cet email est déjà utilisé."));
@@ -211,6 +211,11 @@ public class AdminController {
         }
         user.setDeletedAt(java.time.OffsetDateTime.now());
         user.setActive(false);
+        // Libere l'email d'origine (contrainte unique en base) pour permettre
+        // de recreer un compte avec cet email apres suppression.
+        String freedEmail = "deleted_" + id + "_" + user.getEmail();
+        if (freedEmail.length() > 254) freedEmail = freedEmail.substring(0, 254);
+        user.setEmail(freedEmail);
         userRepo.save(user);
         log.info("Utilisateur supprimé (soft): id={}", id);
         return ResponseEntity.ok(Map.of("message", "Utilisateur supprimé avec succès."));

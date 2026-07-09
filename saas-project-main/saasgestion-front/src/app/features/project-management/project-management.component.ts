@@ -667,6 +667,59 @@ export class ProjectManagementComponent implements OnInit {
   newResource: { matricule: string; personName: string; countryId: number | null } = { matricule: '', personName: '', countryId: null };
   countries: { id: number; label: string; code: string | null }[] = [];
 
+  // ── Pays du projet (multi-pays) ────────────────────────────────
+  projectCountries: { id: number; countryId: number; countryName: string; countryIsoCode: string; pmId: number | null; pmName: string | null; pmEmail: string | null; isLead: boolean; displayOrder: number }[] = [];
+  pms: { id: number; label: string; code: string | null }[] = [];
+  showAddCountryModal = false;
+  addingCountry = false;
+  addCountryError = '';
+  newCountry: { countryId: number | null; pmId: number | null } = { countryId: null, pmId: null };
+
+  get availableCountriesToAdd() {
+    const taken = new Set(this.projectCountries.map(c => c.countryId));
+    return this.countries.filter(c => !taken.has(c.id));
+  }
+
+  loadProjectCountries(): void {
+    this.api.getProjectCountries(this.projectId).subscribe({
+      next: d => { this.projectCountries = d; this.cdr.markForCheck(); }
+    });
+  }
+
+  openAddCountryModal(): void {
+    this.newCountry = { countryId: null, pmId: null };
+    this.addCountryError = '';
+    this.showAddCountryModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeAddCountryModal(): void {
+    this.showAddCountryModal = false;
+    this.cdr.markForCheck();
+  }
+
+  confirmAddCountry(): void {
+    if (!this.newCountry.countryId || this.addingCountry) return;
+    this.addingCountry = true;
+    this.addCountryError = '';
+    this.api.addProjectCountry(this.projectId, {
+      countryId: this.newCountry.countryId,
+      pmId: this.newCountry.pmId
+    }).subscribe({
+      next: () => {
+        this.addingCountry = false;
+        this.showAddCountryModal = false;
+        this.loadProjectCountries();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.addingCountry = false;
+        this.addCountryError = err?.error?.error || 'Erreur lors de l\'ajout du pays.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   // Matricule warning
   showMatriculeWarning = false;
   addResourceError = '';
@@ -699,6 +752,27 @@ export class ProjectManagementComponent implements OnInit {
     return this.auth.currentUser()?.role === 'BUM';
   }
 
+  // ── Restriction d'edition par pays ──────────────────────────────
+  // Un PM voit toutes les donnees du projet mais ne modifie que les lignes de son pays.
+  get myCountryIds(): Set<number> {
+    const email = this.auth.currentUser()?.email;
+    if (!email) return new Set();
+    return new Set(
+      this.projectCountries.filter(c => c.pmEmail === email).map(c => c.countryId)
+    );
+  }
+
+  canEditResource(resource: ResourceRow): boolean {
+    if (this.isAdmin) return true;
+    if (!resource.countryId) return false;
+    return this.myCountryIds.has(resource.countryId);
+  }
+
+  canEditResourceId(resourceId: number): boolean {
+    const resource = this.resources.find(r => r.id === resourceId);
+    return resource ? this.canEditResource(resource) : false;
+  }
+
   get isAdmin(): boolean {
     return this.auth.currentUser()?.role === 'ADMIN';
   }
@@ -728,6 +802,8 @@ export class ProjectManagementComponent implements OnInit {
     this.api.getWipTable(this.projectId).subscribe({ next: d => { this.kpiWipRows = d; this.cdr.markForCheck(); } });
     this.api.getProject(this.projectId).subscribe({ next: p => { this.tenderMargin = Number(p.marginBudget) || 0; this.cdr.markForCheck(); } });
     this.api.getCountries().subscribe({ next: d => { this.countries = d as any; this.cdr.markForCheck(); } });
+    this.api.getPMs().subscribe({ next: d => { this.pms = d as any; this.cdr.markForCheck(); } });
+    this.loadProjectCountries();
   }
 
   goBack(): void {
@@ -2190,6 +2266,7 @@ export class ProjectManagementComponent implements OnInit {
   // ── Inline editing - resource cells ─────────────────────────────
   startEditResource(resourceId: number, month: string, field: string, currentVal: number): void {
     if (!this.isEditable) return;
+    if (!this.canEditResourceId(resourceId)) return;
     this.editingCell = { resourceId, month, field };
     this.editValue = currentVal > 0 ? String(currentVal) : '';
   }
@@ -2380,6 +2457,7 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   deleteResource(resourceId: number, name: string): void {
+    if (!this.canEditResourceId(resourceId)) return;
     this.pendingDelete = { type: 'resource', id: resourceId, name };
     this.showDeleteModal = true;
     this.cdr.markForCheck();
@@ -2446,6 +2524,7 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   onCountryChange(resource: ResourceRow, newCountryId: number): void {
+    if (!this.canEditResource(resource)) return;
     resource.countryId = newCountryId;
     const c = this.countries.find(c => c.id === newCountryId);
     resource.countryName = c?.label ?? null;

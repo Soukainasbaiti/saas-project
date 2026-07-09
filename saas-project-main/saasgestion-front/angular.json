@@ -67,7 +67,8 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "allowedHosts": [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io", "localhost"]
+            "allowedHosts": [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io", "localhost"],
+            "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
             "production": {

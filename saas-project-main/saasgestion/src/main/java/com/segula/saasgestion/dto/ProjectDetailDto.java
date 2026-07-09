@@ -52,4 +52,5 @@ public class ProjectDetailDto {
     private OffsetDateTime updatedAt;
     private OffsetDateTime deletedAt;
     private List<MonthlyForecastDto> monthlyForecasts;
+    private List<ProjectCountryDto> countries;
 }

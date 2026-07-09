@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
@@ -31,6 +31,7 @@ export class ProjectEditComponent implements OnInit {
   functions:       ReferenceDto[] = [];
   frontFinanciers: ReferenceDto[] = [];
   pms:             ReferenceDto[] = [];
+  countries:       ReferenceDto[] = [];
   years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 + i);
 
   constructor(
@@ -65,7 +66,9 @@ export class ProjectEditComponent implements OnInit {
       endDate:                 [null, Validators.required],
       revenueBudget:           [0, [Validators.required, Validators.min(0)]],
       costBudget:              [0, [Validators.required, Validators.min(0)]],
-      projectNameLegacy:       ['']
+      projectNameLegacy:       [''],
+      frontOfficeCountryId:    [null, Validators.required],
+      backOfficeCountries:     this.fb.array([])
     }, { validators: this.dateValidator });
 
     // Charger les données de référence et le projet rejeté en parallèle
@@ -78,10 +81,45 @@ export class ProjectEditComponent implements OnInit {
     });
   }
 
+  // ── Pays (multi-pays) ──────────────────────────────────────────
+  get backOfficeCountries(): FormArray {
+    return this.form.get('backOfficeCountries') as FormArray;
+  }
+
+  addBackOfficeCountry(countryId: number | null = null, pmId: number | null = null): void {
+    this.backOfficeCountries.push(this.fb.group({
+      countryId: [countryId, Validators.required],
+      pmId:      [pmId]
+    }));
+    this.cdr.markForCheck();
+  }
+
+  removeBackOfficeCountry(index: number): void {
+    this.backOfficeCountries.removeAt(index);
+    this.cdr.markForCheck();
+  }
+
+  takenCountryIds(exceptIndex?: number): number[] {
+    const ids: number[] = [];
+    const front = this.form.get('frontOfficeCountryId')?.value;
+    if (front) ids.push(front);
+    this.backOfficeCountries.controls.forEach((c, i) => {
+      if (i === exceptIndex) return;
+      const v = c.get('countryId')?.value;
+      if (v) ids.push(v);
+    });
+    return ids;
+  }
+
+  availableCountriesFor(exceptIndex?: number): ReferenceDto[] {
+    const taken = this.takenCountryIds(exceptIndex);
+    return this.countries.filter(c => !taken.includes(Number(c.id)));
+  }
+
   private loadReferenceData(): Promise<void> {
     return new Promise(resolve => {
       let count = 0;
-      const done = () => { if (++count === 8) resolve(); };
+      const done = () => { if (++count === 9) resolve(); };
       this.api.getBus().subscribe(d            => { this.bus             = d; done(); });
       this.api.getCustomers().subscribe(d      => { this.customers       = d; done(); });
       this.api.getIndustries().subscribe(d     => { this.industries      = d; done(); });
@@ -90,6 +128,7 @@ export class ProjectEditComponent implements OnInit {
       this.api.getFunctions().subscribe(d      => { this.functions       = d; done(); });
       this.api.getFrontFinanciers().subscribe(d => { this.frontFinanciers = d; done(); });
       this.api.getPMs().subscribe(d            => { this.pms             = d; done(); });
+      this.api.getCountries().subscribe(d      => { this.countries       = d; done(); });
     });
   }
 
@@ -118,8 +157,12 @@ export class ProjectEditComponent implements OnInit {
               endDate:                 p.endDate           || null,
               revenueBudget:           p.revenueBudget     || 0,
               costBudget:              p.costBudget        || 0,
-              projectNameLegacy:       p.projectNameLegacy || ''
+              projectNameLegacy:       p.projectNameLegacy || '',
+              frontOfficeCountryId:    p.frontOfficeCountryId || null
             });
+            (p.backOfficeCountries || []).forEach((bo: { countryId: number; pmId: number | null }) =>
+              this.addBackOfficeCountry(bo.countryId, bo.pmId)
+            );
             resolve();
           },
           error: err => {

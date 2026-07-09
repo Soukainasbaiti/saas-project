@@ -114,11 +114,9 @@
             <th>Statut</th>
             <th>Revenu</th>
             <th>Marge</th>
-            <th class="th-modules" title="Risques">⚠ Risk</th>
-            <th class="th-modules" title="Issues">🔴 Issues</th>
-            <th class="th-modules" title="Opportunités">💡 Opp.</th>
+            <th>Engagement</th>
+            <th>Tender</th>
             <th class="th-modules" title="MIP">📋 MIP</th>
-            <th class="th-modules" title="WIP — Work In Progress">💰 WIP</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -141,36 +139,14 @@
             <td class="val-money" [class.neg]="(p.revenueBudget - p.costBudget) < 0">
               {{ fmtCompact((p.revenueBudget - p.costBudget) * 1000) }}
             </td>
-            <!-- Risk -->
-            <td class="td-module">
-              <span class="module-badge badge-risk" *ngIf="getStats(p.id).riskCount > 0">{{ getStats(p.id).riskCount }}</span>
-              <span class="module-none" *ngIf="getStats(p.id).riskCount === 0">—</span>
-            </td>
-            <!-- Issues -->
-            <td class="td-module">
-              <span class="module-badge badge-issue" *ngIf="getStats(p.id).openIssueCount > 0">{{ getStats(p.id).openIssueCount }}</span>
-              <span class="module-none" *ngIf="getStats(p.id).openIssueCount === 0">—</span>
-            </td>
-            <!-- Opportunités -->
-            <td class="td-module">
-              <span class="module-badge badge-opp" *ngIf="getStats(p.id).openOpportunityCount > 0">{{ getStats(p.id).openOpportunityCount }}</span>
-              <span class="module-none" *ngIf="getStats(p.id).openOpportunityCount === 0">—</span>
-            </td>
+            <!-- Engagement -->
+            <td><span class="bu-badge" [title]="p.engagementType">{{ engagementLabel(p.engagementType) }}</span></td>
+            <!-- Tender (marge %) -->
+            <td class="val-money" [class.neg]="p.projectMargin < 0">{{ (p.projectMargin * 100) | number:'1.0-1' }}%</td>
             <!-- MIP -->
             <td class="td-module">
               <span class="module-badge badge-mip" *ngIf="getStats(p.id).mipCount > 0">{{ getStats(p.id).mipCount }}</span>
               <span class="module-none" *ngIf="getStats(p.id).mipCount === 0">—</span>
-            </td>
-            <!-- WIP avec montant visible -->
-            <td class="td-module td-wip">
-              <ng-container *ngIf="getStats(p.id).wipEntryCount > 0; else noWip">
-                <div class="wip-cell" [class.wip-cell-positive]="getStats(p.id).wipTotalAmount > 0"
-                     [class.wip-cell-negative]="getStats(p.id).wipTotalAmount < 0">
-                  <span class="wip-cell-count">{{ getStats(p.id).wipEntryCount }} BL</span>
-                  <span class="wip-cell-amount">{{ getStats(p.id).wipTotalAmount > 0 ? '+' : '' }}{{ fmtCompact(getStats(p.id).wipTotalAmount) }} €</span>
-                </div>
-              </ng-container>
-              <ng-template #noWip><span class="module-none">—</span></ng-template>
             </td>
             <td>
               <div class="action-btns">
@@ -190,7 +166,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredProjects.length === 0">
-            <td colspan="12" class="empty-row">Aucun projet trouvé</td>
+            <td colspan="10" class="empty-row">Aucun projet trouvé</td>
           </tr>
         </tbody>
       </table>

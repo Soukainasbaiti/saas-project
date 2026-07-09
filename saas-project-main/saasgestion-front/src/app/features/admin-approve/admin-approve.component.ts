@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
+import { ApiService } from '../../core/services/api.service';
 
 interface PendingDetail {
   token: string;
@@ -63,9 +64,15 @@ export class AdminApproveComponent implements OnInit {
     }
   }
 
+  // Resolution best-effort des noms pays/PM (nécessite d'être connecté ;
+  // sans connexion — accès via lien email — on affiche simplement les ID bruts).
+  countries: { id: number; label: string; code: string | null }[] = [];
+  pms:       { id: number; label: string; code: string | null }[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
+    private api: ApiService,
     public  auth: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -73,6 +80,17 @@ export class AdminApproveComponent implements OnInit {
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get('token') ?? '';
     this.loadDetail();
+    this.api.getCountries().subscribe({ next: d => { this.countries = d as any; this.cdr.detectChanges(); }, error: () => {} });
+    this.api.getPMs().subscribe({ next: d => { this.pms = d as any; this.cdr.detectChanges(); }, error: () => {} });
+  }
+
+  countryLabel(id: number): string {
+    return this.countries.find(c => c.id === id)?.label ?? ('#' + id);
+  }
+
+  pmLabel(id: number | null): string {
+    if (id == null) return 'À assigner';
+    return this.pms.find(p => p.id === id)?.label ?? ('#' + id);
   }
 
   loadDetail(): void {

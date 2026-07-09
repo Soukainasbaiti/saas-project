@@ -13,6 +13,11 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
 
     Optional<AppUser> findByEmailIgnoreCaseAndDeletedAtIsNull(String email);
 
+    // La contrainte d'unicite email en base porte sur TOUS les utilisateurs
+    // (meme desactives/supprimes), il faut donc verifier sans le filtre deletedAt IS NULL.
+    boolean existsByEmailIgnoreCase(String email);
+    Optional<AppUser> findByEmailIgnoreCase(String email);
+
     @Query("SELECT u FROM AppUser u WHERE u.role IN ('PM','BUM') AND u.isActive = true AND u.deletedAt IS NULL ORDER BY u.fullName ASC")
     List<AppUser> findAllActivePMs();
 

@@ -44,6 +44,15 @@
             {{ projectEngagementType }}
           </button>
 
+          <!-- Pays du projet (multi-pays) -->
+          <span class="granularity-badge" *ngFor="let c of projectCountries"
+                [title]="c.pmName || 'PM à assigner'">
+            {{ c.countryIsoCode }}<ng-container *ngIf="c.isLead"> ★</ng-container>
+          </span>
+          <button class="engagement-switch-btn" (click)="openAddCountryModal()" title="Ajouter un pays au projet">
+            + Pays
+          </button>
+
           <!-- Theme picker -->
           <div class="theme-picker-wrap">
             <button class="theme-picker-btn" (click)="showThemePicker=!showThemePicker" title="Thème couleur">
@@ -202,8 +211,8 @@
                 <th class="col-indicator sticky-col">{{ i18n.t('op.indicator') }}</th>
                 <th class="col-op-val col-op-real">{{ i18n.t('op.real_cumul') }}</th>
                 <th class="col-op-val col-op-real-month">{{ i18n.t('op.real_month') }} {{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '' }}</th>
-                <th class="col-op-val col-op-forecast">Forecast</th>
-                <th class="col-op-val col-op-landing">Landing</th>
+                <th class="col-op-val col-op-forecast">ETC (forecast)</th>
+                <th class="col-op-val col-op-landing">EAC (landing)</th>
               </tr>
             </thead>
             <tbody>
@@ -512,7 +521,7 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)" [disabled]="!canEditResource(r)">
                     <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
@@ -532,7 +541,7 @@
                   </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ cfmt(resourceRowTotal(r,'dailyCosts'), 2) }}</td>
-                <td class="col-action" *ngIf="isEditable"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
+                <td class="col-action" *ngIf="isEditable"><button class="btn-delete-row" [disabled]="!canEditResource(r)" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
@@ -578,7 +587,7 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)" [disabled]="!canEditResource(r)">
                     <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
@@ -597,7 +606,7 @@
                   </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ fmt(resourceRowTotal(r,'workedDays'),1) }}</td>
-                <td class="col-action"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
+                <td class="col-action"><button class="btn-delete-row" [disabled]="!canEditResource(r)" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
@@ -775,7 +784,7 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)" [disabled]="!canEditResource(r)">
                     <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
@@ -794,7 +803,7 @@
                   </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ fmt(resourceRowTotal(r,'billedDays'),1) }}</td>
-                <td class="col-action"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
+                <td class="col-action"><button class="btn-delete-row" [disabled]="!canEditResource(r)" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
@@ -833,7 +842,7 @@
                   <div><div class="person-name">{{ r.personName }}</div><div class="person-matric">{{ r.matricule }}</div></div>
                 </div></td>
                 <td class="col-type">
-                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)">
+                  <select class="contract-select" [ngModel]="r.countryId" (ngModelChange)="onCountryChange(r, $event)" [disabled]="!canEditResource(r)">
                     <option *ngFor="let c of countries" [value]="c.id">{{ c.label }}</option>
                   </select>
                 </td>
@@ -852,7 +861,7 @@
                   </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ cfmt(resourceRowTotal(r,'dailyRates')) }}</td>
-                <td class="col-action"><button class="btn-delete-row" (click)="deleteResource(r.id,r.personName)">
+                <td class="col-action"><button class="btn-delete-row" [disabled]="!canEditResource(r)" (click)="deleteResource(r.id,r.personName)">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 </button></td>
               </tr>
@@ -2143,6 +2152,39 @@
         <button class="btn-confirm" (click)="confirmChangeEngagement()"
           [disabled]="!targetEngagementType || targetEngagementType === projectEngagementType || changingEngagement">
           {{ changingEngagement ? 'Changement en cours...' : 'Confirmer le changement' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale : Ajouter un pays au projet -->
+  <div class="modal-overlay" *ngIf="showAddCountryModal" (click)="closeAddCountryModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter un pays au projet</h3>
+        <button class="modal-close" (click)="closeAddCountryModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Pays</label>
+          <select [(ngModel)]="newCountry.countryId">
+            <option [ngValue]="null" disabled>Sélectionner un pays</option>
+            <option *ngFor="let c of availableCountriesToAdd" [ngValue]="c.id">{{ c.label }} ({{ c.code }})</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Chef de Projet</label>
+          <select [(ngModel)]="newCountry.pmId">
+            <option [ngValue]="null">À assigner (l'Admin complètera)</option>
+            <option *ngFor="let p of pms" [ngValue]="p.id">{{ p.label }}</option>
+          </select>
+        </div>
+        <p class="error-msg" *ngIf="addCountryError">{{ addCountryError }}</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeAddCountryModal()">Annuler</button>
+        <button class="btn-confirm" (click)="confirmAddCountry()" [disabled]="!newCountry.countryId || addingCountry">
+          {{ addingCountry ? 'Ajout en cours...' : 'Ajouter le pays' }}
         </button>
       </div>
     </div>

@@ -98,6 +98,17 @@
       </table>
     </div>
 
+    <!-- Pays du projet -->
+    <div class="detail-card" *ngIf="project.countries?.length">
+      <div class="dc-title">🌍 Pays du Projet</div>
+      <table class="info-table">
+        <tr *ngFor="let c of project.countries">
+          <td>{{ c.countryName }} <span class="chip-d" *ngIf="c.isLead">Chef de file</span></td>
+          <td>👤 {{ c.pmName || 'À assigner' }}</td>
+        </tr>
+      </table>
+    </div>
+
     <!-- Planning & Audit -->
     <div class="detail-card">
       <div class="dc-title">📅 Planning & Audit</div>

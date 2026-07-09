@@ -126,6 +126,7 @@ export interface ProjectCountryDto {
   countryIsoCode: string;
   pmId: number | null;
   pmName: string | null;
+  pmEmail: string | null;
   isLead: boolean;
   displayOrder: number;
 }

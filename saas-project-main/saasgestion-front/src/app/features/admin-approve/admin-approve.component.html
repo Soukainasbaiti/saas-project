@@ -71,6 +71,20 @@
           </table>
         </div>
 
+        <div class="detail-card" *ngIf="detail.project.frontOfficeCountryId">
+          <div class="card-title">🌍 Pays</div>
+          <table class="info-table">
+            <tr>
+              <td>Pays Front Office (chef de file)</td>
+              <td><span class="chip">{{ countryLabel(detail.project.frontOfficeCountryId) }}</span></td>
+            </tr>
+            <tr *ngFor="let bo of detail.project.backOfficeCountries">
+              <td>Pays Back Office</td>
+              <td><span class="chip">{{ countryLabel(bo.countryId) }}</span> — PM : {{ pmLabel(bo.pmId) }}</td>
+            </tr>
+          </table>
+        </div>
+
         <div class="detail-card wide">
           <div class="card-title">📋 Activité & Planning</div>
           <table class="info-table">

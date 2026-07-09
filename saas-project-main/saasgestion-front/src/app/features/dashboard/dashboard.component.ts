@@ -78,7 +78,7 @@ export class DashboardComponent implements OnInit {
   }
 
   displayedColumns = [
-    'projectName', 'frontFinancier', 'bu', 'customer',
+    'projectName', 'frontFinancier', 'bu', 'customer', 'countries',
     'activity', 'revenueBudget', 'costBudget', 'marginBudget',
     'projectMargin', 'status', 'actions'
   ];
@@ -96,7 +96,8 @@ export class DashboardComponent implements OnInit {
       status:        [null],
       customerId:    [null],
       industryId:    [null],
-      customerGroup: [null]
+      customerGroup: [null],
+      country:       [null]
     });
   }
 
@@ -116,7 +117,7 @@ export class DashboardComponent implements OnInit {
       this.filterForm.get(k)!.valueChanges.subscribe(() => this.loadProjects())
     );
     // Filtres client → filtrage local uniquement
-    ['industryId', 'customerGroup'].forEach(k =>
+    ['industryId', 'customerGroup', 'country'].forEach(k =>
       this.filterForm.get(k)!.valueChanges.subscribe(() => this.applyClientFilters())
     );
   }
@@ -134,6 +135,12 @@ export class DashboardComponent implements OnInit {
 
   get customerGroups(): string[] {
     return [...new Set(this.allProjects.map(p => p.customerGroup).filter(Boolean))].sort();
+  }
+
+  get uniqueCountries(): string[] {
+    const names = new Set<string>();
+    this.allProjects.forEach(p => (p.countries || []).forEach(c => names.add(c.countryName)));
+    return [...names].sort();
   }
 
   loadStats(): void {
@@ -172,6 +179,7 @@ export class DashboardComponent implements OnInit {
     let filtered = this.allProjects;
     if (f.industryId)    filtered = filtered.filter(p => p.industryId    === +f.industryId);
     if (f.customerGroup) filtered = filtered.filter(p => p.customerGroup === f.customerGroup);
+    if (f.country)       filtered = filtered.filter(p => (p.countries || []).some(c => c.countryName === f.country));
     this.projects      = filtered;
     this.totalElements = filtered.length;
     this.cdr.detectChanges();

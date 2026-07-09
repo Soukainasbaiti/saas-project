@@ -173,23 +173,22 @@
           </span>
         </div>
 
-        <div class="form-group full-width" formArrayName="backOfficeCountries">
+        <div class="form-group full" formArrayName="backOfficeCountries">
           <label class="form-label">Pays Back Office (optionnel)</label>
 
-          <div *ngFor="let group of backOfficeCountries.controls; let i = index"
-               [formGroupName]="i" style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
-            <select class="form-select" formControlName="countryId" style="flex:1">
+          <div class="bo-country-row" *ngFor="let group of backOfficeCountries.controls; let i = index" [formGroupName]="i">
+            <select class="form-select" formControlName="countryId">
               <option [ngValue]="null" disabled>Pays</option>
               <option *ngFor="let c of availableCountriesFor(i)" [ngValue]="c.id">{{ c.label }} ({{ c.code }})</option>
             </select>
-            <select class="form-select" formControlName="pmId" style="flex:1">
+            <select class="form-select" formControlName="pmId">
               <option [ngValue]="null">À assigner (l'Admin complètera)</option>
               <option *ngFor="let p of pms" [ngValue]="p.id">{{ p.label }}</option>
             </select>
-            <button type="button" class="btn-secondary" (click)="removeBackOfficeCountry(i)">✕</button>
+            <button type="button" class="btn-bo-remove" title="Retirer ce pays" (click)="removeBackOfficeCountry(i)">✕</button>
           </div>
 
-          <button type="button" class="btn-secondary" (click)="addBackOfficeCountry()">
+          <button type="button" class="btn-bo-add" (click)="addBackOfficeCountry()">
             + Ajouter un pays Back Office
           </button>
         </div>

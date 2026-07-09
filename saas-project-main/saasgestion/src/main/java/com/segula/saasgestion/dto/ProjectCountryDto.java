@@ -10,6 +10,7 @@ public class ProjectCountryDto {
     private String countryIsoCode;
     private Long pmId;
     private String pmName;
+    private String pmEmail;
     private boolean isLead;
     private int displayOrder;
 }

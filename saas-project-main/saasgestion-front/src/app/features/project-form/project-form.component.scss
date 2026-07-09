@@ -49,6 +49,24 @@
 .field-hint { font-size: 11px; color: #94a3b8; }
 .error-msg { font-size: 11px; color: #dc2626; }
 
+/* Pays Back Office */
+.bo-country-row {
+  display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center;
+  margin-bottom: 10px;
+}
+.btn-bo-remove {
+  width: 38px; height: 38px; border-radius: 8px; border: 1.5px solid #fecaca;
+  background: #fff5f5; color: #dc2626; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s; flex-shrink: 0;
+  &:hover { background: #fee2e2; border-color: #fca5a5; }
+}
+.btn-bo-add {
+  border: 1.5px dashed #93c5fd; background: #f8fbff; color: #0066cc;
+  padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; width: 100%;
+  &:hover { background: #eff6ff; border-color: #60a5fa; }
+}
+
 /* Margin preview */
 .margin-preview {
   display: flex; align-items: center; gap: 16px; margin-top: 18px;

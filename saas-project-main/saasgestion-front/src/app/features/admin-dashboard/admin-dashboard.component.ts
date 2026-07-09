@@ -768,4 +768,15 @@ export class AdminDashboardComponent implements OnInit {
     };
     return m[s] ?? '';
   }
+
+  engagementLabel(code: string): string {
+    const m: Record<string, string> = {
+      'AT':  'AT — Assistance Technique',
+      'T&M': 'T&M — Time & Material',
+      'UoW': 'UoW — Unit of Work',
+      'WP':  'WPK — Work Package',
+      'TK':  'TK — Turnkey'
+    };
+    return m[code] ?? (code || '—');
+  }
 }

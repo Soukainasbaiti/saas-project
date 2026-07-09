@@ -213,6 +213,7 @@ public class ProjectCountryService {
                 .countryIsoCode(pc.getCountry().getIsoCode())
                 .pmId(pc.getPm() != null ? pc.getPm().getId() : null)
                 .pmName(pc.getPm() != null ? pc.getPm().getFullName() : null)
+                .pmEmail(pc.getPm() != null ? pc.getPm().getEmail() : null)
                 .isLead(pc.isLead())
                 .displayOrder(pc.getDisplayOrder())
                 .build();
