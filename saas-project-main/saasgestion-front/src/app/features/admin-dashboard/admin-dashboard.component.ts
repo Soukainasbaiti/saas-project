@@ -33,6 +33,7 @@ export class AdminDashboardComponent implements OnInit {
   filterIndustry      = '';
   filterPm            = '';
   filterCountry       = '';
+  filterMajor         = '';
 
   // Détail modal
   selectedProject: ProjectDetailDto | null = null;
@@ -231,8 +232,10 @@ export class AdminDashboardComponent implements OnInit {
         (p.countries || []).some(c => c.pmName === this.filterPm);
       const matchCountry       = !this.filterCountry       ||
         (p.countries || []).some(c => c.countryName === this.filterCountry);
+      const matchMajor         = !this.filterMajor          ||
+        (this.filterMajor === 'oui' ? p.majorProject : !p.majorProject);
       return matchSearch && matchStatus && matchBu && matchClient && matchCustomerGroup
-        && matchIndustry && matchPm && matchCountry;
+        && matchIndustry && matchPm && matchCountry && matchMajor;
     });
   }
 

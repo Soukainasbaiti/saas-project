@@ -35,8 +35,8 @@ public class ProjectManagementController {
     }
 
     @GetMapping("/{id}/management")
-    public ResponseEntity<ProjectManagementDto> getManagement(@PathVariable Long id) {
-        return ResponseEntity.ok(managementService.getProjectManagement(id));
+    public ResponseEntity<ProjectManagementDto> getManagement(@PathVariable Long id, Authentication auth) {
+        return ResponseEntity.ok(managementService.getProjectManagement(id, userId(auth)));
     }
 
     @PostMapping("/management/resource")
@@ -141,6 +141,16 @@ public class ProjectManagementController {
     }
 
     // ── Validation workflow ────────────────────────────────────────
+    @PostMapping("/{id}/management/reopen")
+    public ResponseEntity<?> reopen(@PathVariable Long id, Authentication auth) {
+        try {
+            managementService.reopenForEditing(id, resolveFullName(auth));
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/management/submit")
     public ResponseEntity<?> submit(@PathVariable Long id, Authentication auth) {
         try {

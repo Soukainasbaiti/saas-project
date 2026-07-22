@@ -53,6 +53,13 @@
             + Pays
           </button>
 
+          <!-- Reprendre la saisie apres validation/soumission (ex: 2e tranche de travail) -->
+          <button class="engagement-switch-btn" *ngIf="!isEditable && (validationStatus==='VALIDATED' || validationStatus==='SUBMITTED')"
+                  [disabled]="reopening" (click)="reopenForEditing()"
+                  title="Repasser en brouillon pour continuer la saisie (ex: ajouter une nouvelle tranche de travail)">
+            🔓 {{ reopening ? 'Réouverture...' : 'Reprendre la saisie' }}
+          </button>
+
           <!-- Theme picker -->
           <div class="theme-picker-wrap">
             <button class="theme-picker-btn" (click)="showThemePicker=!showThemePicker" title="Thème couleur">
@@ -135,11 +142,11 @@
         <span class="tab-dot dot-purple"></span>Daily Rate (ADR)
       </button>
       <button class="pm-tab" *ngIf="!isResultatsEngagement" [class.active]="activeTab==='revenueMoyens'" (click)="setTab('revenueMoyens')">
-        <span class="tab-dot dot-emerald"></span>Revenus — Moyens
+        <span class="tab-dot dot-emerald"></span>Revenu (CS)
       </button>
       <!-- Revenus Résultats : visible seulement pour Engagement Résultats (UoW, WP) -->
       <button class="pm-tab" *ngIf="!isMoyensEngagement" [class.active]="activeTab==='revenueResultats'" (click)="setTab('revenueResultats')">
-        <span class="tab-dot dot-emerald"></span>Revenus — Résultats
+        <span class="tab-dot dot-emerald"></span>{{ resultatsRevenueLabel }}
       </button>
       <button class="pm-tab" [class.active]="activeTab==='risks'" (click)="setTab('risks')">
         <span class="tab-dot dot-purple"></span>Risks
@@ -1568,7 +1575,7 @@
 
     <!-- ═══ TAB: Risks ═══ -->
     <ng-container *ngIf="activeTab==='risks'">
-      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible; animation:none;">
         <app-risk-register
           [projectId]="projectId"
           [projectName]="projectName">
@@ -1578,7 +1585,7 @@
 
     <!-- ═══ TAB: Issues ═══ -->
     <ng-container *ngIf="activeTab==='issues'">
-      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible; animation:none;">
         <app-issue-register
           [projectId]="projectId"
           [projectRisks]="[]">
@@ -1588,21 +1595,21 @@
 
     <!-- ═══ TAB: Opportunities ═══ -->
     <ng-container *ngIf="activeTab==='opportunities'">
-      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible; animation:none;">
         <app-opportunity-register [projectId]="projectId"></app-opportunity-register>
       </div>
     </ng-container>
 
     <!-- ═══ TAB: MIP ═══ -->
     <ng-container *ngIf="activeTab==='mip'">
-      <div class="pm-panel panel-blue" style="padding:0; overflow:visible;">
+      <div class="pm-panel panel-blue" style="padding:0; overflow:visible; animation:none;">
         <app-mip-register [projectId]="projectId"></app-mip-register>
       </div>
     </ng-container>
 
     <!-- ═══ TAB: WIP ═══ -->
     <ng-container *ngIf="activeTab==='wip'">
-      <div class="pm-panel panel-blue" style="padding:1.2rem; overflow:visible;">
+      <div class="pm-panel panel-blue" style="padding:1.2rem; overflow:visible; animation:none;">
         <app-wip-register [projectId]="projectId"></app-wip-register>
       </div>
     </ng-container>

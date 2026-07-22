@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -75,8 +74,6 @@ public class ProjectCountryService {
                 notifyCountryAdded(pc, createdBy);
             }
         }
-
-        recomputeProjectName(project);
     }
 
     @Transactional
@@ -108,8 +105,6 @@ public class ProjectCountryService {
                 .addedBy(addedBy)
                 .build();
         projectCountryRepo.save(pc);
-
-        recomputeProjectName(project);
 
         notifyCountryAdded(pc, addedBy);
 
@@ -171,34 +166,6 @@ public class ProjectCountryService {
                 frontOfficePm != null ? frontOfficePm.getEmail() : "",
                 pc.getProject().getId()
         );
-    }
-
-    // ── Nom de projet auto-genere : suffixe des codes pays (ordonne) ──
-    private void recomputeProjectName(Project project) {
-        List<ProjectCountry> countries = projectCountryRepo.findByProjectIdOrderByDisplayOrderAsc(project.getId());
-        if (countries.isEmpty()) return;
-
-        String suffix = countries.stream()
-                .sorted(Comparator.comparingInt(ProjectCountry::getDisplayOrder))
-                .map(pc -> pc.getCountry().getIsoCode())
-                .reduce((a, b) -> a + "-" + b)
-                .orElse("");
-
-        String baseName = stripExistingCountrySuffix(project.getProjectName(), countries);
-        project.setProjectName(baseName + "-" + suffix);
-        projectRepo.save(project);
-    }
-
-    private String stripExistingCountrySuffix(String currentName, List<ProjectCountry> countries) {
-        if (currentName == null) return "";
-        String name = currentName;
-        for (ProjectCountry pc : countries) {
-            String tag = "-" + pc.getCountry().getIsoCode();
-            if (name.endsWith(tag)) {
-                name = name.substring(0, name.length() - tag.length());
-            }
-        }
-        return name;
     }
 
     private String projectDisplayName(Project project) {

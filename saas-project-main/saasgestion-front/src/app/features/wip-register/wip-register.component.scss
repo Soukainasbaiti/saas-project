@@ -301,7 +301,7 @@ $shadow-lg: 0 16px 40px rgba(15, 23, 42, .16);
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.25);
-  z-index: 200;
+  z-index: 5000;
   animation: fadeIn .15s ease-out;
 }
 
@@ -312,7 +312,7 @@ $shadow-lg: 0 16px 40px rgba(15, 23, 42, .16);
   height: 100vh;
   background: #fff;
   box-shadow: -4px 0 24px rgba(0,0,0,.12);
-  z-index: 201;
+  z-index: 5001;
   transition: right .3s cubic-bezier(.4,0,.2,1);
   display: flex;
   flex-direction: column;
@@ -517,7 +517,7 @@ $shadow-lg: 0 16px 40px rgba(15, 23, 42, .16);
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.4);
-  z-index: 300;
+  z-index: 5000;
   display: flex;
   align-items: center;
   justify-content: center;

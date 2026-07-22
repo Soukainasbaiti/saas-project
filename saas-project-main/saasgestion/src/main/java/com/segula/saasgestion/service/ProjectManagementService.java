@@ -62,9 +62,30 @@ public class ProjectManagementService {
 
 
     // ── Get full management DTO ────────────────────────────────────
-    public ProjectManagementDto getProjectManagement(Long projectId) {
+    public ProjectManagementDto getProjectManagement(Long projectId, Long currentUserId) {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        // Vue contextuelle multi-pays : si l'utilisateur connecte est PM d'un ou plusieurs
+        // pays de ce projet (pas Admin), on affiche son propre nom + le(s) code(s) de son(ses)
+        // pays a la place du PM/pays chef de file par defaut.
+        String displayPmName = project.getProjectManager() != null ? project.getProjectManager().getFullName() : "";
+        String displayProjectName = project.getProjectName() != null ? project.getProjectName() : project.getActivity();
+        if (currentUserId != null) {
+            String role = appUserRepository.findById(currentUserId).map(AppUser::getRole).orElse("");
+            if (!"ADMIN".equals(role)) {
+                List<ProjectCountry> viewerCountries = projectCountryRepository.findByProjectIdAndPmId(projectId, currentUserId);
+                if (!viewerCountries.isEmpty()) {
+                    displayPmName = appUserRepository.findById(currentUserId).map(AppUser::getFullName).orElse(displayPmName);
+                    String suffix = viewerCountries.stream()
+                        .sorted(java.util.Comparator.comparingInt(ProjectCountry::getDisplayOrder))
+                        .map(pc -> pc.getCountry().getIsoCode())
+                        .reduce((a, b) -> a + "-" + b)
+                        .orElse("");
+                    if (!suffix.isEmpty()) displayProjectName = displayProjectName + "-" + suffix;
+                }
+            }
+        }
 
         String granularity = getGranularity(projectId);
         boolean locked = isGranularityLocked(projectId);
@@ -170,7 +191,7 @@ public class ProjectManagementService {
 
         return ProjectManagementDto.builder()
             .projectId(projectId)
-            .projectName(project.getProjectName() != null ? project.getProjectName() : project.getActivity())
+            .projectName(displayProjectName)
             .granularity(granularity)
             .granularityLocked(locked)
             .currency(currency)
@@ -189,7 +210,7 @@ public class ProjectManagementService {
             .engagementType(project.getEngagement() != null ? project.getEngagement().getEngagementType() : null)
             .clientName(project.getCustomer() != null ? project.getCustomer().getName() : "")
             .buTrigram(project.getBu() != null ? project.getBu().getTrigram() : "")
-            .pmName(project.getProjectManager() != null ? project.getProjectManager().getFullName() : "")
+            .pmName(displayPmName)
             .projectCode(project.getProjectCode() != null ? project.getProjectCode() : "")
             .projectBusinessId(project.getProjectId() != null ? project.getProjectId() : "")
             .deliveryConfidenceLevel(deliveryConfidenceLevel)
@@ -435,6 +456,23 @@ public class ProjectManagementService {
         historyRepo.save(ProjectValidationHistory.builder()
             .projectId(projectId).action("REJECTED").actorName(bumName).comment(comment).build());
         log.warn("One Pager rejeté : projet={} bum={} motif={}", projectId, bumName, comment);
+    }
+
+    // Permet au PM de rouvrir la saisie apres validation/soumission (ex: pour ajouter une 2e tranche
+    // de travail) - repasse le projet en DRAFT ; il faudra le resoumettre pour re-validation.
+    @Transactional
+    public void reopenForEditing(Long projectId, String pmName) {
+        ProjectManagementConfig config = configRepo.findById(projectId)
+            .orElseThrow(() -> new RuntimeException("Not found"));
+        if (!"VALIDATED".equals(config.getValidationStatus()) && !"SUBMITTED".equals(config.getValidationStatus()))
+            throw new RuntimeException("Le projet n'est ni valide ni en attente de validation.");
+        String previousStatus = config.getValidationStatus();
+        config.setValidationStatus("DRAFT");
+        configRepo.save(config);
+        historyRepo.save(ProjectValidationHistory.builder()
+            .projectId(projectId).action("REOPENED").actorName(pmName)
+            .comment("Reouvert depuis " + previousStatus).build());
+        log.info("One Pager reouvert pour edition : projet={} pm={} (etait {})", projectId, pmName, previousStatus);
     }
 
     public List<Map<String, Object>> getValidationHistory() {

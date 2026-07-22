@@ -44,6 +44,11 @@
           <option value="">Pays</option>
           <option *ngFor="let c of uniqueCountries" [value]="c">{{ c }}</option>
         </select>
+        <select class="filter-select filter-select--new" [(ngModel)]="filterMajor">
+          <option value="">Projet Majeur</option>
+          <option value="oui">Majeur</option>
+          <option value="non">Non majeur</option>
+        </select>
         <button class="btn-export" (click)="openExportModal()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -116,7 +121,7 @@
             <th>Marge</th>
             <th>Engagement</th>
             <th>Tender</th>
-            <th class="th-modules" title="MIP">📋 MIP</th>
+            <th>Projet Majeur</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -140,13 +145,13 @@
               {{ fmtCompact((p.revenueBudget - p.costBudget) * 1000) }}
             </td>
             <!-- Engagement -->
-            <td><span class="bu-badge" [title]="p.engagementType">{{ engagementLabel(p.engagementType) }}</span></td>
+            <td [title]="p.engagementType">{{ engagementLabel(p.engagementType) }}</td>
             <!-- Tender (marge %) -->
             <td class="val-money" [class.neg]="p.projectMargin < 0">{{ (p.projectMargin * 100) | number:'1.0-1' }}%</td>
-            <!-- MIP -->
-            <td class="td-module">
-              <span class="module-badge badge-mip" *ngIf="getStats(p.id).mipCount > 0">{{ getStats(p.id).mipCount }}</span>
-              <span class="module-none" *ngIf="getStats(p.id).mipCount === 0">—</span>
+            <!-- Projet Majeur -->
+            <td>
+              <span *ngIf="p.majorProject" class="d-chip d-chip-gold">⭐ Oui</span>
+              <span *ngIf="!p.majorProject" class="module-none">Non</span>
             </td>
             <td>
               <div class="action-btns">

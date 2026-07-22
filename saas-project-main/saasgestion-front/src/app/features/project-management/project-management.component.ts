@@ -262,6 +262,17 @@ export class ProjectManagementComponent implements OnInit {
   get isMoyensEngagement(): boolean {
     return !!this.projectEngagementType && !this.isResultatsEngagement;
   }
+
+  // Libellé dynamique de l'onglet Revenus - Résultats selon le module actif (WP vs UoW)
+  get resultatsRevenueLabel(): string {
+    if (this.engagementModules.workPackage && !this.engagementModules.unitOfWork) {
+      return 'Revenus Work Package (WPK)';
+    }
+    if (this.engagementModules.unitOfWork && !this.engagementModules.workPackage) {
+      return 'Revenus Unit of Work (UoW)';
+    }
+    return 'Revenus — Résultats';
+  }
   months: string[] = [];
   monthStatus: { [period: string]: 'REAL' | 'FORECAST' } = {};
   savingMonthStatus: { [period: string]: boolean } = {};
@@ -927,6 +938,17 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   // ── Validation actions ────────────────────────────────────────
+  reopening = false;
+  reopenForEditing(): void {
+    if (this.reopening) return;
+    if (!confirm('Repasser ce projet en brouillon pour continuer la saisie ? Il faudra le resoumettre pour re-validation.')) return;
+    this.reopening = true;
+    this.api.reopenForEditing(this.projectId).subscribe({
+      next: () => { this.reopening = false; this.load(); },
+      error: (e) => { this.reopening = false; alert(e.error?.error || 'Erreur lors de la réouverture'); this.cdr.markForCheck(); }
+    });
+  }
+
   submitForValidation(): void {
     this.showSubmitModal = true;
     this.cdr.markForCheck();

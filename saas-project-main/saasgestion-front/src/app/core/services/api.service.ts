@@ -196,6 +196,9 @@ export class ApiService {
   }
 
   // ── Validation workflow ────────────────────────────────────────
+  reopenForEditing(projectId: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/${projectId}/management/reopen`, {});
+  }
   submitForValidation(projectId: number): Observable<void> {
     return this.http.post<void>(`${this.base}/projects/${projectId}/management/submit`, {});
   }

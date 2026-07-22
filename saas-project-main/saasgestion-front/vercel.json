@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://saas-gestion-production.up.railway.app/api/:path*"
+      "destination": "https://saas-project-production-ce9e.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",
