@@ -788,6 +788,15 @@ export class ProjectManagementComponent implements OnInit {
     return this.auth.currentUser()?.role === 'ADMIN';
   }
 
+  // Seuls l'Admin et le PM du pays Front Office (chef de file) peuvent ajouter un pays.
+  // Les PM Back Office ne le peuvent pas.
+  get canAddCountry(): boolean {
+    if (this.isAdmin) return true;
+    const email = this.auth.currentUser()?.email;
+    if (!email) return false;
+    return this.projectCountries.some(c => c.isLead && c.pmEmail === email);
+  }
+
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,

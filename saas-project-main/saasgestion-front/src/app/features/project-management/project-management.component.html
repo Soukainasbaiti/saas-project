@@ -44,12 +44,7 @@
             {{ projectEngagementType }}
           </button>
 
-          <!-- Pays du projet (multi-pays) -->
-          <span class="granularity-badge" *ngFor="let c of projectCountries"
-                [title]="c.pmName || 'PM à assigner'">
-            {{ c.countryIsoCode }}<ng-container *ngIf="c.isLead"> ★</ng-container>
-          </span>
-          <button class="engagement-switch-btn" (click)="openAddCountryModal()" title="Ajouter un pays au projet">
+          <button class="engagement-switch-btn" *ngIf="canAddCountry" (click)="openAddCountryModal()" title="Ajouter un pays au projet">
             + Pays
           </button>
 

@@ -94,6 +94,14 @@ public class ProjectCountryService {
         AppUser addedBy = userRepo.findById(requestedByUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
+        if (!"ADMIN".equals(addedBy.getRole())) {
+            boolean isFrontOfficePm = projectCountryRepo.findByProjectIdOrderByDisplayOrderAsc(projectId).stream()
+                    .anyMatch(c -> c.isLead() && c.getPm() != null && c.getPm().getId().equals(requestedByUserId));
+            if (!isFrontOfficePm) {
+                throw new IllegalArgumentException("Seul l'Admin ou le PM du pays Front Office peut ajouter un pays.");
+            }
+        }
+
         int nextOrder = projectCountryRepo.findByProjectIdOrderByDisplayOrderAsc(projectId).size() + 1;
 
         ProjectCountry pc = ProjectCountry.builder()
