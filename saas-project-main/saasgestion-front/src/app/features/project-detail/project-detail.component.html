@@ -88,9 +88,6 @@
         <tr><td>Fonction</td><td>{{ project.functionName || '—' }}</td></tr>
         <tr><td>Chef de Projet</td><td>👤 {{ project.projectManager }}</td></tr>
         <tr><td>Email PM</td><td class="email-val">{{ project.pmEmail }}</td></tr>
-        <tr><td>Bureau Tech.</td><td>
-          <span class="chip-d chip-purple">{{ project.technicalOffice }}</span>
-        </td></tr>
         <tr><td>Projet Majeur</td><td>
           <span *ngIf="project.majorProject" class="chip-d chip-gold">⭐ Oui</span>
           <span *ngIf="!project.majorProject" class="text-muted">Non</span>
@@ -103,8 +100,15 @@
       <div class="dc-title">🌍 Pays du Projet</div>
       <table class="info-table">
         <tr *ngFor="let c of project.countries">
-          <td>{{ c.countryName }} <span class="chip-d" *ngIf="c.isLead">Chef de file</span></td>
-          <td>👤 {{ c.pmName || 'À assigner' }}</td>
+          <td>
+            {{ c.countryName }}
+            <span class="chip-d" *ngIf="c.isLead">Chef de file</span>
+            <span class="chip-d chip-purple" *ngIf="!c.isLead">Back Office</span>
+          </td>
+          <td>
+            <div>👤 {{ c.pmName || 'À assigner' }}</div>
+            <div class="email-val" *ngIf="c.pmEmail">✉️ {{ c.pmEmail }}</div>
+          </td>
         </tr>
       </table>
     </div>
