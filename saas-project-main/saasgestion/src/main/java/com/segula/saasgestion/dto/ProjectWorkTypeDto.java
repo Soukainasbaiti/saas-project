@@ -9,11 +9,11 @@ public class ProjectWorkTypeDto {
     private String name;
     private String unitLabel;
     private BigDecimal unitPrice;
-    private Integer plannedQty;
     private Double durationDays;
-    // computed
-    private Integer deliveredQty;     // somme des qté des tickets DELIVERED
-    private BigDecimal plannedRevenue; // unitPrice × plannedQty
+    // computed depuis les tickets (le catalogue n'a pas de quantité propre)
+    private Integer orderedQty;        // somme des qté de tous les tickets (commandé)
+    private Integer deliveredQty;      // somme des qté des tickets DELIVERED
+    private BigDecimal orderedRevenue; // unitPrice × orderedQty
     private BigDecimal actualRevenue;  // unitPrice × deliveredQty
-    private Double completionRate;     // deliveredQty / plannedQty × 100
+    private Double completionRate;     // deliveredQty / orderedQty × 100
 }

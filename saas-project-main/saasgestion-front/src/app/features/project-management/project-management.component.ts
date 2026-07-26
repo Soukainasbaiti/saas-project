@@ -55,10 +55,10 @@ interface WorkTypeRow {
   name: string;
   unitLabel: string;
   unitPrice: number | null;
-  plannedQty: number | null;
   durationDays: number | null;
+  orderedQty: number;
   deliveredQty: number;
-  plannedRevenue: number;
+  orderedRevenue: number;
   actualRevenue: number;
   completionRate: number;
 }
@@ -190,6 +190,7 @@ export class ProjectManagementComponent implements OnInit {
   // ── Génération BL ─────────────────────────────────────────────
   showBlModal = false;
   blSelectedPeriod = '';
+  blIsWorkPackage = false;
   blIsDrawing   = false;
   blSigLastX    = 0;
   blSigLastY    = 0;
@@ -308,7 +309,7 @@ export class ProjectManagementComponent implements OnInit {
   workTickets: WorkTicketRow[] = [];
   showAddWorkTypeModal = false;
   showAddWorkTicketModal = false;
-  newWorkType = { name: '', unitLabel: '', unitPrice: null as number|null, plannedQty: null as number|null, durationDays: null as number|null };
+  newWorkType = { name: '', unitLabel: '', unitPrice: null as number|null, durationDays: null as number|null };
   uowActiveView: 'catalogue' | 'tickets' = 'catalogue';
   expandedTypes = new Set<number>(); // accordion state
 
@@ -320,7 +321,7 @@ export class ProjectManagementComponent implements OnInit {
   newWorkTicket = { workTypeId: null as number|null, quantity: 1, consultant: '', assignedDate: '', startDate: '', endDate: '', comments: '' };
 
   // KPIs Unit of Work
-  uowTotalPlanned(): number  { return this.workTypes.reduce((s,t) => s + (t.plannedRevenue||0), 0); }
+  uowTotalOrdered(): number  { return this.workTypes.reduce((s,t) => s + (t.orderedRevenue||0), 0); }
   uowTotalActual(): number   { return this.workTypes.reduce((s,t) => s + (t.actualRevenue||0), 0); }
   uowFtrRate(): number {
     const done = this.workTickets.filter(t => t.firstPass !== null);
@@ -355,7 +356,7 @@ export class ProjectManagementComponent implements OnInit {
     });
   }
   openAddWorkTypeModal(): void {
-    this.newWorkType = { name: '', unitLabel: '', unitPrice: null, plannedQty: null, durationDays: null };
+    this.newWorkType = { name: '', unitLabel: '', unitPrice: null, durationDays: null };
     this.showAddWorkTypeModal = true;
     this.cdr.markForCheck();
   }
@@ -2791,6 +2792,7 @@ export class ProjectManagementComponent implements OnInit {
     const yyyy = today.getFullYear();
 
     this.blSelectedPeriod = p;
+    this.blIsWorkPackage = false;
     this.blForm = {
       blDate: `${dd}/${mm}/${yyyy}`,
       blNumber: `BL_${this.projectCode || this.projectId}_${p}`,
@@ -2826,6 +2828,47 @@ export class ProjectManagementComponent implements OnInit {
 
   closeBlModal(): void {
     this.showBlModal = false;
+    this.cdr.markForCheck();
+  }
+
+  // ── Génération BL — Work Package (par Lot → Livrables) ──────────
+  openBlModalWp(lotName: string): void {
+    if (!lotName) return;
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+
+    this.blSelectedPeriod = '';
+    this.blIsWorkPackage = true;
+    this.blForm = {
+      blDate: `${dd}/${mm}/${yyyy}`,
+      blNumber: `BL_${this.projectCode || this.projectId}_${lotName.replace(/\s+/g, '')}`,
+      period: lotName,
+      orderNumber: '',
+      clientProjectId: this.projectBusinessId,
+      supplierContact: this.projectPmName,
+      clientContact: '',
+      additionalContact: '',
+      clientName: this.projectClientName,
+      buCode: this.projectBuTrigram,
+      projectDescription: this.projectName,
+      projectCode: this.projectCode
+    };
+
+    // Lignes : une par livrable du lot sélectionné
+    this.blLines = this.deliverablesForLot(lotName).map(d => ({
+      designation: d.deliverableName,
+      quantity: 1,
+      unitPrice: d.rfRevenue || d.plannedRevenue || 0,
+      total: d.rfRevenue || d.plannedRevenue || 0
+    }));
+
+    if (this.blLines.length === 0) {
+      this.blLines.push({ designation: 'Prestation', quantity: 0, unitPrice: 0, total: 0 });
+    }
+
+    this.showBlModal = true;
     this.cdr.markForCheck();
   }
 
@@ -3014,7 +3057,7 @@ export class ProjectManagementComponent implements OnInit {
       doc.text(wrapped.slice(0, 2), x, yy + 4.5);
     };
 
-    infoBlock('Periode :', this.blForm.period,             c1, y);
+    infoBlock(this.blIsWorkPackage ? 'Lot :' : 'Periode :', this.blForm.period, c1, y);
     infoBlock('Business Unit :', this.blForm.buCode,       c2, y);
     infoBlock('Description Projet :', this.blForm.projectDescription, c3, y);
     y += 14;

@@ -24,8 +24,9 @@ public class ProjectWorkType {
     @Column(name = "unit_price", precision = 12, scale = 2)
     private BigDecimal unitPrice; // prix par unité
 
-    @Column(name = "planned_qty")
-    private Integer plannedQty; // quantité totale prévue
+    // Pas de quantité au niveau du catalogue (catalogue = liste de prix,
+    // la quantité vient des tickets/commandes). La quantité commandée est
+    // recalculée dynamiquement depuis les tickets dans toWorkTypeDto().
 
     @Column(name = "duration_days")
     private Double durationDays; // durée estimée par unité (en jours)

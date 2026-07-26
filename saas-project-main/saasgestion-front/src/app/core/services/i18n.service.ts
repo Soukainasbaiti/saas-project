@@ -466,6 +466,7 @@ const T: Record<string, Record<Lang, string>> = {
   'pm.wp.no_deliverable':  { fr: 'Aucun livrable dans ce lot — cliquez sur + Livrable pour commencer.', en: 'No deliverables in this lot — click + Deliverable to start.' },
 
   // ── Unit of Work ─────────────────────────────────────────────────
+  'pm.uow.rev_ordered':    { fr: 'Revenu Commandé',      en: 'Ordered Revenue' },
   'pm.uow.rev_actual':     { fr: 'Revenu Réalisé',       en: 'Actual Revenue' },
   'pm.uow.types':          { fr: 'Types',                en: 'Types' },
   'pm.uow.add_type':       { fr: '+ Type de livrable',   en: '+ Deliverable Type' },
@@ -475,10 +476,10 @@ const T: Record<string, Record<Lang, string>> = {
   'pm.uow.col.name':       { fr: 'Nom du livrable',      en: 'Deliverable Name' },
   'pm.uow.col.unit':       { fr: 'Unité',                en: 'Unit' },
   'pm.uow.col.unit_price': { fr: 'Prix unitaire',        en: 'Unit price' },
-  'pm.uow.col.qty_planned':{ fr: 'Qté prévue',           en: 'Planned qty' },
+  'pm.uow.col.qty_planned':{ fr: 'Qté commandée',        en: 'Ordered qty' },
   'pm.uow.col.duration':   { fr: 'Durée/unité',          en: 'Duration/unit' },
   'pm.uow.col.qty_actual': { fr: 'Qté réalisée',         en: 'Actual qty' },
-  'pm.uow.col.rev_planned':{ fr: 'Rev. Prévu',           en: 'Planned Rev.' },
+  'pm.uow.col.rev_planned':{ fr: 'Rev. Commandé',        en: 'Ordered Rev.' },
   'pm.uow.col.rev_actual': { fr: 'Rev. Réalisé',         en: 'Actual Rev.' },
   'pm.uow.col.progress':   { fr: 'Avancement',           en: 'Progress' },
   'pm.uow.col.assigned':   { fr: 'Assigné le',           en: 'Assigned on' },

@@ -1076,7 +1076,6 @@ public class ProjectManagementService {
             .name(req.getName())
             .unitLabel(req.getUnitLabel())
             .unitPrice(req.getUnitPrice())
-            .plannedQty(req.getPlannedQty())
             .durationDays(req.getDurationDays())
             .build();
         ProjectWorkType saved = workTypeRepo.save(wt);
@@ -1153,26 +1152,34 @@ public class ProjectManagementService {
     }
 
     private ProjectWorkTypeDto toWorkTypeDto(ProjectWorkType wt, List<ProjectWorkTicket> allTickets) {
-        int deliveredQty = allTickets.stream()
-            .filter(t -> t.getWorkType().getId().equals(wt.getId()) && "DELIVERED".equals(t.getStatus()))
+        List<ProjectWorkTicket> typeTickets = allTickets.stream()
+            .filter(t -> t.getWorkType().getId().equals(wt.getId()))
+            .toList();
+
+        // Le catalogue n'a pas de quantité propre : "commandé" = somme des
+        // quantités de tous les tickets créés pour ce type (quel que soit le statut).
+        int orderedQty = typeTickets.stream()
+            .mapToInt(t -> t.getQuantity() != null ? t.getQuantity() : 0)
+            .sum();
+        int deliveredQty = typeTickets.stream()
+            .filter(t -> "DELIVERED".equals(t.getStatus()))
             .mapToInt(t -> t.getQuantity() != null ? t.getQuantity() : 0)
             .sum();
 
         java.math.BigDecimal unitPrice = wt.getUnitPrice() != null ? wt.getUnitPrice() : java.math.BigDecimal.ZERO;
-        java.math.BigDecimal plannedRev = unitPrice.multiply(java.math.BigDecimal.valueOf(wt.getPlannedQty() != null ? wt.getPlannedQty() : 0));
+        java.math.BigDecimal orderedRev = unitPrice.multiply(java.math.BigDecimal.valueOf(orderedQty));
         java.math.BigDecimal actualRev  = unitPrice.multiply(java.math.BigDecimal.valueOf(deliveredQty));
-        double completion = wt.getPlannedQty() != null && wt.getPlannedQty() > 0
-            ? (deliveredQty * 100.0 / wt.getPlannedQty()) : 0;
+        double completion = orderedQty > 0 ? (deliveredQty * 100.0 / orderedQty) : 0;
 
         return ProjectWorkTypeDto.builder()
             .id(wt.getId())
             .name(wt.getName())
             .unitLabel(wt.getUnitLabel())
             .unitPrice(wt.getUnitPrice())
-            .plannedQty(wt.getPlannedQty())
             .durationDays(wt.getDurationDays())
+            .orderedQty(orderedQty)
             .deliveredQty(deliveredQty)
-            .plannedRevenue(plannedRev)
+            .orderedRevenue(orderedRev)
             .actualRevenue(actualRev)
             .completionRate(completion)
             .build();

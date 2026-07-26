@@ -1350,6 +1350,9 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                   <span class="wp-active-lot-name">{{ selectedLot }}</span>
                 </div>
+                <button class="wp-lot-add-livrable" (click)="openBlModalWp(selectedLot)">
+                  Générer BL
+                </button>
                 <button class="wp-lot-add-livrable" (click)="openAddDeliverableModal(selectedLot)">
                   + Livrable
                 </button>
@@ -1494,8 +1497,8 @@
             <!-- KPI bar -->
             <div class="wp-kpi-bar">
               <div class="wp-kpi">
-                <span class="wp-kpi-label">{{ i18n.t('pm.wp.rev_planned') }}</span>
-                <span class="wp-kpi-value">{{ cfmt(uowTotalPlanned()) }} {{ currencySymbol }}</span>
+                <span class="wp-kpi-label">{{ i18n.t('pm.uow.rev_ordered') }}</span>
+                <span class="wp-kpi-value">{{ cfmt(uowTotalOrdered()) }} {{ currencySymbol }}</span>
               </div>
               <div class="wp-kpi">
                 <span class="wp-kpi-label">{{ i18n.t('pm.uow.rev_actual') }}</span>
@@ -1564,10 +1567,10 @@
                       <td class="uow-col-name"><strong>{{ wt.name }}</strong></td>
                       <td class="uow-col-unit">{{ wt.unitLabel }}</td>
                       <td class="uow-col-price">{{ cfmt(wt.unitPrice ?? 0) }} {{ currencySymbol }}</td>
-                      <td class="uow-col-qty">{{ wt.plannedQty }}</td>
+                      <td class="uow-col-qty">{{ wt.orderedQty }}</td>
                       <td class="uow-col-dur">{{ wt.durationDays ? wt.durationDays + ' j' : '—' }}</td>
                       <td class="uow-col-qty delivered">{{ wt.deliveredQty }}</td>
-                      <td class="uow-col-rev">{{ cfmt(wt.plannedRevenue) }}</td>
+                      <td class="uow-col-rev">{{ cfmt(wt.orderedRevenue) }}</td>
                       <td class="uow-col-rev actual">{{ wt.actualRevenue > 0 ? cfmt(wt.actualRevenue) : '—' }}</td>
                       <td class="uow-col-pct">
                         <div class="uow-progress-wrap">
@@ -2190,10 +2193,6 @@
         <div class="form-group">
           <label>Prix unitaire (€)</label>
           <input type="number" [(ngModel)]="newWorkType.unitPrice" min="0" placeholder="0" />
-        </div>
-        <div class="form-group">
-          <label>Quantité prévue</label>
-          <input type="number" [(ngModel)]="newWorkType.plannedQty" min="1" placeholder="0" />
         </div>
         <div class="form-group">
           <label>Durée estimée par unité (jours)</label>

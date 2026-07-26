@@ -9,6 +9,5 @@ public class CreateWorkTypeRequest {
     private String name;
     private String unitLabel;
     private BigDecimal unitPrice;
-    private Integer plannedQty;
     private Double durationDays;
 }
