@@ -35,6 +35,21 @@ interface OtherCostRow {
   isRebill: boolean;
 }
 
+interface CountryForecastRow {
+  countryId: number;
+  countryName: string;
+  countryIsoCode: string;
+  amounts: Record<string, number>; // TCV par mois
+}
+
+interface CountryBudgetLineRow {
+  countryId: number;
+  countryName: string;
+  countryIsoCode: string;
+  category: string;
+  amounts: Record<string, number>; // montant par mois
+}
+
 interface WorkTypeRow {
   id: number;
   name: string;
@@ -279,6 +294,14 @@ export class ProjectManagementComponent implements OnInit {
   resources: ResourceRow[] = [];
   otherCosts: OtherCostRow[] = [];
   deliverables: DeliverableRow[] = [];
+
+  // ── TCV / Budget par pays (prévisions) ─────────────────────────────
+  countryForecasts: CountryForecastRow[] = [];
+  countryBudgetLines: CountryBudgetLineRow[] = [];
+  showAddCountryBudgetCategoryModal = false;
+  addCountryBudgetCategoryFor: number | null = null;
+  newCountryBudgetCategoryName = '';
+  readonly countryBudgetCategorySuggestions = ['Labor Cost', 'Matériel', 'Licence', 'Déplacement', 'Téléphonie & Internet', 'Autres'];
 
   // ── Unit of Work ──────────────────────────────────────────────────
   workTypes: WorkTypeRow[] = [];
@@ -525,7 +548,7 @@ export class ProjectManagementComponent implements OnInit {
     return { TO_DO: 'To Do', IN_PROGRESS: 'In Progress', SUBMITTED: 'Submitted', APPROVED: 'Approved', BLOCKED: 'Blocked' }[s] ?? s;
   }
 
-  activeTab: 'onePager' | 'dailyCost' | 'workedDays' | 'otherCosts' | 'rebillCosts' | 'billedDays' | 'dailyRate' | 'revenueMoyens' | 'revenueResultats' | 'risks' | 'issues' | 'opportunities' | 'mip' | 'wip' | 'synthese' = 'onePager';
+  activeTab: 'onePager' | 'dailyCost' | 'workedDays' | 'otherCosts' | 'rebillCosts' | 'billedDays' | 'dailyRate' | 'revenueMoyens' | 'revenueResultats' | 'countryBudget' | 'risks' | 'issues' | 'opportunities' | 'mip' | 'wip' | 'synthese' = 'onePager';
 
   // ── One Pager — données KPI opérationnels ─────────────────────
   kpiRisks:   any[] = [];
@@ -669,7 +692,7 @@ export class ProjectManagementComponent implements OnInit {
   showSubmitModal = false;
   showValidateModal = false;
   showDeleteModal = false;
-  pendingDelete: { type: 'resource' | 'category' | 'resources-bulk' | 'resources-all'; id?: number; ids?: number[]; name: string } | null = null;
+  pendingDelete: { type: 'resource' | 'category' | 'resources-bulk' | 'resources-all' | 'country-budget-category'; id?: number; ids?: number[]; name: string; countryId?: number } | null = null;
   selectedResourceIds = new Set<number>();
 
   get isEditable(): boolean {
@@ -897,6 +920,14 @@ export class ProjectManagementComponent implements OnInit {
         const validResourceIds = new Set(this.resources.map(r => r.id));
         this.selectedResourceIds.forEach(id => { if (!validResourceIds.has(id)) this.selectedResourceIds.delete(id); });
         this.otherCosts = data.otherCosts.map((c: any) => ({
+          ...c,
+          amounts: this.toNumberMap(c.amounts),
+        }));
+        this.countryForecasts = (data.countryForecasts || []).map((c: any) => ({
+          ...c,
+          amounts: this.toNumberMap(c.amounts),
+        }));
+        this.countryBudgetLines = (data.countryBudgetLines || []).map((c: any) => ({
           ...c,
           amounts: this.toNumberMap(c.amounts),
         }));
@@ -1133,6 +1164,135 @@ export class ProjectManagementComponent implements OnInit {
 
   otherCostGrandTotal(): number {
     return this.otherCosts.reduce((s, c) => s + this.otherCostRowTotal(c), 0);
+  }
+
+  // ── TCV par pays ──────────────────────────────────────────────────
+  countryForecastForMonth(countryId: number, m: string): number {
+    const row = this.countryForecasts.find(f => f.countryId === countryId);
+    return row ? (row.amounts[m] || 0) : 0;
+  }
+
+  countryForecastRowTotal(countryId: number): number {
+    return this.months.reduce((s, m) => s + this.countryForecastForMonth(countryId, m), 0);
+  }
+
+  tcvTotalForMonth(m: string): number {
+    return this.projectCountries.reduce((s, c) => s + this.countryForecastForMonth(c.countryId, m), 0);
+  }
+
+  tcvGrandTotal(): number {
+    return this.months.reduce((s, m) => s + this.tcvTotalForMonth(m), 0);
+  }
+
+  startEditCountryForecast(countryId: number, month: string): void {
+    if (!this.isEditable) return;
+    const currentVal = this.countryForecastForMonth(countryId, month);
+    this.editingCell = { category: 'tcv-' + countryId, month, field: 'tcv' };
+    this.editValue = currentVal > 0 ? String(currentVal) : '';
+  }
+
+  isEditingCountryForecast(countryId: number, month: string): boolean {
+    return this.editingCell?.category === 'tcv-' + countryId && this.editingCell?.month === month;
+  }
+
+  saveCountryForecastEdit(countryId: number, month: string): void {
+    const val = parseFloat(this.editValue) || 0;
+    this.editingCell = null;
+    this.cdr.markForCheck();
+    this.api.saveCountryForecast({ projectId: this.projectId, countryId, month, tcv: val }).subscribe({
+      next: () => this.load(),
+      error: (err) => {
+        const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+        this.showSaveError('❌ ' + msg);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ── Budget par pays ───────────────────────────────────────────────
+  budgetLinesForCountry(countryId: number): CountryBudgetLineRow[] {
+    return this.countryBudgetLines.filter(b => b.countryId === countryId);
+  }
+
+  budgetLineRowTotal(row: CountryBudgetLineRow): number {
+    return this.months.reduce((s, m) => s + (row.amounts[m] || 0), 0);
+  }
+
+  budgetCountryTotalForMonth(countryId: number, m: string): number {
+    return this.budgetLinesForCountry(countryId).reduce((s, b) => s + (b.amounts[m] || 0), 0);
+  }
+
+  budgetCountryGrandTotal(countryId: number): number {
+    return this.budgetLinesForCountry(countryId).reduce((s, b) => s + this.budgetLineRowTotal(b), 0);
+  }
+
+  budgetTotalForMonth(m: string): number {
+    return this.projectCountries.reduce((s, c) => s + this.budgetCountryTotalForMonth(c.countryId, m), 0);
+  }
+
+  budgetGrandTotal(): number {
+    return this.projectCountries.reduce((s, c) => s + this.budgetCountryGrandTotal(c.countryId), 0);
+  }
+
+  startEditCountryBudgetLine(row: CountryBudgetLineRow, month: string): void {
+    if (!this.isEditable) return;
+    this.editingCell = { category: 'budget-' + row.countryId + '-' + row.category, month, field: 'amount' };
+    this.editValue = (row.amounts[month] || 0) > 0 ? String(row.amounts[month]) : '';
+  }
+
+  isEditingCountryBudgetLine(row: CountryBudgetLineRow, month: string): boolean {
+    return this.editingCell?.category === 'budget-' + row.countryId + '-' + row.category && this.editingCell?.month === month;
+  }
+
+  saveCountryBudgetLineEdit(row: CountryBudgetLineRow, month: string): void {
+    const val = parseFloat(this.editValue) || 0;
+    const previousVal = row.amounts[month];
+    row.amounts[month] = val;
+    this.editingCell = null;
+    this.cdr.markForCheck();
+    this.api.saveCountryBudgetLine({ projectId: this.projectId, countryId: row.countryId, category: row.category, month, amount: val }).subscribe({
+      next: () => this.load(),
+      error: (err) => {
+        row.amounts[month] = previousVal;
+        const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+        this.showSaveError('❌ ' + msg);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openAddCountryBudgetCategoryModal(countryId: number): void {
+    this.addCountryBudgetCategoryFor = countryId;
+    this.newCountryBudgetCategoryName = '';
+    this.showAddCountryBudgetCategoryModal = true;
+    this.cdr.markForCheck();
+  }
+
+  confirmAddCountryBudgetCategory(): void {
+    const name = this.newCountryBudgetCategoryName.trim();
+    if (!name || this.addCountryBudgetCategoryFor == null) return;
+    this.api.addCountryBudgetCategory({ projectId: this.projectId, countryId: this.addCountryBudgetCategoryFor, category: name }).subscribe({
+      next: () => { this.showAddCountryBudgetCategoryModal = false; this.load(); }
+    });
+  }
+
+  deleteCountryBudgetCategory(countryId: number, category: string): void {
+    this.pendingDelete = { type: 'country-budget-category', countryId, name: category };
+    this.showDeleteModal = true;
+    this.cdr.markForCheck();
+  }
+
+  // ── EBM par pays ──────────────────────────────────────────────────
+  ebmCountryPct(countryId: number): number {
+    const tcv = this.countryForecastRowTotal(countryId);
+    const budget = this.budgetCountryGrandTotal(countryId);
+    return tcv > 0 ? ((tcv - budget) / tcv) * 100 : 0;
+  }
+
+  ebmTotalPct(): number {
+    const tcv = this.tcvGrandTotal();
+    const budget = this.budgetGrandTotal();
+    return tcv > 0 ? ((tcv - budget) / tcv) * 100 : 0;
   }
 
   // ── Financial synthesis calculations ────────────────────────────
@@ -2557,6 +2717,10 @@ export class ProjectManagementComponent implements OnInit {
       this.api.deleteResource(this.pendingDelete.id).subscribe({ next: () => this.load() });
     } else if (this.pendingDelete.type === 'category') {
       this.api.deleteOtherCostCategory({ projectId: this.projectId, category: this.pendingDelete.name }).subscribe({
+        next: () => this.load()
+      });
+    } else if (this.pendingDelete.type === 'country-budget-category' && this.pendingDelete.countryId != null) {
+      this.api.deleteCountryBudgetCategory({ projectId: this.projectId, countryId: this.pendingDelete.countryId, category: this.pendingDelete.name }).subscribe({
         next: () => this.load()
       });
     } else if (this.pendingDelete.type === 'resources-bulk' || this.pendingDelete.type === 'resources-all') {

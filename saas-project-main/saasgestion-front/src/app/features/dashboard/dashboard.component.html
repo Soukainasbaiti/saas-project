@@ -530,6 +530,16 @@
           </table>
         </div>
 
+        <div class="modal-card" *ngIf="selectedProject.countries?.length">
+          <div class="mc-title">🌍 Pays</div>
+          <table class="info-table">
+            <tr *ngFor="let c of selectedProject.countries">
+              <td>{{ c.countryName }} <ng-container *ngIf="c.isLead">★</ng-container></td>
+              <td>{{ c.pmName || 'PM à assigner' }}</td>
+            </tr>
+          </table>
+        </div>
+
         <div class="modal-card">
           <div class="mc-title">{{ i18n.t('modal.detail.technical') }}</div>
           <table class="info-table">

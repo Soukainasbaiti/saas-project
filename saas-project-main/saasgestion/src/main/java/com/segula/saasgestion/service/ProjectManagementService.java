@@ -40,6 +40,8 @@ public class ProjectManagementService {
     private final AppUserRepository appUserRepository;
     private final CountryRepository countryRepository;
     private final ProjectCountryRepository projectCountryRepository;
+    private final ProjectCountryForecastRepository countryForecastRepo;
+    private final ProjectCountryBudgetLineRepository countryBudgetLineRepo;
     private final EmailService emailService;
 
     // ── Autorisation multi-pays ──────────────────────────────────────
@@ -157,6 +159,56 @@ public class ProjectManagementService {
                 .build();
         }).collect(Collectors.toList());
 
+        // TCV par pays (prévisions) — alimente ProjectMonthlyForecast.revenue via syncProjectForecastFromCountries
+        List<ProjectCountryForecast> countryForecasts = countryForecastRepo.findByProjectIdOrderByCountryIdAscMonthAsc(projectId);
+        Map<Long, Map<String, BigDecimal>> tcvByCountry = new LinkedHashMap<>();
+        Map<Long, Country> countryById = new LinkedHashMap<>();
+        countryForecasts.forEach(cf -> {
+            tcvByCountry.computeIfAbsent(cf.getCountry().getId(), k -> new LinkedHashMap<>())
+                .put(cf.getMonth(), cf.getTcv());
+            countryById.putIfAbsent(cf.getCountry().getId(), cf.getCountry());
+        });
+        List<ProjectCountryForecastDto> countryForecastDtos = tcvByCountry.entrySet().stream().map(e -> {
+            Map<String, BigDecimal> amounts = new LinkedHashMap<>();
+            for (String p : periods) {
+                amounts.put(p, e.getValue().getOrDefault(p, BigDecimal.ZERO));
+            }
+            Country c = countryById.get(e.getKey());
+            return ProjectCountryForecastDto.builder()
+                .countryId(c.getId())
+                .countryName(c.getName())
+                .countryIsoCode(c.getIsoCode())
+                .amounts(amounts)
+                .build();
+        }).collect(Collectors.toList());
+
+        // Budget par pays (prévisions), groupé par pays + catégorie (Labor Cost, matériel, licence...)
+        List<ProjectCountryBudgetLine> budgetLines = countryBudgetLineRepo.findByProjectIdOrderByCountryIdAscCategoryAscMonthAsc(projectId);
+        Map<String, Map<String, BigDecimal>> budgetByCountryCategory = new LinkedHashMap<>();
+        Map<String, Country> countryByLineKey = new LinkedHashMap<>();
+        Map<String, String> categoryByLineKey = new LinkedHashMap<>();
+        budgetLines.forEach(bl -> {
+            String key = bl.getCountry().getId() + "|" + bl.getCategory();
+            budgetByCountryCategory.computeIfAbsent(key, k -> new LinkedHashMap<>())
+                .put(bl.getMonth(), bl.getAmount());
+            countryByLineKey.putIfAbsent(key, bl.getCountry());
+            categoryByLineKey.putIfAbsent(key, bl.getCategory());
+        });
+        List<ProjectCountryBudgetLineDto> countryBudgetLineDtos = budgetByCountryCategory.entrySet().stream().map(e -> {
+            Map<String, BigDecimal> amounts = new LinkedHashMap<>();
+            for (String p : periods) {
+                amounts.put(p, e.getValue().getOrDefault(p, BigDecimal.ZERO));
+            }
+            Country c = countryByLineKey.get(e.getKey());
+            return ProjectCountryBudgetLineDto.builder()
+                .countryId(c.getId())
+                .countryName(c.getName())
+                .countryIsoCode(c.getIsoCode())
+                .category(categoryByLineKey.get(e.getKey()))
+                .amounts(amounts)
+                .build();
+        }).collect(Collectors.toList());
+
         // Statut Réel/Prévision par mois (uniquement les valeurs explicitement choisies par le PM)
         Map<String, String> monthStatusMap = monthStatusRepo.findByProjectId(projectId).stream()
             .collect(Collectors.toMap(ProjectMonthStatus::getPeriod, ProjectMonthStatus::getStatus));
@@ -202,6 +254,8 @@ public class ProjectManagementService {
             .endDate(project.getEndDate())
             .resources(resourceDtos)
             .otherCosts(otherCostDtos)
+            .countryForecasts(countryForecastDtos)
+            .countryBudgetLines(countryBudgetLineDtos)
             .validationStatus(validationStatus)
             .validatedBy(validatedBy)
             .validatedAt(validatedAt)
@@ -393,6 +447,110 @@ public class ProjectManagementService {
                 .amount(BigDecimal.ZERO).isRebill(isRebill).build();
             otherCostRepo.save(marker);
         }
+    }
+
+    // ── TCV / Budget par pays (prévisions) ──────────────────────────
+    @Transactional
+    public void saveCountryForecast(SaveCountryForecastRequest req) {
+        Project project = projectRepository.findById(req.getProjectId())
+            .orElseThrow(() -> new RuntimeException("Project not found"));
+        Country country = countryRepository.findById(req.getCountryId())
+            .orElseThrow(() -> new RuntimeException("Country not found"));
+        ProjectCountryForecast f = countryForecastRepo
+            .findByProjectIdAndCountryIdAndMonth(req.getProjectId(), req.getCountryId(), req.getMonth())
+            .orElse(ProjectCountryForecast.builder().project(project).country(country).month(req.getMonth()).build());
+        f.setTcv(req.getTcv() != null ? req.getTcv() : BigDecimal.ZERO);
+        countryForecastRepo.save(f);
+        syncProjectForecastFromCountries(req.getProjectId());
+    }
+
+    @Transactional
+    public void saveCountryBudgetLine(SaveCountryBudgetLineRequest req) {
+        Project project = projectRepository.findById(req.getProjectId())
+            .orElseThrow(() -> new RuntimeException("Project not found"));
+        Country country = countryRepository.findById(req.getCountryId())
+            .orElseThrow(() -> new RuntimeException("Country not found"));
+        ProjectCountryBudgetLine b = countryBudgetLineRepo
+            .findByProjectIdAndCountryIdAndCategoryAndMonth(req.getProjectId(), req.getCountryId(), req.getCategory(), req.getMonth())
+            .orElse(ProjectCountryBudgetLine.builder().project(project).country(country)
+                .category(req.getCategory()).month(req.getMonth()).build());
+        b.setAmount(req.getAmount() != null ? req.getAmount() : BigDecimal.ZERO);
+        countryBudgetLineRepo.save(b);
+        syncProjectForecastFromCountries(req.getProjectId());
+    }
+
+    @Transactional
+    public void deleteCountryForecast(Long projectId, Long countryId, String month) {
+        countryForecastRepo.findByProjectIdAndCountryIdAndMonth(projectId, countryId, month)
+            .ifPresent(countryForecastRepo::delete);
+        syncProjectForecastFromCountries(projectId);
+    }
+
+    @Transactional
+    public void addCountryBudgetCategory(Long projectId, Long countryId, String categoryName) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new RuntimeException("Project not found"));
+        Country country = countryRepository.findById(countryId)
+            .orElseThrow(() -> new RuntimeException("Country not found"));
+        boolean exists = !countryBudgetLineRepo
+            .findByProjectIdAndCountryIdAndCategory(projectId, countryId, categoryName).isEmpty();
+        if (!exists) {
+            countryBudgetLineRepo.save(ProjectCountryBudgetLine.builder()
+                .project(project).country(country).category(categoryName)
+                .month("0000-00").amount(BigDecimal.ZERO).build());
+        }
+    }
+
+    @Transactional
+    public void deleteCountryBudgetCategory(Long projectId, Long countryId, String category) {
+        List<ProjectCountryBudgetLine> records = countryBudgetLineRepo
+            .findByProjectIdAndCountryIdAndCategory(projectId, countryId, category);
+        countryBudgetLineRepo.deleteAll(records);
+        syncProjectForecastFromCountries(projectId);
+    }
+
+    /**
+     * Recalcule ProjectMonthlyForecast.revenue/cost (et Project.revenueBudget/costBudget)
+     * comme somme des lignes par pays, dès qu'une saisie TCV/Budget par pays existe.
+     * Tant qu'aucune répartition par pays n'a été saisie, les prévisions "à plat"
+     * (saisies via la modale de création / l'édition admin) restent inchangées.
+     */
+    @Transactional
+    public void syncProjectForecastFromCountries(Long projectId) {
+        List<ProjectCountryForecast> forecasts = countryForecastRepo.findByProjectIdOrderByCountryIdAscMonthAsc(projectId);
+        List<ProjectCountryBudgetLine> budgetLines = countryBudgetLineRepo
+            .findByProjectIdOrderByCountryIdAscCategoryAscMonthAsc(projectId).stream()
+            .filter(b -> !"0000-00".equals(b.getMonth()))
+            .collect(Collectors.toList());
+
+        if (forecasts.isEmpty() && budgetLines.isEmpty()) return;
+
+        Map<String, BigDecimal> revenueByMonth = new HashMap<>();
+        forecasts.forEach(f -> revenueByMonth.merge(f.getMonth(), f.getTcv(), BigDecimal::add));
+
+        Map<String, BigDecimal> costByMonth = new HashMap<>();
+        budgetLines.forEach(b -> costByMonth.merge(b.getMonth(), b.getAmount(), BigDecimal::add));
+
+        Set<String> months = new TreeSet<>();
+        months.addAll(revenueByMonth.keySet());
+        months.addAll(costByMonth.keySet());
+
+        Map<String, ProjectMonthlyForecast> existing = monthlyForecastRepo.findByProjectIdOrderByMonthAsc(projectId).stream()
+            .collect(Collectors.toMap(ProjectMonthlyForecast::getMonth, f -> f));
+
+        for (String m : months) {
+            ProjectMonthlyForecast f = existing.get(m);
+            if (f == null) {
+                f = ProjectMonthlyForecast.builder().projectId(projectId).month(m).build();
+            }
+            f.setRevenue(revenueByMonth.getOrDefault(m, BigDecimal.ZERO));
+            f.setCost(costByMonth.getOrDefault(m, BigDecimal.ZERO));
+            monthlyForecastRepo.save(f);
+        }
+
+        BigDecimal totalRevenue = revenueByMonth.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCost = costByMonth.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        projectRepository.updateBudgetTotals(projectId, totalRevenue, totalCost);
     }
 
     // ── Validation workflow ────────────────────────────────────────

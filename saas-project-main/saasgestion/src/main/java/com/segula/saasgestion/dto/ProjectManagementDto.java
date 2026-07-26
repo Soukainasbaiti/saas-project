@@ -18,6 +18,9 @@ public class ProjectManagementDto {
     private Map<String, String> monthStatus;
     private List<ProjectResourceDto> resources;
     private List<ProjectOtherCostDto> otherCosts;
+    // ── TCV / Budget par pays (previsions) ──
+    private List<ProjectCountryForecastDto> countryForecasts;
+    private List<ProjectCountryBudgetLineDto> countryBudgetLines;
     // ── Validation ──
     private String validationStatus;   // DRAFT | SUBMITTED | VALIDATED | REJECTED
     private String validatedBy;

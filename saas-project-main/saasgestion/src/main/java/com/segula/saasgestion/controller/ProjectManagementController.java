@@ -110,6 +110,47 @@ public class ProjectManagementController {
         return ResponseEntity.ok().build();
     }
 
+    // ── TCV par pays (prévisions) ────────────────────────────────────
+    @PostMapping("/management/country-forecast")
+    public ResponseEntity<Void> saveCountryForecast(@RequestBody SaveCountryForecastRequest req) {
+        managementService.saveCountryForecast(req);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/management/country-forecast")
+    public ResponseEntity<Void> deleteCountryForecast(@RequestBody Map<String, Object> req) {
+        Long projectId = Long.valueOf(req.get("projectId").toString());
+        Long countryId = Long.valueOf(req.get("countryId").toString());
+        String month = req.get("month").toString();
+        managementService.deleteCountryForecast(projectId, countryId, month);
+        return ResponseEntity.ok().build();
+    }
+
+    // ── Budget par pays (prévisions) ─────────────────────────────────
+    @PostMapping("/management/country-budget-line")
+    public ResponseEntity<Void> saveCountryBudgetLine(@RequestBody SaveCountryBudgetLineRequest req) {
+        managementService.saveCountryBudgetLine(req);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/management/country-budget-line/category")
+    public ResponseEntity<Void> addCountryBudgetCategory(@RequestBody Map<String, Object> req) {
+        Long projectId = Long.valueOf(req.get("projectId").toString());
+        Long countryId = Long.valueOf(req.get("countryId").toString());
+        String category = req.get("category").toString();
+        managementService.addCountryBudgetCategory(projectId, countryId, category);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/management/country-budget-line/category")
+    public ResponseEntity<Void> deleteCountryBudgetCategory(@RequestBody Map<String, Object> req) {
+        Long projectId = Long.valueOf(req.get("projectId").toString());
+        Long countryId = Long.valueOf(req.get("countryId").toString());
+        String category = req.get("category").toString();
+        managementService.deleteCountryBudgetCategory(projectId, countryId, category);
+        return ResponseEntity.ok().build();
+    }
+
     // ── Statut Réel/Prévision par mois (Revenus — Moyens / Synthèse Financière) ──
     @PutMapping("/{id}/management/month-status")
     public ResponseEntity<?> updateMonthStatus(@PathVariable Long id, @RequestBody List<MonthStatusDto> updates) {

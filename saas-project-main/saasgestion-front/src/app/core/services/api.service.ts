@@ -175,6 +175,22 @@ export class ApiService {
   setCategoryRebill(req: { projectId: number; category: string; isRebill: boolean }): Observable<void> {
     return this.http.post<void>(`${this.base}/projects/management/cost/rebill`, req);
   }
+  // ── TCV / Budget par pays (prévisions) ──────────────────────────
+  saveCountryForecast(req: { projectId: number; countryId: number; month: string; tcv: number }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/country-forecast`, req);
+  }
+  deleteCountryForecast(req: { projectId: number; countryId: number; month: string }): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/management/country-forecast`, { body: req });
+  }
+  saveCountryBudgetLine(req: { projectId: number; countryId: number; category: string; month: string; amount: number }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/country-budget-line`, req);
+  }
+  addCountryBudgetCategory(req: { projectId: number; countryId: number; category: string }): Observable<void> {
+    return this.http.post<void>(`${this.base}/projects/management/country-budget-line/category`, req);
+  }
+  deleteCountryBudgetCategory(req: { projectId: number; countryId: number; category: string }): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/management/country-budget-line/category`, { body: req });
+  }
   setGranularity(projectId: number, granularity: string, currency: string): Observable<any> {
     return this.http.post<any>(`${this.base}/projects/${projectId}/management/granularity`, { granularity, currency });
   }

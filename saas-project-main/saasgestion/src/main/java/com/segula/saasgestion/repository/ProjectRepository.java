@@ -5,10 +5,12 @@ import com.segula.saasgestion.domain.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,4 +75,16 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "AND p.createdById = :userId " +
            "AND cfg.validationStatus = 'REJECTED'")
     List<Object[]> findRejectedByPmId(@Param("userId") Long userId);
+
+    // Mise à jour ciblée (TCV/Budget par pays) : évite un save() complet de l'entité,
+    // qui réécrirait aussi les colonnes enum (status, technical_office) sans raison.
+    // margin_budget/project_margin sont normalement recalculées par le trigger Postgres
+    // trg_project_calc_margin, mais on les recalcule aussi ici explicitement (même formule)
+    // pour garantir la cohérence même si le trigger ne se déclenche pas sur un UPDATE en masse.
+    @Modifying
+    @Query(value = "UPDATE project SET revenue_budget = :revenue, cost_budget = :cost, " +
+                   "margin_budget = :revenue - :cost, " +
+                   "project_margin = CASE WHEN :revenue = 0 THEN 0 ELSE (:revenue - :cost) / :revenue END " +
+                   "WHERE id = :id", nativeQuery = true)
+    void updateBudgetTotals(@Param("id") Long id, @Param("revenue") BigDecimal revenue, @Param("cost") BigDecimal cost);
 }

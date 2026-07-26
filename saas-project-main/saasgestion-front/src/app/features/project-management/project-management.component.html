@@ -129,6 +129,9 @@
       <button class="pm-tab" [class.active]="activeTab==='rebillCosts'" (click)="setTab('rebillCosts')">
         <span class="tab-dot dot-blue"></span>Rebilled
       </button>
+      <button class="pm-tab" [class.active]="activeTab==='countryBudget'" (click)="setTab('countryBudget')">
+        <span class="tab-dot dot-gold"></span>TCV / Budget Pays
+      </button>
       <!-- Billed Days + ADR + Revenus Moyens : visibles seulement pour Engagement Moyens (AT, T&M, TK) -->
       <button class="pm-tab" *ngIf="!isResultatsEngagement" [class.active]="activeTab==='billedDays'" (click)="setTab('billedDays')">
         <span class="tab-dot dot-purple"></span>Billed Days
@@ -746,6 +749,157 @@
                 <td *ngFor="let m of months" class="total-cell">{{ rebillForMonth(m)>0 ? cfmt(rebillForMonth(m)) : '—' }}</td>
                 <td class="total-cell grand">{{ cfmt(rebillCostGrandTotal()) }}</td>
                 <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TAB: TCV / Budget par pays ═══ -->
+    <ng-container *ngIf="activeTab==='countryBudget'">
+      <div class="pm-panel panel-gold">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            TCV par pays
+          </div>
+        </div>
+        <div class="matrix-scroll">
+          <table class="matrix-table">
+            <thead><tr>
+              <th class="col-name sticky-col">Pays</th>
+              <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
+              <th class="col-total">Total</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngIf="!projectCountries.length">
+                <td [attr.colspan]="months.length+2" class="empty-msg">Aucun pays rattaché à ce projet.</td>
+              </tr>
+              <tr *ngFor="let c of projectCountries">
+                <td class="col-name sticky-col category-cell">
+                  {{ c.countryName }} <span class="contract-badge" *ngIf="c.isLead">Chef de file</span>
+                </td>
+                <td *ngFor="let m of months" class="data-cell"
+                    [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
+                    (click)="startEditCountryForecast(c.countryId, m)">
+                  <ng-container *ngIf="!isEditingCountryForecast(c.countryId, m); else tcvTpl">
+                    <span [class.has-value]="countryForecastForMonth(c.countryId, m) > 0">
+                      {{ countryForecastForMonth(c.countryId, m) > 0 ? cfmt(countryForecastForMonth(c.countryId, m)) : '—' }}
+                    </span>
+                  </ng-container>
+                  <ng-template #tcvTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
+                      (blur)="saveCountryForecastEdit(c.countryId, m)"
+                      (keydown.enter)="saveCountryForecastEdit(c.countryId, m)"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
+                </td>
+                <td class="col-total total-cell">{{ cfmt(countryForecastRowTotal(c.countryId)) }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="sticky-col">TCV Total</td>
+                <td *ngFor="let m of months" class="total-cell">{{ cfmt(tcvTotalForMonth(m)) }}</td>
+                <td class="total-cell grand">{{ cfmt(tcvGrandTotal()) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="pm-panel panel-blue" *ngFor="let c of projectCountries" style="margin-top:16px">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Budget {{ c.countryName }}
+          </div>
+          <div class="panel-header-right">
+            <button class="btn-add-resource" (click)="openAddCountryBudgetCategoryModal(c.countryId)">+ Ajouter une ligne</button>
+          </div>
+        </div>
+        <div class="matrix-scroll">
+          <table class="matrix-table">
+            <thead><tr>
+              <th class="col-name sticky-col">Catégorie</th>
+              <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
+              <th class="col-total">Total</th>
+              <th class="col-action"></th>
+            </tr></thead>
+            <tbody>
+              <tr *ngIf="!budgetLinesForCountry(c.countryId).length">
+                <td [attr.colspan]="months.length+3" class="empty-msg">Aucune ligne de budget pour ce pays.</td>
+              </tr>
+              <tr *ngFor="let b of budgetLinesForCountry(c.countryId)">
+                <td class="col-name sticky-col category-cell">{{ b.category }}</td>
+                <td *ngFor="let m of months" class="data-cell"
+                    [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
+                    (click)="startEditCountryBudgetLine(b, m)">
+                  <ng-container *ngIf="!isEditingCountryBudgetLine(b, m); else budgetTpl">
+                    <span [class.has-value]="b.amounts[m] > 0">{{ b.amounts[m] > 0 ? cfmt(b.amounts[m]) : '—' }}</span>
+                  </ng-container>
+                  <ng-template #budgetTpl>
+                    <input type="number" class="cell-input" [(ngModel)]="editValue" min="0"
+                      (blur)="saveCountryBudgetLineEdit(b, m)"
+                      (keydown.enter)="saveCountryBudgetLineEdit(b, m)"
+                      (keydown.escape)="cancelEdit()" autofocus />
+                  </ng-template>
+                </td>
+                <td class="col-total total-cell">{{ cfmt(budgetLineRowTotal(b)) }}</td>
+                <td class="col-action">
+                  <button class="btn-delete-row" (click)="deleteCountryBudgetCategory(c.countryId, b.category)" title="Supprimer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="sticky-col">Budget {{ c.countryName }}</td>
+                <td *ngFor="let m of months" class="total-cell">{{ cfmt(budgetCountryTotalForMonth(c.countryId, m)) }}</td>
+                <td class="total-cell grand">{{ cfmt(budgetCountryGrandTotal(c.countryId)) }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Synthèse EBM par pays -->
+      <div class="pm-panel panel-gold" style="margin-top:16px" *ngIf="projectCountries.length">
+        <div class="panel-header">
+          <div class="panel-title">EBM par pays</div>
+        </div>
+        <div class="matrix-scroll">
+          <table class="matrix-table">
+            <thead><tr>
+              <th class="col-name sticky-col">Pays</th>
+              <th class="col-total">TCV</th>
+              <th class="col-total">Budget</th>
+              <th class="col-total">EBM (€)</th>
+              <th class="col-total">EBM (%)</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let c of projectCountries">
+                <td class="col-name sticky-col category-cell">{{ c.countryName }}</td>
+                <td class="col-total total-cell rev-val">{{ cfmt(countryForecastRowTotal(c.countryId)) }}</td>
+                <td class="col-total total-cell">{{ cfmt(budgetCountryGrandTotal(c.countryId)) }}</td>
+                <td class="col-total total-cell" [class]="marginClass(ebmCountryPct(c.countryId))">
+                  {{ cfmt(countryForecastRowTotal(c.countryId) - budgetCountryGrandTotal(c.countryId)) }}
+                </td>
+                <td class="col-total total-cell" [class]="marginClass(ebmCountryPct(c.countryId))">
+                  {{ fmtPct(ebmCountryPct(c.countryId)) }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="sticky-col">TOTAL</td>
+                <td class="total-cell grand rev-val">{{ cfmt(tcvGrandTotal()) }}</td>
+                <td class="total-cell grand">{{ cfmt(budgetGrandTotal()) }}</td>
+                <td class="total-cell grand">{{ cfmt(tcvGrandTotal() - budgetGrandTotal()) }}</td>
+                <td class="total-cell grand">{{ fmtPct(ebmTotalPct()) }}</td>
               </tr>
             </tfoot>
           </table>
@@ -1855,6 +2009,39 @@
         <button class="btn-cancel" (click)="showAddCategoryModal=false">{{ i18n.t('btn.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmAddCategory()"
                 [disabled]="!newCategoryName.trim()">{{ i18n.t('btn.add') }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ajouter ligne de budget par pays -->
+  <div class="modal-overlay" *ngIf="showAddCountryBudgetCategoryModal" (click)="showAddCountryBudgetCategoryModal=false">
+    <div class="modal-card category-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter une ligne de budget</h3>
+        <button class="modal-close" (click)="showAddCountryBudgetCategoryModal=false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="cat-sug-grid">
+          <button *ngFor="let s of countryBudgetCategorySuggestions"
+                  class="cat-sug-btn"
+                  [class.selected]="newCountryBudgetCategoryName === s"
+                  (click)="newCountryBudgetCategoryName = s">
+            <span class="cat-sug-label">{{ s }}</span>
+            <span class="cat-sug-check" *ngIf="newCountryBudgetCategoryName===s">✓</span>
+          </button>
+        </div>
+        <div class="cat-custom-input">
+          <input type="text" [(ngModel)]="newCountryBudgetCategoryName"
+                 placeholder="Ou saisir un libellé personnalisé..."
+                 (keydown.enter)="confirmAddCountryBudgetCategory()" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showAddCountryBudgetCategoryModal=false">{{ i18n.t('btn.cancel') }}</button>
+        <button class="btn-confirm" (click)="confirmAddCountryBudgetCategory()"
+                [disabled]="!newCountryBudgetCategoryName.trim()">{{ i18n.t('btn.add') }}</button>
       </div>
     </div>
   </div>

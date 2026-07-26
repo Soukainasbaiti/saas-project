@@ -389,6 +389,14 @@
           <div class="ds-row"><span>Type Engagement</span><b class="pid-badge">{{ selectedProject.engagementType }}</b></div>
         </div>
 
+        <div class="detail-section" *ngIf="selectedProject.countries?.length">
+          <div class="ds-title">🌍 Pays</div>
+          <div class="ds-row" *ngFor="let c of selectedProject.countries">
+            <span>{{ c.countryName }} <b *ngIf="c.isLead" class="pid-badge">Chef de file</b></span>
+            <b>{{ c.pmName || 'PM à assigner' }}</b>
+          </div>
+        </div>
+
         <div class="detail-section">
           <div class="ds-title">Technique</div>
           <div class="ds-row"><span>Discipline</span><b>{{ selectedProject.engineeringDiscipline }}</b></div>
