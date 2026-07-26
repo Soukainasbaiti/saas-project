@@ -379,11 +379,6 @@ export class AdminDashboardComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  get editForecastTotalCov(): number | null {
-    const values = this.editMonthlyForecasts.map(f => f.cov).filter((v): v is number => v != null);
-    return values.length === 0 ? null : values.reduce((s, v) => s + v, 0);
-  }
-
   get editForecastTotalRevenue(): number {
     return this.editMonthlyForecasts.reduce((s, f) => s + (f.revenue || 0), 0);
   }
@@ -392,16 +387,12 @@ export class AdminDashboardComponent implements OnInit {
     return this.editMonthlyForecasts.reduce((s, f) => s + (f.cost || 0), 0);
   }
 
-  // ── Saisie directe Revenue/Cost/COV : accepte "514000", "514.000" ou
+  // ── Saisie directe TCV/Budget : accepte "514000", "514.000" ou
   //    "514,000" (séparateur de milliers) sans tronquer le montant ──────
-  onForecastCellBlur(event: Event, f: { revenue: number; cost: number; cov: number | null }, field: 'revenue' | 'cost' | 'cov'): void {
+  onForecastCellBlur(event: Event, f: { revenue: number; cost: number; cov: number | null }, field: 'revenue' | 'cost'): void {
     const input = event.target as HTMLInputElement;
     const parsed = parseNum(input.value);
-    if (field === 'cov') {
-      f.cov = parsed;
-    } else {
-      f[field] = parsed ?? 0;
-    }
+    f[field] = parsed ?? 0;
     input.value = parsed != null ? String(parsed) : '';
     this.cdr.markForCheck();
   }
@@ -489,10 +480,6 @@ export class AdminDashboardComponent implements OnInit {
     return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.cost || 0), 0);
   }
 
-  get forecastTotalCov(): number {
-    return (this.selectedProject?.monthlyForecasts ?? []).reduce((s, f) => s + (f.cov || 0), 0);
-  }
-
   // ── Export helpers ──────────────────────────────────────────
   openExportModal(): void {
     this.exportFilters = { status: '', buId: '', customerName: '',
@@ -574,13 +561,12 @@ export class AdminDashboardComponent implements OnInit {
       'Type Engagement':     p.engagementType || '',
       'Statut':              p.status,
       'Projet Majeur':       p.majorProject ? 'Oui' : 'Non',
-      'Bureau Technique':    p.technicalOffice || '',
       'Date Début':          p.startDate || '',
       'Date Fin':            p.endDate   || '',
-      'Revenue Budget (EUR)': p.revenueBudget,
-      'Cout Budget (EUR)':    p.costBudget,
-      'Marge (EUR)':          p.marginBudget,
-      'Marge (%)':            p.revenueBudget > 0
+      'TCV (EUR)':            p.revenueBudget,
+      'Budget (EUR)':         p.costBudget,
+      'EBM (EUR)':            p.marginBudget,
+      'EBM (%)':              p.revenueBudget > 0
         ? +((p.marginBudget / p.revenueBudget) * 100).toFixed(1) : 0
     }));
 
@@ -630,10 +616,10 @@ export class AdminDashboardComponent implements OnInit {
 
     const kpis = [
       { label: 'Projets',  value: String(rows.length),          color: [0, 102, 204] as [number,number,number] },
-      { label: 'Revenue',  value: this.fmtPdf(totalRev),         color: [5, 150, 105] as [number,number,number] },
-      { label: 'Cout',     value: this.fmtPdf(totalCost),        color: [220, 38, 38] as [number,number,number] },
-      { label: 'Marge',    value: this.fmtPdf(totalMarg),        color: [5, 150, 105] as [number,number,number] },
-      { label: 'Marge %',  value: avgMarg,                       color: [124, 58, 237] as [number,number,number] },
+      { label: 'TCV',      value: this.fmtPdf(totalRev),         color: [5, 150, 105] as [number,number,number] },
+      { label: 'Budget',   value: this.fmtPdf(totalCost),        color: [220, 38, 38] as [number,number,number] },
+      { label: 'EBM',      value: this.fmtPdf(totalMarg),        color: [5, 150, 105] as [number,number,number] },
+      { label: 'EBM %',    value: avgMarg,                       color: [124, 58, 237] as [number,number,number] },
     ];
     const boxW = (pageW - 28) / kpis.length;
     kpis.forEach((k, i) => {
@@ -659,8 +645,8 @@ export class AdminDashboardComponent implements OnInit {
       head: [[
         'Project ID', 'Nom Projet', 'Front Fin.', 'BU', 'Client',
         'Trig. Ind.', 'Chef de Projet', 'Type Eng.',
-        'Statut', 'Majeur', 'Bureau Tech.',
-        'Revenue', 'Cout', 'Marge', 'Marge %'
+        'Statut', 'Majeur',
+        'TCV', 'Budget', 'EBM', 'EBM %'
       ]],
       body: rows.map(p => [
         p.projectId || '—',
@@ -673,7 +659,6 @@ export class AdminDashboardComponent implements OnInit {
         p.engagementType || '—',
         p.status,
         p.majorProject ? 'Oui' : 'Non',
-        p.technicalOffice || '—',
         this.fmtPdf(p.revenueBudget),
         this.fmtPdf(p.costBudget),
         this.fmtPdf(p.marginBudget),
@@ -710,8 +695,8 @@ export class AdminDashboardComponent implements OnInit {
               doc.setTextColor(...colors[val]);
             }
           }
-          // Marge % coloration
-          if (data.column.index === 14) {
+          // EBM % coloration
+          if (data.column.index === 13) {
             const pct = parseFloat(String(data.cell.raw));
             if (!isNaN(pct)) {
               doc.setTextColor(pct >= 0 ? 5 : 220, pct >= 0 ? 150 : 38, pct >= 0 ? 105 : 38);
@@ -730,11 +715,10 @@ export class AdminDashboardComponent implements OnInit {
         7:  { cellWidth: 14 },
         8:  { cellWidth: 16, fontStyle: 'bold' },
         9:  { cellWidth: 11, halign: 'center' },
-        10: { cellWidth: 18 },
+        10: { halign: 'right' },
         11: { halign: 'right' },
         12: { halign: 'right' },
-        13: { halign: 'right' },
-        14: { halign: 'right', fontStyle: 'bold' }
+        13: { halign: 'right', fontStyle: 'bold' }
       },
       didDrawPage: (data) => {
         // Footer on each page

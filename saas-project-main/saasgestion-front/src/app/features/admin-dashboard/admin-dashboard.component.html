@@ -344,17 +344,17 @@
       <!-- Barre financière -->
       <div class="detail-fin-bar">
         <div class="fin-item">
-          <div class="fin-lbl">CA Budget</div>
+          <div class="fin-lbl">TCV</div>
           <div class="fin-val c-green">{{ fmt(selectedProject.revenueBudget * 1000) }}</div>
         </div>
         <div class="fin-sep"></div>
         <div class="fin-item">
-          <div class="fin-lbl">Coût Budget</div>
+          <div class="fin-lbl">Budget</div>
           <div class="fin-val c-red">{{ fmt(selectedProject.costBudget * 1000) }}</div>
         </div>
         <div class="fin-sep"></div>
         <div class="fin-item">
-          <div class="fin-lbl">Marge</div>
+          <div class="fin-lbl">EBM</div>
           <div class="fin-val c-blue">{{ fmt(selectedProject.marginBudget * 1000) }}</div>
         </div>
       </div>
@@ -396,7 +396,6 @@
           <div class="ds-row"><span>Activité</span><b>{{ selectedProject.activity }}</b></div>
           <div class="ds-row"><span>Chef de Projet</span><b>{{ selectedProject.projectManager }}</b></div>
           <div class="ds-row"><span>Email PM</span><b class="email-val">{{ selectedProject.pmEmail }}</b></div>
-          <div class="ds-row"><span>Bureau Tech.</span><b>{{ selectedProject.technicalOffice }}</b></div>
         </div>
 
         <div class="detail-section">
@@ -421,11 +420,10 @@
             <thead>
               <tr>
                 <th>Mois</th>
-                <th>Revenu</th>
-                <th>Coût</th>
-                <th>COV</th>
-                <th>Marge €</th>
-                <th>Marge %</th>
+                <th>TCV</th>
+                <th>Budget</th>
+                <th>EBM €</th>
+                <th>EBM %</th>
               </tr>
             </thead>
             <tbody>
@@ -433,7 +431,6 @@
                 <td class="month-cell">{{ monthLabel(f.month) }}</td>
                 <td class="c-green num">{{ fmt(f.revenue * 1000) }}</td>
                 <td class="c-red   num">{{ fmt(f.cost * 1000) }}</td>
-                <td class="num">{{ fmt(f.cov != null ? f.cov * 1000 : null) }}</td>
                 <td class="num">{{ fmt((f.revenue - f.cost) * 1000) }}</td>
                 <td class="num" [ngClass]="monthMarginClass(f.revenue, f.cost)">
                   {{ monthMarginPct(f.revenue, f.cost) }}
@@ -445,7 +442,6 @@
                 <td>TOTAL</td>
                 <td class="c-green num">{{ fmt(forecastTotalRevenue * 1000) }}</td>
                 <td class="c-red   num">{{ fmt(forecastTotalCost * 1000) }}</td>
-                <td class="num">{{ fmt(forecastTotalCov * 1000) }}</td>
                 <td class="num">{{ fmt((forecastTotalRevenue - forecastTotalCost) * 1000) }}</td>
                 <td class="num" [ngClass]="monthMarginClass(forecastTotalRevenue, forecastTotalCost)">
                   {{ monthMarginPct(forecastTotalRevenue, forecastTotalCost) }}
@@ -562,12 +558,12 @@
         </div>
 
         <div class="form-group">
-          <label>CA Budget (€) *</label>
+          <label>TCV (€) *</label>
           <input class="fi" type="number" formControlName="revenueBudget">
         </div>
 
         <div class="form-group">
-          <label>Cost Budget (€) *</label>
+          <label>Budget (€) *</label>
           <input class="fi" type="number" formControlName="costBudget">
         </div>
 
@@ -610,17 +606,16 @@
 
       </form>
 
-      <!-- Prévisions Mensuelles — édition Revenue / Cost / COV -->
+      <!-- Prévisions Mensuelles — édition TCV / Budget -->
       <div class="forecast-section edit-cov-section" *ngIf="editMonthlyForecasts.length > 0">
-        <div class="ds-title">📅 Prévisions Mensuelles — Revenue / Cost / COV (€)</div>
+        <div class="ds-title">📅 Prévisions Mensuelles — TCV / Budget (€)</div>
         <div class="forecast-scroll">
           <table class="forecast-tbl">
             <thead>
               <tr>
                 <th>Mois</th>
-                <th>Revenu (€)</th>
-                <th>Coût (€)</th>
-                <th>COV (€)</th>
+                <th>TCV (€)</th>
+                <th>Budget (€)</th>
               </tr>
             </thead>
             <tbody>
@@ -636,11 +631,6 @@
                          (blur)="onForecastCellBlur($event, f, 'cost')"
                          (keydown.enter)="$any($event.target).blur()" placeholder="0">
                 </td>
-                <td class="num">
-                  <input type="text" inputmode="decimal" class="cov-input" [value]="f.cov ?? ''"
-                         (blur)="onForecastCellBlur($event, f, 'cov')"
-                         (keydown.enter)="$any($event.target).blur()" placeholder="0">
-                </td>
               </tr>
             </tbody>
             <tfoot>
@@ -648,7 +638,6 @@
                 <td>TOTAL</td>
                 <td class="c-green num">{{ fmt(editForecastTotalRevenue) }}</td>
                 <td class="c-red   num">{{ fmt(editForecastTotalCost) }}</td>
-                <td class="num">{{ fmt(editForecastTotalCov) }}</td>
               </tr>
             </tfoot>
           </table>

@@ -34,15 +34,15 @@
     <!-- Financial bar -->
     <div class="detail-fin-bar">
       <div class="fin-item">
-        <div class="fin-lbl">💰 CA Budget</div>
+        <div class="fin-lbl">💰 TCV</div>
         <div class="fin-val rev">{{ fmt(project.revenueBudget * 1000) }}</div>
       </div>
       <div class="fin-item">
-        <div class="fin-lbl">💸 Coût Budget</div>
+        <div class="fin-lbl">💸 Budget</div>
         <div class="fin-val cost">{{ fmt(project.costBudget * 1000) }}</div>
       </div>
       <div class="fin-item">
-        <div class="fin-lbl">📈 Marge</div>
+        <div class="fin-lbl">📈 EBM</div>
         <div class="fin-val marg">{{ fmt(project.marginBudget * 1000) }}</div>
         <div class="fin-pct" [class]="marginClass(project.projectMargin)">
           {{ fmtPct(project.projectMargin) }} de marge
@@ -147,11 +147,11 @@
           <thead>
             <tr>
               <th>Mois</th>
-              <th>Revenue (€)</th>
-              <th>Cost (€)</th>
+              <th>TCV (€)</th>
+              <th>Budget (€)</th>
               <th>COV (€)</th>
-              <th>Marge €</th>
-              <th>Marge %</th>
+              <th>EBM €</th>
+              <th>EBM %</th>
             </tr>
           </thead>
           <tbody>

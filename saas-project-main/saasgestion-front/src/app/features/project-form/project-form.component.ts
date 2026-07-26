@@ -47,7 +47,6 @@ export class ProjectFormComponent implements OnInit {
   pasteMode: 'column' | 'row' = 'column';
   revPasted  = false;
   costPasted = false;
-  covPasted  = false;
 
   get dashboardRoute(): string {
     return this.auth.isAdmin() ? '/admin' : '/';
@@ -65,10 +64,6 @@ export class ProjectFormComponent implements OnInit {
 
   get totalCost(): number {
     return this.monthlyRows.reduce((s, r) => s + (r.cost || 0), 0);
-  }
-
-  get totalCov(): number {
-    return this.monthlyRows.reduce((s, r) => s + (r.cov || 0), 0);
   }
 
   get totalMargin(): number {
@@ -202,7 +197,6 @@ export class ProjectFormComponent implements OnInit {
     this.pasteMode    = 'column';
     this.revPasted    = false;
     this.costPasted   = false;
-    this.covPasted    = false;
     this.showMonthlyModal = true;
     this.cdr.markForCheck();
   }
@@ -237,10 +231,8 @@ export class ProjectFormComponent implements OnInit {
       const parts = line.split('\t');
       const rev  = parseNum(parts[0]);
       const cost = parseNum(parts[1]);
-      const cov  = parseNum(parts[2]);
       if (rev  !== null) this.monthlyRows[i].revenue = rev;
       if (cost !== null) this.monthlyRows[i].cost    = cost;
-      if (cov  !== null) this.monthlyRows[i].cov     = cov;
     });
 
     this.pasteApplied = true;
@@ -249,7 +241,7 @@ export class ProjectFormComponent implements OnInit {
   }
 
   // ── Coller depuis Excel / Google Sheets – mode ligne (zones dédiées) ──
-  onPasteRow(event: ClipboardEvent, field: 'revenue' | 'cost' | 'cov'): void {
+  onPasteRow(event: ClipboardEvent, field: 'revenue' | 'cost'): void {
     event.preventDefault();
     const text = event.clipboardData?.getData('text/plain') ?? '';
     // Prend la première ligne non vide : valeurs séparées par tabulation
@@ -264,19 +256,16 @@ export class ProjectFormComponent implements OnInit {
     if (field === 'revenue') {
       this.revPasted = true;
       setTimeout(() => { this.revPasted = false; this.cdr.markForCheck(); }, 2500);
-    } else if (field === 'cost') {
+    } else {
       this.costPasted = true;
       setTimeout(() => { this.costPasted = false; this.cdr.markForCheck(); }, 2500);
-    } else {
-      this.covPasted = true;
-      setTimeout(() => { this.covPasted = false; this.cdr.markForCheck(); }, 2500);
     }
     this.cdr.markForCheck();
   }
 
-  // ── Saisie directe Revenue/Cost/COV : accepte "514000", "514.000" ou
+  // ── Saisie directe TCV/Budget : accepte "514000", "514.000" ou
   //    "514,000" (séparateur de milliers) sans tronquer le montant ──────
-  onMonthlyCellBlur(event: Event, row: MonthlyRow, field: 'revenue' | 'cost' | 'cov'): void {
+  onMonthlyCellBlur(event: Event, row: MonthlyRow, field: 'revenue' | 'cost'): void {
     const input = event.target as HTMLInputElement;
     const parsed = parseNum(input.value);
     row[field] = parsed;

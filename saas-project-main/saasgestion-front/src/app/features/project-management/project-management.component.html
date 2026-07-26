@@ -205,7 +205,6 @@
                 <th class="col-op-val op-id-th op-as-of">
                   <span class="op-id-label">{{ i18n.t('op.dates_label') }}</span>
                   <span class="op-id-value">{{ startDate ? (startDate | date:'dd/MM/yyyy') : '—' }} → {{ endDate ? (endDate | date:'dd/MM/yyyy') : '—' }}</span>
-                  <span class="op-id-asof">{{ i18n.t('op.asof') }} {{ lastRealMonth() ? formatMonth(lastRealMonth()!) : '—' }}</span>
                 </th>
               </tr>
               <!-- ── Ligne en-têtes colonnes ── -->
@@ -894,6 +893,30 @@
           </div>
         </div>
 
+        <!-- Summary cards -->
+        <div class="rm-summary-cards">
+          <div class="rm-card rm-card-billing">
+            <div class="rm-card-label">{{ i18n.t('pm.rev.conf_billing') }}</div>
+            <div class="rm-card-value">{{ cfmt(billingGrandTotal()) }}</div>
+            <div class="rm-card-sub">ADR × Billed Days</div>
+          </div>
+          <div class="rm-card rm-card-rebill">
+            <div class="rm-card-label">Rebilled</div>
+            <div class="rm-card-value">{{ cfmt(rebillRowTotal()) }}</div>
+            <div class="rm-card-sub">{{ i18n.t('pm.rev.recharged') }}</div>
+          </div>
+          <div class="rm-card rm-card-total">
+            <div class="rm-card-label">{{ i18n.t('pm.rev.total_moyens') }}</div>
+            <div class="rm-card-value">{{ cfmt(moyensGrandTotal()) }}</div>
+            <div class="rm-card-sub">= Billing + Rebilled</div>
+          </div>
+          <div class="rm-card rm-card-cost">
+            <div class="rm-card-label">{{ i18n.t('pm.rev.total_costs') }}</div>
+            <div class="rm-card-value">{{ cfmt(totalDirectCost()) }}</div>
+            <div class="rm-card-sub">= (Daily Cost × Working Days) + Other Costs</div>
+          </div>
+        </div>
+
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead>
@@ -1010,30 +1033,6 @@
               </tr>
             </tfoot>
           </table>
-        </div>
-
-        <!-- Summary cards -->
-        <div class="rm-summary-cards">
-          <div class="rm-card rm-card-billing">
-            <div class="rm-card-label">{{ i18n.t('pm.rev.conf_billing') }}</div>
-            <div class="rm-card-value">{{ cfmt(billingGrandTotal()) }}</div>
-            <div class="rm-card-sub">ADR × Billed Days</div>
-          </div>
-          <div class="rm-card rm-card-rebill">
-            <div class="rm-card-label">Rebilled</div>
-            <div class="rm-card-value">{{ cfmt(rebillRowTotal()) }}</div>
-            <div class="rm-card-sub">{{ i18n.t('pm.rev.recharged') }}</div>
-          </div>
-          <div class="rm-card rm-card-total">
-            <div class="rm-card-label">{{ i18n.t('pm.rev.total_moyens') }}</div>
-            <div class="rm-card-value">{{ cfmt(moyensGrandTotal()) }}</div>
-            <div class="rm-card-sub">= Billing + Rebilled</div>
-          </div>
-          <div class="rm-card rm-card-cost">
-            <div class="rm-card-label">{{ i18n.t('pm.rev.total_costs') }}</div>
-            <div class="rm-card-value">{{ cfmt(totalDirectCost()) }}</div>
-            <div class="rm-card-sub">= (Daily Cost × Working Days) + Other Costs</div>
-          </div>
         </div>
       </div>
     </ng-container>

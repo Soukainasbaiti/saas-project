@@ -36,11 +36,11 @@ const T: Record<string, Record<Lang, string>> = {
 
   'kpi.total_projects':  { fr: 'Total Projets',    en: 'Total Projects' },
   'kpi.active':          { fr: 'Actifs',           en: 'Active' },
-  'kpi.total_revenue':   { fr: 'Revenu Total',     en: 'Total Revenue' },
-  'kpi.revenue_budget':  { fr: 'CA Budget',        en: 'Revenue Budget' },
-  'kpi.total_cost':      { fr: 'Coût Total',       en: 'Total Cost' },
-  'kpi.cumul_cost':      { fr: 'Coûts cumulés',    en: 'Cumulative costs' },
-  'kpi.total_margin':    { fr: 'Marge Totale',     en: 'Total Margin' },
+  'kpi.total_revenue':   { fr: 'TCV Total',        en: 'Total TCV' },
+  'kpi.revenue_budget':  { fr: 'TCV',              en: 'TCV' },
+  'kpi.total_cost':      { fr: 'Budget Total',     en: 'Total Budget' },
+  'kpi.cumul_cost':      { fr: 'Budgets cumulés',  en: 'Cumulative budgets' },
+  'kpi.total_margin':    { fr: 'EBM Totale',       en: 'Total EBM' },
 
   'filter.title':        { fr: 'Filtres Avancés',    en: 'Advanced Filters' },
   'filter.project_status':{ fr: 'Statut du Projet', en: 'Project Status' },
@@ -51,10 +51,10 @@ const T: Record<string, Record<Lang, string>> = {
   'table.title':         { fr: 'Liste des Projets',  en: 'Project List' },
   'table.found':         { fr: 'projets trouvés',    en: 'projects found' },
   'table.empty':         { fr: 'Aucun projet trouvé', en: 'No projects found' },
-  'table.col.revenue':   { fr: 'Revenu',             en: 'Revenue' },
-  'table.col.cost':      { fr: 'Coût',               en: 'Cost' },
-  'table.col.margin_eur':{ fr: 'Marge €',            en: 'Margin €' },
-  'table.col.margin_pct':{ fr: 'Marge %',            en: 'Margin %' },
+  'table.col.revenue':   { fr: 'TCV',                en: 'TCV' },
+  'table.col.cost':      { fr: 'Budget',             en: 'Budget' },
+  'table.col.margin_eur':{ fr: 'EBM €',              en: 'EBM €' },
+  'table.col.margin_pct':{ fr: 'EBM %',              en: 'EBM %' },
   'table.action.view':   { fr: '👁 Voir',            en: '👁 View' },
 
   // ── Project detail modal ──────────────────────────────────────────
@@ -70,7 +70,6 @@ const T: Record<string, Record<Lang, string>> = {
   'modal.detail.engage_type':   { fr: 'Type Engagement',  en: 'Engagement Type' },
   'modal.detail.technical':     { fr: 'Technique',         en: 'Technical' },
   'modal.detail.pm':            { fr: 'Chef de Projet',    en: 'Project Manager' },
-  'modal.detail.tech_office':   { fr: 'Bureau Tech.',      en: 'Tech. Office' },
   'modal.detail.planning':      { fr: 'Planning',          en: 'Planning' },
   'modal.detail.start':         { fr: 'Date Début',        en: 'Start Date' },
   'modal.detail.end':           { fr: 'Date Fin',          en: 'End Date' },
@@ -79,8 +78,8 @@ const T: Record<string, Record<Lang, string>> = {
   'modal.detail.updated':       { fr: 'Modifié le',        en: 'Updated' },
   'modal.detail.forecasts':     { fr: '📅 Prévisions Mensuelles', en: '📅 Monthly Forecasts' },
   'modal.detail.month':         { fr: 'Mois',              en: 'Month' },
-  'modal.detail.cost':          { fr: 'Coût',              en: 'Cost' },
-  'modal.detail.ca':            { fr: 'CA Budget',         en: 'Revenue Budget' },
+  'modal.detail.cost':          { fr: 'Budget',            en: 'Budget' },
+  'modal.detail.ca':            { fr: 'TCV',               en: 'TCV' },
   'modal.detail.pm_action':     { fr: '📊 Gestion de Projet', en: '📊 Project Management' },
 
   // ── PM Header KPIs ───────────────────────────────────────────────

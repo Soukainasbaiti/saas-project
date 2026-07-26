@@ -61,14 +61,14 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Revenu Budget (€) <span class="req">*</span></label>
+            <label class="form-label">TCV (€) <span class="req">*</span></label>
             <input class="form-input" type="number" formControlName="revenueBudget"
                    [class.invalid]="form.get('revenueBudget')?.invalid && form.get('revenueBudget')?.touched">
             <span class="error-msg" *ngIf="form.get('revenueBudget')?.invalid && form.get('revenueBudget')?.touched">Champ requis</span>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Cost Budget (€) <span class="req">*</span></label>
+            <label class="form-label">Budget (€) <span class="req">*</span></label>
             <input class="form-input" type="number" formControlName="costBudget"
                    [class.invalid]="form.get('costBudget')?.invalid && form.get('costBudget')?.touched">
             <span class="error-msg" *ngIf="form.get('costBudget')?.invalid && form.get('costBudget')?.touched">Champ requis</span>
@@ -77,12 +77,12 @@
         </div>
 
         <div class="margin-preview" *ngIf="(form.get('revenueBudget')?.value || 0) > 0">
-          <div class="mp-item"><span class="mp-label">CA</span><span class="mp-val rev">{{ form.get('revenueBudget')?.value | number:'1.0-0' }} €</span></div>
+          <div class="mp-item"><span class="mp-label">TCV</span><span class="mp-val rev">{{ form.get('revenueBudget')?.value | number:'1.0-0' }} €</span></div>
           <div class="mp-sep">−</div>
-          <div class="mp-item"><span class="mp-label">Coût</span><span class="mp-val cost">{{ form.get('costBudget')?.value | number:'1.0-0' }} €</span></div>
+          <div class="mp-item"><span class="mp-label">Budget</span><span class="mp-val cost">{{ form.get('costBudget')?.value | number:'1.0-0' }} €</span></div>
           <div class="mp-sep">=</div>
           <div class="mp-item">
-            <span class="mp-label">%BM</span>
+            <span class="mp-label">EBM</span>
             <span class="mp-val" [class.marge-high]="marginPreview>=25" [class.marge-mid]="marginPreview>=10 && marginPreview<25" [class.marge-low]="marginPreview<10">
               {{ marginEur | number:'1.0-0' }} € ({{ marginPreview | number:'1.1-1' }}%)
             </span>
