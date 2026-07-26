@@ -47,6 +47,7 @@ public class MipService {
             .mipId(mipId)
             .identificationDate(req.getIdentificationDate())
             .lever(req.getLever())
+            .actionType(req.getActionType())
             .actionDescription(req.getActionDescription())
             .accountable(req.getAccountable())
             .clientImpact(req.getClientImpact())
@@ -70,6 +71,7 @@ public class MipService {
 
         if (req.getIdentificationDate() != null) mip.setIdentificationDate(req.getIdentificationDate());
         if (req.getLever()              != null) mip.setLever(req.getLever());
+        if (req.getActionType()         != null) mip.setActionType(req.getActionType());
         if (req.getActionDescription()  != null) mip.setActionDescription(req.getActionDescription());
         if (req.getAccountable()        != null) mip.setAccountable(req.getAccountable());
         if (req.getClientImpact()       != null) mip.setClientImpact(req.getClientImpact());
@@ -93,6 +95,7 @@ public class MipService {
         return ProjectMipDto.builder()
             .id(m.getId()).projectId(m.getProjectId()).mipId(m.getMipId())
             .identificationDate(m.getIdentificationDate()).lever(m.getLever())
+            .actionType(m.getActionType())
             .actionDescription(m.getActionDescription()).accountable(m.getAccountable())
             .clientImpact(m.getClientImpact()).dueDate(m.getDueDate()).priority(m.getPriority())
             .risquesPrerequis(m.getRisquesPrerequis()).plannedGain(m.getPlannedGain())

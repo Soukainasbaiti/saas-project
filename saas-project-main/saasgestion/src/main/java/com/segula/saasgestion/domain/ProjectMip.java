@@ -28,6 +28,10 @@ public class ProjectMip {
     @Column(name = "lever", length = 20)
     private String lever;
 
+    // Action type dropdown : liste fixe dépendant du lever choisi
+    @Column(name = "action_type", length = 100)
+    private String actionType;
+
     // Required — Verbe d'action + action précise + objectif mesurable
     @Column(name = "action_description", length = 2000, nullable = false)
     private String actionDescription;

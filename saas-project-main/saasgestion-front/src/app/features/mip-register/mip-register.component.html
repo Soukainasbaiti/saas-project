@@ -88,9 +88,16 @@
             </div>
             <div class="mr-field mr-field-quarter">
               <label>Lever</label>
-              <select [(ngModel)]="selectedMip.lever">
+              <select [(ngModel)]="selectedMip.lever" (change)="onLeverChange(selectedMip)">
                 <option value="">— Sélectionner —</option>
                 <option *ngFor="let l of levers" [value]="l">{{ l }}</option>
+              </select>
+            </div>
+            <div class="mr-field mr-field-quarter">
+              <label>Action possible</label>
+              <select [(ngModel)]="selectedMip.actionType" [disabled]="!selectedMip.lever" (change)="onActionTypeChange(selectedMip)">
+                <option value="">— Sélectionner —</option>
+                <option *ngFor="let a of actionsForLever(selectedMip.lever)" [value]="a">{{ a }}</option>
               </select>
             </div>
             <div class="mr-field mr-field-quarter">
@@ -164,6 +171,22 @@
         <button class="mr-close-btn" (click)="showCreateModal=false">✕</button>
       </div>
       <div class="mr-create-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mr-field">
+            <label>Lever</label>
+            <select [(ngModel)]="newMip.lever" (change)="onLeverChange(newMip)">
+              <option value="">— Sélectionner —</option>
+              <option *ngFor="let l of levers" [value]="l">{{ l }}</option>
+            </select>
+          </div>
+          <div class="mr-field">
+            <label>Action possible</label>
+            <select [(ngModel)]="newMip.actionType" [disabled]="!newMip.lever" (change)="onActionTypeChange(newMip)">
+              <option value="">— Sélectionner —</option>
+              <option *ngFor="let a of actionsForLever(newMip.lever)" [value]="a">{{ a }}</option>
+            </select>
+          </div>
+        </div>
         <div class="mr-field">
           <label>Action * <span class="mr-hint">(Verbe d'action + action précise + objectif mesurable)</span></label>
           <textarea [(ngModel)]="newMip.actionDescription" rows="5" placeholder="Ex: Renégocier les contrats avec les fournisseurs afin de réduire les coûts de 8%..."></textarea>
@@ -174,30 +197,23 @@
             <input type="date" [(ngModel)]="newMip.identificationDate" />
           </div>
           <div class="mr-field">
-            <label>Lever</label>
-            <select [(ngModel)]="newMip.lever">
-              <option value="">— Sélectionner —</option>
-              <option *ngFor="let l of levers" [value]="l">{{ l }}</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="mr-field">
             <label>Accountable</label>
             <input type="text" [(ngModel)]="newMip.accountable" placeholder="Responsable..." />
           </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="mr-field">
             <label>Client Impact</label>
             <select [(ngModel)]="newMip.clientImpact">
               <option *ngFor="let c of clientImpacts" [value]="c">{{ c }}</option>
             </select>
           </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="mr-field">
             <label>Planned Gain (€)</label>
             <input type="number" [(ngModel)]="newMip.plannedGain" min="0" placeholder="0" />
           </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="mr-field">
             <label>Priority</label>
             <select [(ngModel)]="newMip.priority">

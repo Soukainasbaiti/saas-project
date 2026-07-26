@@ -10,6 +10,7 @@ public class CreateMipRequest {
     private String actionDescription; // required
     private LocalDate identificationDate;
     private String lever;
+    private String actionType;
     private String accountable;
     private String clientImpact;
     private LocalDate dueDate;

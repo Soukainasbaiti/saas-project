@@ -7,7 +7,7 @@ import { I18nService } from '../../core/services/i18n.service';
 export interface MipRow {
   id: number; projectId: number; mipId: string;
   identificationDate: string | null; lever: string;
-  actionDescription: string; accountable: string;
+  actionType: string; actionDescription: string; accountable: string;
   clientImpact: string; dueDate: string | null;
   priority: string; risquesPrerequis: string;
   plannedGain: number | null; realizedGain: number | null; status: string;
@@ -40,6 +40,52 @@ export class MipRegisterComponent implements OnInit {
   readonly priorities = ['P1-High','P2-Medium','P3-Low'];
   readonly statuses   = ['Identified','In Progress','Completed','Cancelled'];
   readonly clientImpacts = ['Yes','No'];
+
+  // Actions possibles par levier (2e niveau de la cascade, liste fixe)
+  readonly leverActions: Record<string, string[]> = {
+    'Costs': [
+      'Limiter les déplacements',
+      'Réduire les coûts non salariaux',
+      'Optimiser les achats fournisseurs',
+      'Anticiper les besoins budgétaires',
+      'Suivre et renégocier les fournisseurs',
+      'Réduire le nombre de sous-traitants',
+    ],
+    'Delivery': [
+      'Sécuriser le respect des délais',
+      'Réduire les risques de retard',
+      'Améliorer la qualité de livraison',
+    ],
+    'Productivity': [
+      'Automatiser les tâches répétitives',
+      'Améliorer les process',
+      'Optimiser le time efficiency',
+    ],
+    'Resources': [
+      'Optimiser l\'allocation des ressources',
+      'Rééquilibrer la charge entre consultants',
+    ],
+    'Price': [
+      'Ajuster les prix du contrat',
+      'Émettre un change request',
+    ],
+  };
+
+  actionsForLever(lever: string): string[] {
+    return this.leverActions[lever] || [];
+  }
+
+  // ── Cascade Levier -> Action -> Commentaire pré-rempli ─────────────
+  onLeverChange(target: { lever: string; actionType: string }): void {
+    target.actionType = '';
+  }
+
+  onActionTypeChange(target: { actionType: string; actionDescription: string }): void {
+    if (!target.actionType) return;
+    if (!target.actionDescription?.trim()) {
+      target.actionDescription = `Quelle action mettre en place pour : ${target.actionType.toLowerCase()} ?`;
+    }
+  }
 
   constructor(private api: ApiService, private cdr: ChangeDetectorRef, public i18n: I18nService) {}
 
@@ -116,6 +162,6 @@ export class MipRegisterComponent implements OnInit {
   cancelDelete(): void { this.showDeleteConfirm = false; this.pendingDelete = null; this.cdr.markForCheck(); }
 
   private emptyMip(): any {
-    return { actionDescription:'', identificationDate: null, lever:'', accountable:'', clientImpact:'No', dueDate:null, priority:'P1-High', risquesPrerequis:'', plannedGain:null, realizedGain:null, status:'Identified' };
+    return { actionDescription:'', identificationDate: null, lever:'', actionType:'', accountable:'', clientImpact:'No', dueDate:null, priority:'P1-High', risquesPrerequis:'', plannedGain:null, realizedGain:null, status:'Identified' };
   }
 }

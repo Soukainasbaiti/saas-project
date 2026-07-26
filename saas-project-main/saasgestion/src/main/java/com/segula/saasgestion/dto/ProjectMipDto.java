@@ -13,6 +13,7 @@ public class ProjectMipDto {
     private String mipId;
     private LocalDate identificationDate;
     private String lever;
+    private String actionType;
     private String actionDescription;
     private String accountable;
     private String clientImpact;
