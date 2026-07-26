@@ -313,6 +313,13 @@ export class ProjectManagementComponent implements OnInit {
     return this.workTickets.filter(t => t.workTypeId === typeId);
   }
 
+  // ── Revenue per period (Delivery Date → period column), miroir de wpRevenueForPeriod ──
+  uowRevenueForPeriod(period: string): number {
+    return this.workTickets
+      .filter(t => t.status === 'DELIVERED' && t.deliveryDate && this.dateMatchesPeriod(t.deliveryDate, period))
+      .reduce((s, t) => s + (t.revenue || 0), 0);
+  }
+
   // CRUD work types
   loadWorkTypes(): void {
     this.api.getWorkTypes(this.projectId).subscribe({
@@ -1143,8 +1150,16 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   revenueForMonth(m: string): number {
-    const billing = this.resources.reduce((s, r) => s + (r.dailyRates[m] || 0) * (r.billedDays[m] || 0), 0);
-    return billing + this.rebillForMonth(m);
+    let engagementRevenue: number;
+    if (this.engagementModules.workPackage || this.engagementModules.unitOfWork) {
+      // Résultats (WP/UoW) : le revenu ne vient pas des jours facturés mais des livrables/tickets livrés
+      engagementRevenue = (this.engagementModules.workPackage ? this.wpRevenueForPeriod(m) : 0)
+                         + (this.engagementModules.unitOfWork  ? this.uowRevenueForPeriod(m) : 0);
+    } else {
+      // Moyens (AT / T&M / TK) : Jours facturés x TJM
+      engagementRevenue = this.resources.reduce((s, r) => s + (r.dailyRates[m] || 0) * (r.billedDays[m] || 0), 0);
+    }
+    return engagementRevenue + this.rebillForMonth(m);
   }
 
   // ── Revenue Moyens helpers ────────────────────────────────────────
