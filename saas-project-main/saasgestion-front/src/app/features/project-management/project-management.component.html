@@ -798,7 +798,7 @@
                 </td>
                 <td class="col-total total-cell">{{ cfmt(countryForecastRowTotal(c.countryId)) }}</td>
                 <td class="col-action">
-                  <button *ngIf="!c.isLead" class="btn-delete-row" (click)="deleteProjectCountry(c)" [title]="i18n.t('btn.delete')">
+                  <button *ngIf="!c.isLead" class="btn-delete-row" (click)="openDeleteCountryModal(c)" [title]="i18n.t('btn.delete')">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                   </button>
                 </td>
@@ -2479,6 +2479,23 @@
       <div class="modal-footer">
         <button class="btn-cancel" (click)="showDeleteLotModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="btn-delete-confirm" (click)="confirmDeleteLot()">{{ i18n.t('common.delete') }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal : Confirmer suppression Pays ── -->
+  <div class="modal-overlay" *ngIf="showDeleteCountryModal" (click)="cancelDeleteCountry()">
+    <div class="modal-card" (click)="$event.stopPropagation()" style="max-width:420px">
+      <div class="modal-header">
+        <h3>{{ i18n.t('pm.country.delete_title') }}</h3>
+        <button class="modal-close" (click)="cancelDeleteCountry()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#1e293b;margin:0" [innerHTML]="i18n.t('pm.country.delete_confirm', '<strong>' + (pendingDeleteCountry?.countryName || '') + '</strong>')"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cancelDeleteCountry()" [disabled]="deletingCountry">{{ i18n.t('common.cancel') }}</button>
+        <button class="btn-delete-confirm" (click)="confirmDeleteCountry()" [disabled]="deletingCountry">{{ deletingCountry ? i18n.t('common.saving') : i18n.t('common.delete') }}</button>
       </div>
     </div>
   </div>
