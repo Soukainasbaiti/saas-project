@@ -30,6 +30,9 @@ public class ProjectCreateRequest {
                                      private List<MonthlyForecastDto> monthlyForecasts;
 
     // ── Multi-pays ──────────────────────────────────────────────────
-    @NotNull                        private Long       frontOfficeCountryId;
+    // Non-@NotNull : requis uniquement à la création (voir ProjectService.create,
+    // qui valide explicitement), ignoré lors d'une modification (update ne
+    // touche pas aux pays) — le formulaire d'édition admin ne l'envoie pas.
+    private Long       frontOfficeCountryId;
                                      private List<BackOfficeCountryRequest> backOfficeCountries;
 }

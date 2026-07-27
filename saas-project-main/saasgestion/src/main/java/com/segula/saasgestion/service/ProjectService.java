@@ -92,6 +92,10 @@ public class ProjectService {
     @Transactional
     public ProjectDetailDto create(ProjectCreateRequest req, Long createdById) {
 
+        if (req.getFrontOfficeCountryId() == null) {
+            throw new IllegalArgumentException("Le pays chef de file (Front Office) est requis.");
+        }
+
         FrontFinancier ff = resolveFrontFinancier(req.getFrontFinancier());
 
         AppUser pm = userRepo.findById(req.getProjectManagerId())
