@@ -1531,9 +1531,6 @@ export class ProjectManagementComponent implements OnInit {
     const billedFcst = this.sumByStatus(m => this.billedDaysForMonth(m), 'FORECAST');
     const billedLand = billedReal + billedFcst;
 
-    const covReal = this.sumByStatus(m => this.covForMonth(m), 'REAL');
-    const covFcst = this.sumByStatus(m => this.covForMonth(m), 'FORECAST');
-
     const marginReal = revReal - costReal;
     const marginFcst = revFcst - costFcst;
     const marginLand = revLand - costLand;
@@ -1552,12 +1549,10 @@ export class ProjectManagementComponent implements OnInit {
     const budgetCostLM = lm ? this.budgetCostForMonth(lm)    : 0;
     const workedLM     = lm ? this.workedDaysForMonth(lm)              : 0;
     const billedLM     = lm ? this.billedDaysForMonth(lm)              : 0;
-    const covLM        = lm ? this.covForMonth(lm)                     : 0;
     const marginLM       = revLM - costLM;
     const budgetMarginLM = budgetRevLM - budgetCostLM;
 
     return [
-      { label: 'COV - Client Order Value', real: covReal,         lastMonth: covLM,        forecast: covFcst,        landing: covReal + covFcst, format: 'currency' },
       { label: 'Revenue - Budget (TCV)',   real: budgetRevReal,    lastMonth: budgetRevLM,  forecast: budgetRevFcst,  landing: budgetRevLand,  format: 'currency' },
       { label: 'Revenue - Real',           real: revReal,          lastMonth: revLM,        forecast: revFcst,        landing: revLand,        format: 'currency' },
       { label: 'Cost - Budget',            real: budgetCostReal,   lastMonth: budgetCostLM, forecast: budgetCostFcst, landing: budgetCostLand, format: 'currency' },

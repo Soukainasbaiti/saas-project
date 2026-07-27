@@ -1245,7 +1245,7 @@ $op-real-month: #0ea5e9;
 
 .wp-row:hover { background: rgba(var(--pm-accent), .02); }
 
-.wp-col-id      { width: 100px; min-width: 100px; }
+.wp-col-id      { width: 130px; min-width: 130px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wp-col-lot     { width: 70px; }
 .wp-col-name    { width: 220px; min-width: 180px; }
 .wp-col-disc    { width: 140px; }
@@ -1259,7 +1259,10 @@ $op-real-month: #0ea5e9;
 .wp-col-prio    { width: 90px; text-align: center; }
 .wp-col-comment { width: 180px; }
 
-.wp-id-cell { font-size: 11px; font-weight: 700; color: $gray-400; font-family: 'Courier New', monospace; }
+.wp-id-cell {
+  font-size: 11px; font-weight: 700; color: $gray-400; font-family: 'Courier New', monospace;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+}
 
 .wp-input {
   width: 100%; border: 1px solid transparent; border-radius: 5px;

@@ -1385,7 +1385,7 @@
                       <td colspan="15" class="empty-msg">{{ i18n.t('pm.wp.no_deliverable') }}</td>
                     </tr>
                     <tr *ngFor="let d of deliverablesForLot(selectedLot)" class="wp-row">
-                      <td class="wp-col-id sticky-col wp-id-cell">{{ d.deliverableId }}</td>
+                      <td class="wp-col-id sticky-col" [title]="d.deliverableId"><span class="wp-id-cell">{{ d.deliverableId }}</span></td>
                       <td class="wp-col-name">
                         <input class="wp-input" [(ngModel)]="d.deliverableName"
                           (blur)="updateDeliverableField(d,'deliverableName',d.deliverableName)" />
