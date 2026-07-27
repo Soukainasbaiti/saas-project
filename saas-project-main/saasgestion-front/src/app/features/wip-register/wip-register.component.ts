@@ -103,7 +103,7 @@ export class WipRegisterComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-        this.showToast('Erreur lors du chargement des données WIP', 'error');
+        this.showToast(this.i18n.t('wr.toast.load_error'), 'error');
         this.cdr.markForCheck();
       }
     });
@@ -160,7 +160,7 @@ export class WipRegisterComponent implements OnInit {
           this.confirmAmount = doc.confirmedAmount || 0;
           this.confirmModal = true;
         } else {
-          this.showToast('Document ajouté avec succès', 'success');
+          this.showToast(this.i18n.t('wr.toast.doc_added'), 'success');
         }
         this.load();
         this.loadSummary();
@@ -168,7 +168,7 @@ export class WipRegisterComponent implements OnInit {
       },
       error: () => {
         this.uploading[docType as keyof typeof this.uploading] = false;
-        this.showToast("Échec de l'envoi du document", 'error');
+        this.showToast(this.i18n.t('wr.toast.upload_failed'), 'error');
         this.cdr.markForCheck();
       }
     });
@@ -182,13 +182,13 @@ export class WipRegisterComponent implements OnInit {
       next: () => {
         this.confirmModal = false;
         this.confirmDoc = null;
-        this.showToast('Montant confirmé avec succès', 'success');
+        this.showToast(this.i18n.t('wr.toast.amount_confirmed'), 'success');
         this.load();
         this.loadSummary();
         this.cdr.markForCheck();
       },
       error: () => {
-        this.showToast('Erreur lors de la confirmation du montant', 'error');
+        this.showToast(this.i18n.t('wr.toast.confirm_error'), 'error');
         this.cdr.markForCheck();
       }
     });
@@ -239,14 +239,14 @@ export class WipRegisterComponent implements OnInit {
       next: () => {
         this.deleteDocTarget = null;
         this.deleteDocModal = false;
-        this.showToast('Document supprimé', 'success');
+        this.showToast(this.i18n.t('wr.toast.doc_deleted'), 'success');
         this.load();
         this.loadSummary();
         this.cdr.markForCheck();
       },
       error: () => {
         this.deleteDocModal = false;
-        this.showToast('Erreur lors de la suppression du document', 'error');
+        this.showToast(this.i18n.t('wr.toast.delete_error'), 'error');
         this.cdr.markForCheck();
       }
     });

@@ -3,10 +3,10 @@
   <!-- Bandeau Admin -->
   <div class="admin-view-banner" *ngIf="isAdmin">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    <span>Vue Administrateur — Consultation du projet</span>
+    <span>{{ i18n.t('pm.header.admin_banner') }}</span>
     <a routerLink="/admin" class="admin-banner-back">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      Retour Dashboard Admin
+      {{ i18n.t('pm.header.back_to_admin') }}
     </a>
   </div>
 
@@ -14,7 +14,7 @@
   <div class="save-error-toast" *ngIf="saveErrorMsg" (click)="saveErrorMsg=''">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     {{ saveErrorMsg }}
-    <span class="toast-hint">{{ i18n.lang()==='fr' ? '(clic pour fermer)' : '(click to close)' }}</span>
+    <span class="toast-hint">{{ i18n.t('common.click_to_close') }}</span>
   </div>
 
   <!-- Header -->
@@ -30,40 +30,40 @@
           <button class="granularity-badge"
                   [class.locked]="granularityLocked"
                   (click)="openGranularityModal()"
-                  [title]="granularityLocked ? 'Granularity locked' : 'Change granularity'">
+                  [title]="granularityLocked ? i18n.t('pm.header.granularity_locked') : i18n.t('pm.header.granularity_change')">
             {{ granularityIcon }} {{ granularityLabel }}
             <span class="lock-icon" *ngIf="granularityLocked">🔒</span>
             <span class="edit-icon" *ngIf="!granularityLocked">✏️</span>
           </button>
-          <button class="currency-switch-btn" (click)="switchCurrency()" title="Switch display currency">
+          <button class="currency-switch-btn" (click)="switchCurrency()" [title]="i18n.t('pm.header.switch_currency')">
             <span *ngFor="let c of currencyOptions" [class.active]="displayCurrency === c.value">{{ c.symbol }}</span>
           </button>
           <!-- Bouton changement engagement -->
-          <button class="engagement-switch-btn" *ngIf="projectEngagementType" (click)="openChangeEngagementModal()" title="Changer le type d'engagement">
+          <button class="engagement-switch-btn" *ngIf="projectEngagementType" (click)="openChangeEngagementModal()" [title]="i18n.t('pm.header.change_engagement')">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             {{ projectEngagementType }}
           </button>
 
-          <button class="engagement-switch-btn" *ngIf="canAddCountry" (click)="openAddCountryModal()" title="Ajouter un pays au projet">
-            + Pays
+          <button class="engagement-switch-btn" *ngIf="canAddCountry" (click)="openAddCountryModal()" [title]="i18n.t('pm.header.add_country_tooltip')">
+            {{ i18n.t('pm.header.add_country_btn') }}
           </button>
 
           <!-- Reprendre la saisie apres validation/soumission (ex: 2e tranche de travail) -->
           <button class="engagement-switch-btn" *ngIf="!isEditable && (validationStatus==='VALIDATED' || validationStatus==='SUBMITTED')"
                   [disabled]="reopening" (click)="reopenForEditing()"
-                  title="Repasser en brouillon pour continuer la saisie (ex: ajouter une nouvelle tranche de travail)">
-            🔓 {{ reopening ? 'Réouverture...' : 'Reprendre la saisie' }}
+                  [title]="i18n.t('pm.header.reopen_tooltip')">
+            🔓 {{ reopening ? i18n.t('pm.header.reopening') : i18n.t('pm.header.resume_entry') }}
           </button>
 
           <!-- Theme picker -->
           <div class="theme-picker-wrap">
-            <button class="theme-picker-btn" (click)="showThemePicker=!showThemePicker" title="Thème couleur">
+            <button class="theme-picker-btn" (click)="showThemePicker=!showThemePicker" [title]="i18n.t('pm.header.theme_color')">
               <span class="theme-dot" [style.background]="currentTheme.color"></span>
               <span class="theme-label">{{ currentTheme.label }}</span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="theme-dropdown" *ngIf="showThemePicker">
-              <div class="theme-dropdown-header">Thème</div>
+              <div class="theme-dropdown-header">{{ i18n.t('pm.header.theme') }}</div>
               <button *ngFor="let t of themes" class="theme-option" [class.active]="t.key === currentThemeKey" (click)="setTheme(t.key)">
                 <span class="theme-dot" [style.background]="t.color"></span>
                 {{ t.label }}
@@ -100,7 +100,7 @@
   <div class="currency-rates-bar">
     <span class="crb-icon">💱</span>
     <span class="crb-text">{{ currencyRatesInfo }}</span>
-    <span class="crb-note">{{ i18n.lang() === 'fr' ? '(taux approximatifs)' : '(approximate rates)' }}</span>
+    <span class="crb-note">{{ i18n.t('pm.header.approx_rates') }}</span>
   </div>
 
 
@@ -509,7 +509,7 @@
           <table class="matrix-table">
             <thead><tr>
               <th class="col-name sticky-col">
-                <input *ngIf="isEditable" type="checkbox" class="row-select-checkbox" [checked]="allResourcesSelected" (change)="toggleSelectAllResources()" [disabled]="!resources.length" title="Tout sélectionner">
+                <input *ngIf="isEditable" type="checkbox" class="row-select-checkbox" [checked]="allResourcesSelected" (change)="toggleSelectAllResources()" [disabled]="!resources.length" [title]="i18n.t('pm.tooltip.select_all')">
                 Consultant
               </th>
               <th class="col-type">Contract</th>
@@ -570,7 +570,7 @@
             Working Days (Labor Days)
           </div>
           <!-- SDH auto-fill (only when editable) -->
-          <label *ngIf="isEditable" class="btn-sdh-import" title="Import worked days from SDH file (CSV/Excel)">
+          <label *ngIf="isEditable" class="btn-sdh-import" [title]="i18n.t('pm.sdh.import_tooltip')">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             {{ i18n.t('pm.sdh.btn') }}
             <input type="file" accept=".csv,.xlsx,.xls" style="display:none" (change)="onSdhFileSelected($event)" />
@@ -674,7 +674,7 @@
                 </td>
                 <td class="col-total total-cell">{{ cfmt(otherCostRowTotal(c)) }}</td>
                 <td class="col-action">
-                  <button class="btn-delete-row" (click)="deleteCategory(c.category)" title="Supprimer">
+                  <button class="btn-delete-row" (click)="deleteCategory(c.category)" [title]="i18n.t('btn.delete')">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                   </button>
                 </td>
@@ -737,7 +737,7 @@
                 </td>
                 <td class="col-total total-cell rebill-total">{{ cfmt(otherCostRowTotal(c)) }}</td>
                 <td class="col-action">
-                  <button class="btn-delete-row" (click)="deleteCategory(c.category)" title="Supprimer">
+                  <button class="btn-delete-row" (click)="deleteCategory(c.category)" [title]="i18n.t('btn.delete')">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                   </button>
                 </td>
@@ -762,23 +762,23 @@
         <div class="panel-header">
           <div class="panel-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            TCV par pays
+            {{ i18n.t('pm.country.title') }}
           </div>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead><tr>
-              <th class="col-name sticky-col">Pays</th>
+              <th class="col-name sticky-col">{{ i18n.t('pm.country.col_country') }}</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Total</th>
             </tr></thead>
             <tbody>
               <tr *ngIf="!projectCountries.length">
-                <td [attr.colspan]="months.length+2" class="empty-msg">Aucun pays rattaché à ce projet.</td>
+                <td [attr.colspan]="months.length+2" class="empty-msg">{{ i18n.t('pm.country.no_countries') }}</td>
               </tr>
               <tr *ngFor="let c of projectCountries">
                 <td class="col-name sticky-col category-cell">
-                  {{ c.countryName }} <span class="contract-badge" *ngIf="c.isLead">Chef de file</span>
+                  {{ c.countryName }} <span class="contract-badge" *ngIf="c.isLead">{{ i18n.t('pm.country.lead') }}</span>
                 </td>
                 <td *ngFor="let m of months" class="data-cell"
                     [class.cell-past]="isPastMonth(m)" [class.cell-current]="isCurrentMonth(m)"
@@ -800,7 +800,7 @@
             </tbody>
             <tfoot>
               <tr class="total-row">
-                <td class="sticky-col">TCV Total</td>
+                <td class="sticky-col">{{ i18n.t('pm.country.tcv_total') }}</td>
                 <td *ngFor="let m of months" class="total-cell">{{ cfmt(tcvTotalForMonth(m)) }}</td>
                 <td class="total-cell grand">{{ cfmt(tcvGrandTotal()) }}</td>
               </tr>
@@ -813,23 +813,23 @@
         <div class="panel-header">
           <div class="panel-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Budget {{ c.countryName }}
+            {{ i18n.t('pm.country.budget_title', c.countryName) }}
           </div>
           <div class="panel-header-right">
-            <button class="btn-add-resource" (click)="openAddCountryBudgetCategoryModal(c.countryId)">+ Ajouter une ligne</button>
+            <button class="btn-add-resource" (click)="openAddCountryBudgetCategoryModal(c.countryId)">{{ i18n.t('pm.country.add_line') }}</button>
           </div>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead><tr>
-              <th class="col-name sticky-col">Catégorie</th>
+              <th class="col-name sticky-col">{{ i18n.t('pm.country.category') }}</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Total</th>
               <th class="col-action"></th>
             </tr></thead>
             <tbody>
               <tr *ngIf="!budgetLinesForCountry(c.countryId).length">
-                <td [attr.colspan]="months.length+3" class="empty-msg">Aucune ligne de budget pour ce pays.</td>
+                <td [attr.colspan]="months.length+3" class="empty-msg">{{ i18n.t('pm.country.no_budget_lines') }}</td>
               </tr>
               <tr *ngFor="let b of budgetLinesForCountry(c.countryId)">
                 <td class="col-name sticky-col category-cell">{{ b.category }}</td>
@@ -848,7 +848,7 @@
                 </td>
                 <td class="col-total total-cell">{{ cfmt(budgetLineRowTotal(b)) }}</td>
                 <td class="col-action">
-                  <button class="btn-delete-row" (click)="deleteCountryBudgetCategory(c.countryId, b.category)" title="Supprimer">
+                  <button class="btn-delete-row" (click)="deleteCountryBudgetCategory(c.countryId, b.category)" [title]="i18n.t('btn.delete')">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                   </button>
                 </td>
@@ -856,7 +856,7 @@
             </tbody>
             <tfoot>
               <tr class="total-row">
-                <td class="sticky-col">Budget {{ c.countryName }}</td>
+                <td class="sticky-col">{{ i18n.t('pm.country.budget_title', c.countryName) }}</td>
                 <td *ngFor="let m of months" class="total-cell">{{ cfmt(budgetCountryTotalForMonth(c.countryId, m)) }}</td>
                 <td class="total-cell grand">{{ cfmt(budgetCountryGrandTotal(c.countryId)) }}</td>
                 <td></td>
@@ -869,12 +869,12 @@
       <!-- Synthèse EBM par pays -->
       <div class="pm-panel panel-gold" style="margin-top:16px" *ngIf="projectCountries.length">
         <div class="panel-header">
-          <div class="panel-title">EBM par pays</div>
+          <div class="panel-title">{{ i18n.t('pm.country.ebm_title') }}</div>
         </div>
         <div class="matrix-scroll">
           <table class="matrix-table">
             <thead><tr>
-              <th class="col-name sticky-col">Pays</th>
+              <th class="col-name sticky-col">{{ i18n.t('pm.country.col_country') }}</th>
               <th class="col-total">TCV</th>
               <th class="col-total">Budget</th>
               <th class="col-total">EBM (€)</th>
@@ -1075,7 +1075,7 @@
           <table class="matrix-table">
             <thead>
             <tr class="status-row">
-              <th class="col-name sticky-col">Statut</th>
+              <th class="col-name sticky-col">{{ i18n.t('pm.col.status') }}</th>
               <th class="col-type"></th>
               <th *ngFor="let m of months" class="col-month status-cell">
                 <button type="button" class="status-badge"
@@ -1083,7 +1083,7 @@
                         [class.badge-forecast]="monthStatusFor(m)==='FORECAST'"
                         [disabled]="savingMonthStatus[m]"
                         (click)="toggleMonthStatus(m)"
-                        title="Click to toggle Real / Forecast">
+                        [title]="i18n.t('pm.toggle_real_forecast_tooltip')">
                   {{ monthStatusFor(m)==='REAL' ? 'Real' : 'Forecast' }}
                 </button>
               </th>
@@ -1330,7 +1330,7 @@
                 <button class="wp-lot-tab" [class.active]="selectedLot === lot" (click)="selectedLot = lot">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                   {{ lot }}
-                  <span class="wp-tab-close" (click)="$event.stopPropagation(); openDeleteLotModal(lot)" title="Supprimer">×</span>
+                  <span class="wp-tab-close" (click)="$event.stopPropagation(); openDeleteLotModal(lot)" [title]="i18n.t('btn.delete')">×</span>
                 </button>
                 <div class="wp-lot-tab-sep" *ngIf="!last"></div>
               </ng-container>
@@ -1351,10 +1351,10 @@
                   <span class="wp-active-lot-name">{{ selectedLot }}</span>
                 </div>
                 <button class="wp-lot-add-livrable" (click)="openBlModalWp(selectedLot)">
-                  Générer BL
+                  {{ i18n.t('pm.btn.gen_bl') }}
                 </button>
                 <button class="wp-lot-add-livrable" (click)="openAddDeliverableModal(selectedLot)">
-                  + Livrable
+                  {{ i18n.t('pm.wp.add_deliverable_btn') }}
                 </button>
               </div>
 
@@ -1784,11 +1784,96 @@
             </button>
           </div>
         </div>
+
+        <!-- Synthèse TCV/Budget/EBM par pays (compacte) -->
+        <div class="matrix-scroll" *ngIf="projectCountries.length" style="margin-bottom:16px">
+          <table class="matrix-table synthese-table">
+            <thead><tr>
+              <th class="col-indicator sticky-col">{{ i18n.t('pm.country.synthesis_title') }}</th>
+              <th class="col-total">TCV</th>
+              <th class="col-total">Budget</th>
+              <th class="col-total">EBM (€)</th>
+              <th class="col-total">EBM (%)</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let c of projectCountries">
+                <td class="col-indicator sticky-col indicator-cell">{{ c.countryName }}</td>
+                <td class="col-total total-cell rev-val">{{ cfmt(countryForecastRowTotal(c.countryId)) }}</td>
+                <td class="col-total total-cell cost-val">{{ cfmt(budgetCountryGrandTotal(c.countryId)) }}</td>
+                <td class="col-total total-cell" [class]="marginClass(ebmCountryPct(c.countryId))">
+                  {{ cfmt(countryForecastRowTotal(c.countryId) - budgetCountryGrandTotal(c.countryId)) }}
+                </td>
+                <td class="col-total total-cell" [class]="marginClass(ebmCountryPct(c.countryId))">
+                  {{ fmtPct(ebmCountryPct(c.countryId)) }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="sticky-col">TOTAL</td>
+                <td class="total-cell grand rev-val">{{ cfmt(tcvGrandTotal()) }}</td>
+                <td class="total-cell grand cost-val">{{ cfmt(budgetGrandTotal()) }}</td>
+                <td class="total-cell grand">{{ cfmt(tcvGrandTotal() - budgetGrandTotal()) }}</td>
+                <td class="total-cell grand">{{ fmtPct(ebmTotalPct()) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Sélecteur de pays + détail mensuel TCV/Budget/EBM -->
+        <ng-container *ngIf="projectCountries.length">
+          <div class="wp-lot-tabs" style="margin-bottom:12px">
+            <button class="wp-lot-tab" [class.active]="financialSummaryCountry==='total'" (click)="selectFinancialSummaryCountry('total')">Total</button>
+            <button class="wp-lot-tab" *ngFor="let c of projectCountries" [class.active]="financialSummaryCountry===c.countryId" (click)="selectFinancialSummaryCountry(c.countryId)">{{ c.countryName }}</button>
+          </div>
+          <div class="matrix-scroll" style="margin-bottom:16px">
+            <table class="matrix-table synthese-table">
+              <thead>
+                <tr>
+                  <th class="col-indicator sticky-col">TCV / Budget — {{ fsSelectedCountryLabel }}</th>
+                  <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
+                  <th class="col-total">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="synth-row synth-rev">
+                  <td class="col-indicator sticky-col indicator-cell"><div class="ind-dot rev-dot"></div>TCV</td>
+                  <td *ngFor="let m of months" class="data-cell readonly">
+                    <span [class.has-value]="fsRevenueForMonth(m)>0">{{ cfmt(fsRevenueForMonth(m)) }}</span>
+                  </td>
+                  <td class="col-total total-cell rev-val">{{ cfmt(fsRevenueTotal()) }}</td>
+                </tr>
+                <tr class="synth-row synth-cost">
+                  <td class="col-indicator sticky-col indicator-cell"><div class="ind-dot cost-dot"></div>Budget</td>
+                  <td *ngFor="let m of months" class="data-cell readonly">
+                    <span [class.has-value]="fsBudgetForMonth(m)>0">{{ cfmt(fsBudgetForMonth(m)) }}</span>
+                  </td>
+                  <td class="col-total total-cell cost-val">{{ cfmt(fsBudgetTotal()) }}</td>
+                </tr>
+                <tr class="synth-row synth-margin">
+                  <td class="col-indicator sticky-col indicator-cell bold-indicator"><div class="ind-dot"></div>EBM (€)</td>
+                  <td *ngFor="let m of months" class="data-cell readonly">
+                    <span class="margin-val" [class]="marginClass(fsMarginPctForMonth(m))">{{ cfmt(fsMarginForMonth(m)) }}</span>
+                  </td>
+                  <td class="col-total total-cell grand"><span [class]="marginClass(fsMarginPctTotal())">{{ cfmt(fsMarginTotal()) }}</span></td>
+                </tr>
+                <tr class="synth-row synth-margin">
+                  <td class="col-indicator sticky-col indicator-cell bold-indicator"><div class="ind-dot"></div>EBM (%)</td>
+                  <td *ngFor="let m of months" class="data-cell readonly">
+                    <span class="margin-pct" [class]="marginClass(fsMarginPctForMonth(m))">{{ fsMarginPctForMonth(m) !== 0 ? fmtPct(fsMarginPctForMonth(m)) : '—' }}</span>
+                  </td>
+                  <td class="col-total total-cell grand"><span [class]="marginClass(fsMarginPctTotal())">{{ fmtPct(fsMarginPctTotal()) }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+
         <div class="matrix-scroll">
           <table class="matrix-table synthese-table">
             <thead>
             <tr class="status-row">
-              <th class="col-indicator sticky-col">Statut</th>
+              <th class="col-indicator sticky-col">{{ i18n.t('pm.col.status') }}</th>
               <th *ngFor="let m of months" class="col-month status-cell">
                 <span class="status-badge readonly"
                       [class.badge-real]="monthStatusFor(m)==='REAL'"
@@ -1844,7 +1929,7 @@
               <tr class="synth-row synth-rev">
                 <td class="col-indicator sticky-col indicator-cell">
                   <div class="ind-dot rev-dot"></div>
-                  Revenu (ADR × Jours Facturés)
+                  {{ i18n.t('pm.synth.revenue_billed') }}
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
                   <span [class.has-value]="(revenueForMonth(m)-rebillForMonth(m))>0">{{ cfmt(revenueForMonth(m)-rebillForMonth(m)) }}</span>
@@ -1866,7 +1951,7 @@
               <tr class="synth-row synth-subtotal">
                 <td class="col-indicator sticky-col indicator-cell bold-indicator">
                   <div class="ind-dot rev-dot"></div>
-                  ➡ Revenu Total
+                  ➡ {{ i18n.t('pm.kpi.revenue') }}
                 </td>
                 <td *ngFor="let m of months" class="data-cell readonly">
                   <span class="subtotal-val rev-val">{{ cfmt(revenueForMonth(m)) }}</span>
@@ -1913,14 +1998,14 @@
             <div class="sk-sub">Labor: {{ cfmt(totalLaborCost()) }} {{ currencySymbol }} · Other: {{ cfmt(totalOtherCost()) }} {{ currencySymbol }}</div>
           </div>
           <div class="synth-kpi rev-kpi">
-            <div class="sk-label">Revenu Total</div>
+            <div class="sk-label">{{ i18n.t('pm.kpi.revenue') }}</div>
             <div class="sk-value">{{ cfmt(totalRevenue()) }} {{ currencySymbol }}</div>
-            <div class="sk-sub">Facturation: {{ cfmt(totalRevenue()-totalRebill()) }} {{ currencySymbol }} · Refacturé: {{ cfmt(totalRebill()) }} {{ currencySymbol }}</div>
+            <div class="sk-sub">{{ i18n.t('pm.synth.billing_label') }}: {{ cfmt(totalRevenue()-totalRebill()) }} {{ currencySymbol }} · {{ i18n.t('pm.synth.rebilled_label') }}: {{ cfmt(totalRebill()) }} {{ currencySymbol }}</div>
           </div>
           <div class="synth-kpi" [class]="'margin-kpi '+marginClass(totalMarginPct())">
             <div class="sk-label">Margin</div>
             <div class="sk-value">{{ cfmt(totalMargin()) }} {{ currencySymbol }}</div>
-            <div class="sk-sub">{{ fmtPct(totalMarginPct()) }} du revenu</div>
+            <div class="sk-sub">{{ fmtPct(totalMarginPct()) }} {{ i18n.t('pm.synth.of_revenue') }}</div>
           </div>
         </div>
       </div>
@@ -2020,7 +2105,7 @@
   <div class="modal-overlay" *ngIf="showAddCountryBudgetCategoryModal" (click)="showAddCountryBudgetCategoryModal=false">
     <div class="modal-card category-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Ajouter une ligne de budget</h3>
+        <h3>{{ i18n.t('pm.country.add_budget_line_title') }}</h3>
         <button class="modal-close" (click)="showAddCountryBudgetCategoryModal=false">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -2037,7 +2122,7 @@
         </div>
         <div class="cat-custom-input">
           <input type="text" [(ngModel)]="newCountryBudgetCategoryName"
-                 placeholder="Ou saisir un libellé personnalisé..."
+                 [placeholder]="i18n.t('pm.country.custom_label_placeholder')"
                  (keydown.enter)="confirmAddCountryBudgetCategory()" />
         </div>
       </div>
@@ -2093,21 +2178,15 @@
           <ul><li *ngFor="let e of sdhResult.errors">{{ e }}</li></ul>
         </div>
         <div class="sdh-format-hint">
-          <p class="sdh-hint-title">📋 {{ i18n.lang() === 'fr' ? 'Format SDH accepté' : 'Accepted SDH format' }}</p>
+          <p class="sdh-hint-title">📋 {{ i18n.t('pm.sdh.format_title') }}</p>
           <p class="sdh-hint-note" style="margin-bottom:6px">
-            {{ i18n.lang() === 'fr'
-              ? '✅ Export Excel SDH (onglet RapportPointageAffairesDetail)'
-              : '✅ SDH Excel export (sheet RapportPointageAffairesDetail)' }}
+            {{ i18n.t('pm.sdh.format_excel') }}
           </p>
           <p class="sdh-hint-note" style="margin-bottom:6px">
-            {{ i18n.lang() === 'fr'
-              ? '✅ CSV simple : Matricule ; mois (yyyy-MM) ; heures'
-              : '✅ Simple CSV: Matricule ; month (yyyy-MM) ; hours' }}
+            {{ i18n.t('pm.sdh.format_csv') }}
           </p>
           <p class="sdh-hint-note" style="color:#64748b">
-            {{ i18n.lang() === 'fr'
-              ? 'Seules les ressources enregistrées dans ce projet sont importées.'
-              : 'Only resources registered in this project are imported.' }}
+            {{ i18n.t('pm.sdh.format_note') }}
           </p>
         </div>
       </div>
@@ -2178,31 +2257,31 @@
   <div class="modal-overlay" *ngIf="showAddWorkTypeModal" (click)="showAddWorkTypeModal=false">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Nouveau type de livrable</h3>
+        <h3>{{ i18n.t('pm.worktype.modal_title') }}</h3>
         <button class="modal-close" (click)="showAddWorkTypeModal=false">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Nom du livrable *</label>
-          <input [(ngModel)]="newWorkType.name" placeholder="ex: Page web, Rapport PDF, Module..." />
+          <label>{{ i18n.t('pm.worktype.name_label') }}</label>
+          <input [(ngModel)]="newWorkType.name" [placeholder]="i18n.t('pm.worktype.name_ph')" />
         </div>
         <div class="form-group">
-          <label>Unité</label>
-          <input [(ngModel)]="newWorkType.unitLabel" placeholder="ex: Pages, Rapports, Modules..." />
+          <label>{{ i18n.t('pm.worktype.unit_label') }}</label>
+          <input [(ngModel)]="newWorkType.unitLabel" [placeholder]="i18n.t('pm.worktype.unit_ph')" />
         </div>
         <div class="form-group">
-          <label>Prix unitaire (€)</label>
+          <label>{{ i18n.t('pm.worktype.price_label') }}</label>
           <input type="number" [(ngModel)]="newWorkType.unitPrice" min="0" placeholder="0" />
         </div>
         <div class="form-group">
-          <label>Durée estimée par unité (jours)</label>
-          <input type="number" [(ngModel)]="newWorkType.durationDays" min="0.5" step="0.5" placeholder="ex: 0.5, 1, 1.5, 2..." />
+          <label>{{ i18n.t('pm.worktype.duration_label') }}</label>
+          <input type="number" [(ngModel)]="newWorkType.durationDays" min="0.5" step="0.5" [placeholder]="i18n.t('pm.worktype.duration_ph')" />
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showAddWorkTypeModal=false">Annuler</button>
+        <button class="btn-cancel" (click)="showAddWorkTypeModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmAddWorkType()" [disabled]="!newWorkType.name.trim()">
-          Créer
+          {{ i18n.t('common.create') }}
         </button>
       </div>
     </div>
@@ -2212,38 +2291,38 @@
   <div class="modal-overlay" *ngIf="showAddWorkTicketModal" (click)="showAddWorkTicketModal=false">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Nouveau ticket</h3>
+        <h3>{{ i18n.t('pm.ticket.modal_title') }}</h3>
         <button class="modal-close" (click)="showAddWorkTicketModal=false">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Type de livrable *</label>
+          <label>{{ i18n.t('pm.ticket.type_label') }}</label>
           <select [(ngModel)]="newWorkTicket.workTypeId">
-            <option [ngValue]="null">— Sélectionner —</option>
+            <option [ngValue]="null">{{ i18n.t('common.select_placeholder') }}</option>
             <option *ngFor="let wt of workTypes" [ngValue]="wt.id">{{ wt.name }} ({{ wt.unitLabel }})</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Quantité</label>
+          <label>{{ i18n.t('pm.ticket.qty_label') }}</label>
           <input type="number" [(ngModel)]="newWorkTicket.quantity" min="1" />
         </div>
         <div class="form-group">
-          <label>Consultant *</label>
+          <label>{{ i18n.t('pm.ticket.consultant_label') }}</label>
           <select [(ngModel)]="newWorkTicket.consultant">
-            <option value="">— Sélectionner —</option>
+            <option value="">{{ i18n.t('common.select_placeholder') }}</option>
             <option *ngFor="let r of resources" [value]="r.personName">{{ r.personName }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Date d'assignation</label>
+          <label>{{ i18n.t('pm.ticket.assigned_date_label') }}</label>
           <input type="date" [(ngModel)]="newWorkTicket.assignedDate" />
         </div>
         <div class="form-group">
-          <label>Date de début</label>
+          <label>{{ i18n.t('pm.ticket.start_date_label') }}</label>
           <input type="date" [(ngModel)]="newWorkTicket.startDate" (change)="onTicketStartDateChange()" />
         </div>
         <div class="form-group">
-          <label>Date de fin prévue <span class="uow-auto-hint">(auto-calculée si vide)</span></label>
+          <label>{{ i18n.t('pm.ticket.end_date_label') }} <span class="uow-auto-hint">({{ i18n.t('pm.ticket.end_date_hint') }})</span></label>
           <input type="date" [(ngModel)]="newWorkTicket.endDate" />
         </div>
         <div class="form-group">
@@ -2252,10 +2331,10 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showAddWorkTicketModal=false">Annuler</button>
+        <button class="btn-cancel" (click)="showAddWorkTicketModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmAddWorkTicket()"
           [disabled]="!newWorkTicket.workTypeId || !newWorkTicket.consultant">
-          Créer le ticket
+          {{ i18n.t('pm.ticket.create_btn') }}
         </button>
       </div>
     </div>
@@ -2265,16 +2344,16 @@
   <div class="modal-overlay" *ngIf="showChangeEngagementModal" (click)="showChangeEngagementModal=false">
     <div class="modal-card engagement-switch-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Passer en Engagement Résultats</h3>
+        <h3>{{ i18n.t('pm.engagement_switch.title') }}</h3>
         <button class="modal-close" (click)="showChangeEngagementModal=false">✕</button>
       </div>
       <div class="modal-body">
 
         <!-- Sélection du nouveau type -->
         <div class="form-group">
-          <label>Choisir le type de résultats</label>
+          <label>{{ i18n.t('pm.engagement_switch.choose_type') }}</label>
           <select [(ngModel)]="targetEngagementType" class="engagement-type-select">
-            <option [ngValue]="null">— Sélectionner —</option>
+            <option [ngValue]="null">{{ i18n.t('common.select_placeholder') }}</option>
             <option *ngFor="let e of resultatsEngagementTypes" [value]="e.code"
               [disabled]="e.code === projectEngagementType">{{ e.label }}</option>
           </select>
@@ -2284,9 +2363,9 @@
         <ng-container *ngIf="targetEngagementType && targetEngagementType !== projectEngagementType">
           <div class="engagement-switch-summary">
             <div class="ess-row">
-              <span class="ess-from">Actuel : <strong>{{ currentEngagementLabel }}</strong></span>
+              <span class="ess-from">{{ i18n.t('pm.engagement_switch.current') }} <strong>{{ currentEngagementLabel }}</strong></span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              <span class="ess-to">Nouveau : <strong>{{ targetEngagementLabel }}</strong></span>
+              <span class="ess-to">{{ i18n.t('pm.engagement_switch.new') }} <strong>{{ targetEngagementLabel }}</strong></span>
             </div>
 
             <div class="ess-impact">
@@ -2294,15 +2373,15 @@
               <ng-container *ngIf="targetIsResultats && isMoyensEngagement">
                 <div class="ess-item preserved">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span>Données conservées : Daily Cost, Working Days, Other Costs, Rebill</span>
+                  <span>{{ i18n.t('pm.engagement_switch.preserved_common') }}</span>
                 </div>
                 <div class="ess-item hidden">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <span>Masqués (non supprimés) : Billed Days, Daily Rate (ADR), Revenus — Moyens</span>
+                  <span>{{ i18n.t('pm.engagement_switch.hidden_to_results') }}</span>
                 </div>
                 <div class="ess-item new">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span>Nouveau disponible : {{ targetEngagementType === 'WP' ? 'Work Package' : 'Unit of Work' }}</span>
+                  <span>{{ i18n.t('pm.engagement_switch.new_available') }} {{ targetEngagementType === 'WP' ? 'Work Package' : 'Unit of Work' }}</span>
                 </div>
               </ng-container>
 
@@ -2310,15 +2389,15 @@
               <ng-container *ngIf="targetIsMoyens && isResultatsEngagement">
                 <div class="ess-item preserved">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span>Données conservées : Daily Cost, Working Days, Other Costs, Rebill</span>
+                  <span>{{ i18n.t('pm.engagement_switch.preserved_common') }}</span>
                 </div>
                 <div class="ess-item hidden">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <span>Masqués (non supprimés) : Revenus — Résultats (WP/UoW)</span>
+                  <span>{{ i18n.t('pm.engagement_switch.hidden_to_moyens') }}</span>
                 </div>
                 <div class="ess-item new">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span>Nouveau disponible : Billed Days, Daily Rate (ADR), Revenus — Moyens</span>
+                  <span>{{ i18n.t('pm.engagement_switch.new_available_moyens') }}</span>
                 </div>
               </ng-container>
 
@@ -2326,7 +2405,7 @@
               <ng-container *ngIf="(targetIsResultats && isResultatsEngagement) || (targetIsMoyens && isMoyensEngagement)">
                 <div class="ess-item preserved">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span>Toutes les données conservées — même catégorie d'engagement</span>
+                  <span>{{ i18n.t('pm.engagement_switch.same_category') }}</span>
                 </div>
               </ng-container>
             </div>
@@ -2335,10 +2414,10 @@
 
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showChangeEngagementModal=false">Annuler</button>
+        <button class="btn-cancel" (click)="showChangeEngagementModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmChangeEngagement()"
           [disabled]="!targetEngagementType || targetEngagementType === projectEngagementType || changingEngagement">
-          {{ changingEngagement ? 'Changement en cours...' : 'Confirmer le changement' }}
+          {{ changingEngagement ? i18n.t('pm.engagement_switch.changing') : i18n.t('pm.engagement_switch.confirm_btn') }}
         </button>
       </div>
     </div>
@@ -2348,30 +2427,30 @@
   <div class="modal-overlay" *ngIf="showAddCountryModal" (click)="closeAddCountryModal()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Ajouter un pays au projet</h3>
+        <h3>{{ i18n.t('pm.header.add_country_tooltip') }}</h3>
         <button class="modal-close" (click)="closeAddCountryModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Pays</label>
+          <label>{{ i18n.t('pm.country.col_country') }}</label>
           <select [(ngModel)]="newCountry.countryId">
-            <option [ngValue]="null" disabled>Sélectionner un pays</option>
+            <option [ngValue]="null" disabled>{{ i18n.t('pm.country.select_country_ph') }}</option>
             <option *ngFor="let c of availableCountriesToAdd" [ngValue]="c.id">{{ c.label }} ({{ c.code }})</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Chef de Projet</label>
+          <label>{{ i18n.t('pm.country.pm_label') }}</label>
           <select [(ngModel)]="newCountry.pmId">
-            <option [ngValue]="null">À assigner (l'Admin complètera)</option>
+            <option [ngValue]="null">{{ i18n.t('pm.country.pm_to_assign') }}</option>
             <option *ngFor="let p of pms" [ngValue]="p.id">{{ p.label }}</option>
           </select>
         </div>
         <p class="error-msg" *ngIf="addCountryError">{{ addCountryError }}</p>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="closeAddCountryModal()">Annuler</button>
+        <button class="btn-cancel" (click)="closeAddCountryModal()">{{ i18n.t('common.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmAddCountry()" [disabled]="!newCountry.countryId || addingCountry">
-          {{ addingCountry ? 'Ajout en cours...' : 'Ajouter le pays' }}
+          {{ addingCountry ? i18n.t('pm.country.adding') : i18n.t('pm.country.add_country_btn') }}
         </button>
       </div>
     </div>
@@ -2381,21 +2460,18 @@
   <div class="modal-overlay" *ngIf="showDeleteLotModal" (click)="showDeleteLotModal=false">
     <div class="modal-card" (click)="$event.stopPropagation()" style="max-width:420px">
       <div class="modal-header">
-        <h3>Supprimer le lot</h3>
+        <h3>{{ i18n.t('pm.lot.delete_title') }}</h3>
         <button class="modal-close" (click)="showDeleteLotModal=false">✕</button>
       </div>
       <div class="modal-body">
-        <p style="font-size:14px;color:#1e293b;margin:0">
-          Êtes-vous sûr de vouloir supprimer le lot
-          <strong style="color:var(--pm-accent)">&laquo; {{ pendingDeleteLotName }} &raquo;</strong> ?
-        </p>
+        <p class="pm-lot-delete-name" style="font-size:14px;color:#1e293b;margin:0" [innerHTML]="i18n.t('pm.lot.delete_confirm', '<strong>' + (pendingDeleteLotName || '') + '</strong>')"></p>
         <p style="font-size:12px;color:#94a3b8;margin:8px 0 0">
-          Les livrables associés à ce lot seront également supprimés.
+          {{ i18n.t('pm.lot.delete_cascade_hint') }}
         </p>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showDeleteLotModal=false">Annuler</button>
-        <button class="btn-delete-confirm" (click)="confirmDeleteLot()">Supprimer</button>
+        <button class="btn-cancel" (click)="showDeleteLotModal=false">{{ i18n.t('common.cancel') }}</button>
+        <button class="btn-delete-confirm" (click)="confirmDeleteLot()">{{ i18n.t('common.delete') }}</button>
       </div>
     </div>
   </div>
@@ -2404,23 +2480,23 @@
   <div class="modal-overlay" *ngIf="showAddLotModal" (click)="showAddLotModal=false">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Créer un Lot / Milestone</h3>
+        <h3>{{ i18n.t('pm.lot.create_title') }}</h3>
         <button class="modal-close" (click)="showAddLotModal=false">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Nom du lot *</label>
+          <label>{{ i18n.t('pm.lot.name_label') }}</label>
           <input [(ngModel)]="newLotName" placeholder="ex: Lot1, Lot2, Milestone A..." autofocus
             (keydown.enter)="confirmAddLot()" />
         </div>
         <p style="font-size:12px;color:#94a3b8;margin:0">
-          Une fois le lot créé, vous pourrez y ajouter des livrables depuis la ligne du lot.
+          {{ i18n.t('pm.lot.create_hint') }}
         </p>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showAddLotModal=false">Annuler</button>
+        <button class="btn-cancel" (click)="showAddLotModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmAddLot()" [disabled]="!newLotName.trim()">
-          Créer le lot
+          {{ i18n.t('pm.lot.create_btn') }}
         </button>
       </div>
     </div>
@@ -2430,7 +2506,7 @@
   <div class="modal-overlay" *ngIf="showAddDeliverableModal" (click)="showAddDeliverableModal=false">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Ajouter un livrable</h3>
+        <h3>{{ i18n.t('pm.deliverable.modal_title') }}</h3>
         <button class="modal-close" (click)="showAddDeliverableModal=false">✕</button>
       </div>
       <div class="modal-body">
@@ -2452,7 +2528,7 @@
         <div class="form-row">
           <label>Owner</label>
           <select class="modal-input" [(ngModel)]="newDeliverable.owner">
-            <option value="">— Sélectionner —</option>
+            <option value="">{{ i18n.t('common.select_placeholder') }}</option>
             <option *ngFor="let r of resources" [value]="r.personName">{{ r.personName }}</option>
           </select>
         </div>
@@ -2478,10 +2554,10 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="showAddDeliverableModal=false">Annuler</button>
+        <button class="btn-cancel" (click)="showAddDeliverableModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="btn-confirm" (click)="confirmAddDeliverable()"
           [disabled]="!newDeliverable.deliverableName.trim() || !newDeliverable.lotName.trim()">
-          Créer le livrable
+          {{ i18n.t('pm.deliverable.create_btn') }}
         </button>
       </div>
     </div>
@@ -2500,11 +2576,11 @@
       <div class="add-mode-tabs">
         <button class="add-tab" [class.active]="addMode==='single'" (click)="addMode='single'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          {{ i18n.lang()==='fr' ? 'Ajout manuel' : 'Manual' }}
+          {{ i18n.t('pm.add.manual_tab') }}
         </button>
         <button class="add-tab" [class.active]="addMode==='bulk'" (click)="addMode='bulk'; bulkPreview=[]">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-          {{ i18n.lang()==='fr' ? 'Coller depuis Excel' : 'Paste from Excel' }}
+          {{ i18n.t('pm.add.bulk_tab') }}
         </button>
       </div>
 
@@ -2523,9 +2599,9 @@
           <input type="text" [(ngModel)]="newResource.matricule" placeholder="Ex: M12345" />
         </div>
         <div class="form-group">
-          <label>Pays</label>
+          <label>{{ i18n.t('pm.country.col_country') }}</label>
           <select [(ngModel)]="newResource.countryId">
-            <option [ngValue]="null" disabled>Sélectionner un pays</option>
+            <option [ngValue]="null" disabled>{{ i18n.t('pm.country.select_country_ph') }}</option>
             <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.label }}</option>
           </select>
         </div>
@@ -2535,29 +2611,27 @@
       <div class="modal-body" *ngIf="addMode==='bulk'">
         <div class="bulk-instructions">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          {{ i18n.lang()==='fr'
-            ? 'Copiez depuis Excel 3 colonnes dans l\'ordre : Nom complet | Matricule | Type de contrat'
-            : 'Copy from Excel 3 columns in order: Full name | Staff ID | Contract type' }}
+          {{ i18n.t('pm.add.bulk_instructions') }}
         </div>
         <div class="form-group">
-          <label>{{ i18n.lang()==='fr' ? 'Coller ici (Ctrl+V)' : 'Paste here (Ctrl+V)' }}</label>
+          <label>{{ i18n.t('pm.add.bulk_paste_label') }}</label>
           <textarea class="bulk-textarea"
             [(ngModel)]="bulkPasteText"
             (input)="parseBulkPaste()"
-            [placeholder]="i18n.lang()==='fr' ? 'Jean Dupont\tM12345\tInternal subco\nMarie Martin\tM67890\tExternal subco' : 'Jean Dupont\tM12345\tInternal subco\nMarie Martin\tM67890\tExternal subco'"
+            placeholder="Jean Dupont&#9;M12345&#9;Internal subco&#10;Marie Martin&#9;M67890&#9;External subco"
             rows="5"></textarea>
         </div>
 
         <!-- Preview table -->
         <div class="bulk-preview" *ngIf="bulkPreview.length > 0">
           <div class="bulk-preview-header">
-            <span>{{ i18n.lang()==='fr' ? 'Aperçu' : 'Preview' }}</span>
-            <span class="bulk-count-ok">{{ bulkValidCount }} {{ i18n.lang()==='fr' ? 'valide(s)' : 'valid' }}</span>
-            <span class="bulk-count-err" *ngIf="bulkErrorCount > 0">· {{ bulkErrorCount }} {{ i18n.lang()==='fr' ? 'erreur(s)' : 'error(s)' }}</span>
+            <span>{{ i18n.t('pm.add.bulk_preview') }}</span>
+            <span class="bulk-count-ok">{{ bulkValidCount }} {{ i18n.t('pm.add.bulk_valid') }}</span>
+            <span class="bulk-count-err" *ngIf="bulkErrorCount > 0">· {{ bulkErrorCount }} {{ i18n.t('pm.add.bulk_error') }}</span>
           </div>
           <div class="bulk-table-wrap">
             <table class="bulk-table">
-              <thead><tr><th>Nom complet</th><th>Matricule</th><th>Contrat</th><th></th></tr></thead>
+              <thead><tr><th>{{ i18n.t('pm.add.bulk_col_fullname') }}</th><th>{{ i18n.t('pm.add.staffid') }}</th><th>{{ i18n.t('pm.add.contract') }}</th><th></th></tr></thead>
               <tbody>
                 <tr *ngFor="let r of bulkPreview" [class.bulk-row-error]="r.error">
                   <td>{{ r.personName || '—' }}</td>
@@ -2584,8 +2658,8 @@
         <button class="btn-confirm" *ngIf="addMode==='bulk'"
           (click)="confirmBulkAdd()"
           [disabled]="bulkAdding || bulkValidCount === 0">
-          <span *ngIf="bulkAdding">{{ i18n.lang()==='fr' ? 'Ajout en cours...' : 'Adding...' }}</span>
-          <span *ngIf="!bulkAdding">{{ i18n.lang()==='fr' ? 'Ajouter tous' : 'Add all' }} ({{ bulkValidCount }})</span>
+          <span *ngIf="bulkAdding">{{ i18n.t('pm.add.bulk_adding') }}</span>
+          <span *ngIf="!bulkAdding">{{ i18n.t('pm.add.bulk_add_all') }} ({{ bulkValidCount }})</span>
         </button>
       </div>
     </div>
@@ -2597,11 +2671,9 @@
       <div class="warn-icon">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </div>
-      <div class="warn-title">{{ i18n.lang()==='fr' ? 'Matricule requis' : 'Staff ID required' }}</div>
+      <div class="warn-title">{{ i18n.t('pm.matricule_warning.title') }}</div>
       <div class="warn-msg">
-        {{ i18n.lang()==='fr'
-          ? 'Un consultant doit obligatoirement avoir un matricule pour être identifié dans les fichiers SDH et les rapports.'
-          : 'A consultant must have a staff ID to be identified in SDH files and reports.' }}
+        {{ i18n.t('pm.matricule_warning.msg') }}
       </div>
       <button class="btn-confirm" (click)="showMatriculeWarning=false">OK</button>
     </div>
@@ -2622,7 +2694,7 @@
         <polyline points="14 2 14 8 20 8"/>
         <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
       </svg>
-      Générer Bon de Livraison
+      {{ i18n.t('pm.bl.title') }}
     </div>
     <button class="bl-modal-close" (click)="closeBlModal()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -2634,35 +2706,35 @@
   <div class="bl-modal-body">
 
     <!-- Sélecteur de mois -->
-    <div class="bl-section-title">Période</div>
+    <div class="bl-section-title">{{ i18n.t('pm.bl.period') }}</div>
     <div class="bl-period-row">
       <select class="bl-input" [(ngModel)]="blSelectedPeriod" (change)="openBlModal(blSelectedPeriod)">
         <option *ngFor="let m of months" [value]="m">{{ formatMonth(m) }}</option>
       </select>
-      <span class="bl-hint">Le mois détermine les billed days pré-remplis</span>
+      <span class="bl-hint">{{ i18n.t('pm.bl.period_hint') }}</span>
     </div>
 
     <!-- Infos générales -->
-    <div class="bl-section-title" style="margin-top:16px">Informations du BL</div>
+    <div class="bl-section-title" style="margin-top:16px">{{ i18n.t('pm.bl.info_title') }}</div>
     <div class="bl-grid-2">
       <div class="bl-field">
-        <label>Numéro BL</label>
+        <label>{{ i18n.t('pm.bl.number') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.blNumber">
       </div>
       <div class="bl-field">
-        <label>Date</label>
-        <input class="bl-input" [(ngModel)]="blForm.blDate" placeholder="JJ/MM/AAAA">
+        <label>{{ i18n.t('pm.bl.date') }}</label>
+        <input class="bl-input" [(ngModel)]="blForm.blDate" [placeholder]="i18n.t('pm.bl.date_ph')">
       </div>
       <div class="bl-field">
-        <label>Numéro de commande</label>
+        <label>{{ i18n.t('pm.bl.order_number') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.orderNumber">
       </div>
       <div class="bl-field">
-        <label>ID Projet Client</label>
+        <label>{{ i18n.t('pm.bl.client_project_id') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.clientProjectId">
       </div>
       <div class="bl-field">
-        <label>Client facturé</label>
+        <label>{{ i18n.t('pm.bl.client_name') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.clientName">
       </div>
       <div class="bl-field">
@@ -2670,39 +2742,39 @@
         <input class="bl-input" [(ngModel)]="blForm.buCode">
       </div>
       <div class="bl-field">
-        <label>Description Projet</label>
+        <label>{{ i18n.t('pm.bl.project_desc') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.projectDescription">
       </div>
       <div class="bl-field">
-        <label>Code Projet</label>
+        <label>{{ i18n.t('pm.bl.project_code') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.projectCode">
       </div>
       <div class="bl-field">
-        <label>Interlocuteur fournisseur</label>
+        <label>{{ i18n.t('pm.bl.supplier_contact') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.supplierContact">
       </div>
       <div class="bl-field">
-        <label>Interlocuteur client</label>
+        <label>{{ i18n.t('pm.bl.client_contact') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.clientContact">
       </div>
       <div class="bl-field">
-        <label>Interlocuteur additionnel</label>
+        <label>{{ i18n.t('pm.bl.additional_contact') }}</label>
         <input class="bl-input" [(ngModel)]="blForm.additionalContact">
       </div>
     </div>
 
     <!-- Lignes de prestation -->
     <div class="bl-section-title" style="margin-top:16px">
-      Lignes de prestation
-      <button class="bl-add-line" (click)="addBlLine()">+ Ajouter ligne</button>
+      {{ i18n.t('pm.bl.lines_title') }}
+      <button class="bl-add-line" (click)="addBlLine()">{{ i18n.t('pm.bl.add_line_btn') }}</button>
     </div>
     <table class="bl-lines-table">
       <thead>
         <tr>
-          <th>Désignation</th>
-          <th class="tc">Quantité (jours)</th>
-          <th class="tc">Prix unitaire (€)</th>
-          <th class="tr">Total (€)</th>
+          <th>{{ i18n.t('pm.bl.designation') }}</th>
+          <th class="tc">{{ i18n.t('pm.bl.quantity_days') }}</th>
+          <th class="tc">{{ i18n.t('pm.bl.unit_price') }}</th>
+          <th class="tr">{{ i18n.t('pm.bl.total') }}</th>
           <th></th>
         </tr>
       </thead>
@@ -2735,14 +2807,14 @@
     <!-- ── Pad de signature fournisseur ── -->
     <div class="bl-section-title" style="margin-top:20px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:5px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      Signature Fournisseur
+      {{ i18n.t('pm.bl.signature_title') }}
     </div>
     <div class="bl-sig-wrapper">
       <div class="bl-sig-header">
-        <span class="bl-sig-name">{{ blForm.supplierContact || 'Fournisseur' }}</span>
+        <span class="bl-sig-name">{{ blForm.supplierContact || i18n.t('pm.bl.supplier_fallback') }}</span>
         <button class="bl-sig-clear" (click)="clearBlSignature()" type="button">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          Effacer
+          {{ i18n.t('pm.bl.clear_signature') }}
         </button>
       </div>
       <canvas #blSignatureCanvas
@@ -2758,24 +2830,24 @@
       </canvas>
       <div class="bl-sig-hint">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Signez dans le cadre ci-dessus à la souris ou au doigt
+        {{ i18n.t('pm.bl.signature_hint') }}
       </div>
     </div>
 
     <p class="bl-disclaimer">
-      Vérifiez tous les champs avant téléchargement. La signature client peut être ajoutée manuellement sur le document imprimé.
+      {{ i18n.t('pm.bl.disclaimer') }}
     </p>
   </div>
 
   <div class="bl-modal-footer">
-    <button class="btn-cancel-bl" (click)="closeBlModal()">Annuler</button>
+    <button class="btn-cancel-bl" (click)="closeBlModal()">{{ i18n.t('common.cancel') }}</button>
     <button class="btn-download-bl" (click)="generateBlPdf()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
         <polyline points="7 10 12 15 17 10"/>
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
-      Télécharger PDF
+      {{ i18n.t('pm.bl.download_btn') }}
     </button>
   </div>
 
@@ -2789,79 +2861,79 @@
 
   <!-- Finance — RIO 10.4.1 : Écart PM = PM% EAC − PM% Budget EAC -->
   <ng-container *ngIf="tipId === 'finance'">
-    <strong>Score Finance — Écart PM</strong>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : Écart &gt; 0%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 85 : Écart ≥ −2%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 70 : Écart ≥ −5%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 50 : Écart ≥ −8%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 30 : Écart ≥ −10%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 15 : Écart &lt; −10%</div>
+    <strong>{{ i18n.t('pm.tip.finance.title') }}</strong>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.finance.r1') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.finance.r2') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.finance.r3') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.finance.r4') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> {{ i18n.t('pm.tip.finance.r5') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> {{ i18n.t('pm.tip.finance.r6') }}</div>
     <div class="sf-divider"></div>
     <div class="sf-vals">
-      <span class="sf-chip">EAC : {{ totalMarginPct() | number:'1.1-1' }}%</span>
-      <span class="sf-chip">Budget : {{ budgetMarginPct() | number:'1.1-1' }}%</span>
-      <span class="sf-chip">Écart : {{ dviPct | number:'1.1-1' }}%</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.finance.eac_chip') }} {{ totalMarginPct() | number:'1.1-1' }}%</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.finance.budget_chip') }} {{ budgetMarginPct() | number:'1.1-1' }}%</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.finance.gap_chip') }} {{ dviPct | number:'1.1-1' }}%</span>
     </div>
   </ng-container>
 
   <!-- Risks — RIO 10.4.2 : Total = union (High/Critical OU Overdue) -->
   <ng-container *ngIf="tipId === 'risks'">
-    <strong>Score Risks — Total flaggés</strong>
-    <div class="sf-formula">High/Critical ∪ Overdue (union, 1 risque = 1)</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : 0 risque</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 80 : ≤ 2 risques</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 60 : ≤ 5 risques</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 40 : ≤ 10 risques</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 20 : &gt; 10 risques</div>
+    <strong>{{ i18n.t('pm.tip.risks.title') }}</strong>
+    <div class="sf-formula">{{ i18n.t('pm.tip.risks.formula') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.risks.r1') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.risks.r2') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.risks.r3') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.risks.r4') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> {{ i18n.t('pm.tip.risks.r5') }}</div>
     <div class="sf-divider"></div>
     <div class="sf-vals">
-      <span class="sf-chip">Critical : {{ openCriticalCount }}</span>
-      <span class="sf-chip">High : {{ openHighCount }}</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.risks.critical_chip') }} {{ openCriticalCount }}</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.risks.high_chip') }} {{ openHighCount }}</span>
     </div>
   </ng-container>
 
   <!-- Issues — RIO 10.4.3 : (High|Critical Impact) ET Overdue -->
   <ng-container *ngIf="tipId === 'issues'">
-    <strong>Score Issues — Total flaggées</strong>
-    <div class="sf-formula">Issues (High sévérité ou Critical Impact) avec deadline dépassée</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : 0 issue</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 80 : ≤ 3 issues</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 60 : ≤ 8 issues</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 40 : ≤ 15 issues</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 20 : &gt; 15 issues</div>
+    <strong>{{ i18n.t('pm.tip.issues.title') }}</strong>
+    <div class="sf-formula">{{ i18n.t('pm.tip.issues.formula') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.issues.r1') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.issues.r2') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.issues.r3') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.issues.r4') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> {{ i18n.t('pm.tip.issues.r5') }}</div>
     <div class="sf-divider"></div>
     <div class="sf-vals">
-      <span class="sf-chip">Ouvertes : {{ openIssues.length }} / {{ kpiIssues.length }}</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.issues.open_chip') }} {{ openIssues.length }} / {{ kpiIssues.length }}</span>
     </div>
   </ng-container>
 
   <!-- MIP — RIO 10.4.5 : Completion Rate + Delayed -->
   <ng-container *ngIf="tipId === 'mip'">
-    <strong>Score MIP — Completion + Retards</strong>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : ≥ 90% &amp; 0 retard</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 80 : ≥ 80% &amp; ≤ 2 retards</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 60 : ≥ 70%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 40 : ≥ 50%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 20 : &lt; 50%</div>
+    <strong>{{ i18n.t('pm.tip.mip.title') }}</strong>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.mip.r1') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.mip.r2') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.mip.r3') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.mip.r4') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> {{ i18n.t('pm.tip.mip.r5') }}</div>
     <div class="sf-divider"></div>
     <div class="sf-vals">
-      <span class="sf-chip">Completion : {{ mipCompletionRate | number:'1.0-1' }}%</span>
-      <span class="sf-chip">Retards : {{ mipDelayedCount }}</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.mip.completion_chip') }} {{ mipCompletionRate | number:'1.0-1' }}%</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.mip.delays_chip') }} {{ mipDelayedCount }}</span>
     </div>
   </ng-container>
 
   <!-- Facturation — RIO 10.4.4 : Collection Rate % -->
   <ng-container *ngIf="tipId === 'billing'">
-    <strong>Score Facturation — Collection Rate</strong>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 100 : ≥ 95%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> 85 : ≥ 90%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 70 : ≥ 80%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> 50 : ≥ 70%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 30 : ≥ 60%</div>
-    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> 15 : &lt; 60%</div>
+    <strong>{{ i18n.t('pm.tip.billing.title') }}</strong>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.billing.r1') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-green">●</span> {{ i18n.t('pm.tip.billing.r2') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.billing.r3') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-orange">●</span> {{ i18n.t('pm.tip.billing.r4') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> {{ i18n.t('pm.tip.billing.r5') }}</div>
+    <div class="sf-legend-row"><span class="sf-dot sf-red">●</span> {{ i18n.t('pm.tip.billing.r6') }}</div>
     <div class="sf-divider"></div>
     <div class="sf-vals">
-      <span class="sf-chip">Collection : {{ wipInvoicedPctNum | number:'1.0-1' }}%</span>
+      <span class="sf-chip">{{ i18n.t('pm.tip.billing.collection_chip') }} {{ wipInvoicedPctNum | number:'1.0-1' }}%</span>
     </div>
   </ng-container>
 

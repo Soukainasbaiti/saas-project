@@ -1,9 +1,6 @@
 <div class="wip-root">
 
-  <p class="wip-intro">
-    Suivi mensuel du WIP (Work In Progress) : comparez le montant déclaré (jours facturables × ADR) au montant
-    réellement facturé via le BL signé, dossier par dossier.
-  </p>
+  <p class="wip-intro">{{ i18n.t('wr.intro') }}</p>
 
   <!-- ── SKELETON (chargement) ── -->
   <ng-container *ngIf="loading">
@@ -19,29 +16,29 @@
   <!-- ── KPI SUMMARY ── -->
   <div class="wip-kpis" *ngIf="!loading">
     <div class="wip-kpi">
-      <div class="wip-kpi-label">Total Déclaré</div>
+      <div class="wip-kpi-label">{{ i18n.t('wr.kpi.declared') }}</div>
       <div class="wip-kpi-value blue">{{ fmt(totalDeclared) }}</div>
     </div>
     <div class="wip-kpi">
-      <div class="wip-kpi-label">Total Facturé (BL)</div>
+      <div class="wip-kpi-label">{{ i18n.t('wr.kpi.invoiced') }}</div>
       <div class="wip-kpi-value green">{{ fmt(totalInvoiced) }}</div>
     </div>
     <div class="wip-kpi">
-      <div class="wip-kpi-label">WIP Total (Écart)</div>
+      <div class="wip-kpi-label">{{ i18n.t('wr.kpi.delta') }}</div>
       <div class="wip-kpi-value" [ngClass]="deltaClass(totalDelta)">
         {{ totalDelta > 0 ? '+' : '' }}{{ fmt(totalDelta) }}
       </div>
     </div>
     <div class="wip-kpi">
-      <div class="wip-kpi-label">Mois couverts</div>
+      <div class="wip-kpi-label">{{ i18n.t('wr.kpi.months') }}</div>
       <div class="wip-kpi-value">{{ rows.length }}</div>
     </div>
     <div class="wip-kpi" *ngIf="summary?.totalOrderAmount != null">
-      <div class="wip-kpi-label">Commande Totale{{ summary?.orderPeriod ? ' (' + fmtPeriod(summary!.orderPeriod!) + ')' : '' }}</div>
+      <div class="wip-kpi-label">{{ i18n.t('wr.kpi.order_total') }}{{ summary?.orderPeriod ? ' (' + fmtPeriod(summary!.orderPeriod!) + ')' : '' }}</div>
       <div class="wip-kpi-value blue">{{ fmt(summary!.totalOrderAmount) }}</div>
     </div>
     <div class="wip-kpi" *ngIf="summary?.remainingOnOrder != null">
-      <div class="wip-kpi-label">Reste sur Commande</div>
+      <div class="wip-kpi-label">{{ i18n.t('wr.kpi.remaining') }}</div>
       <div class="wip-kpi-value" [ngClass]="orderRemainingClass(summary!.remainingOnOrder!)">
         {{ fmt(summary!.remainingOnOrder) }}
       </div>
@@ -62,7 +59,7 @@
         <path *ngIf="!hideEmpty" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
         <circle *ngIf="!hideEmpty" cx="12" cy="12" r="3"/>
       </svg>
-      {{ hideEmpty ? 'Afficher mois vides' : 'Masquer mois vides' }}
+      {{ hideEmpty ? i18n.t('wr.filter.show_empty') : i18n.t('wr.filter.hide_empty') }}
     </button>
   </div>
 
@@ -71,12 +68,12 @@
     <table class="wip-table">
       <thead>
         <tr>
-          <th>Mois</th>
-          <th class="th-right">Montant Déclaré</th>
-          <th class="th-right">Montant Facturé (BL)</th>
-          <th class="th-right">Delta (WIP)</th>
-          <th class="th-center">Documents</th>
-          <th class="th-center">Actions</th>
+          <th>{{ i18n.t('wr.col.month') }}</th>
+          <th class="th-right">{{ i18n.t('wr.col.declared') }}</th>
+          <th class="th-right">{{ i18n.t('wr.col.invoiced') }}</th>
+          <th class="th-right">{{ i18n.t('wr.col.delta') }}</th>
+          <th class="th-center">{{ i18n.t('wr.col.documents') }}</th>
+          <th class="th-center">{{ i18n.t('wr.col.actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -101,14 +98,14 @@
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
                 </svg>
-                BL signé
+                {{ i18n.t('wr.badge.bl_signed') }}
               </span>
               <span class="doc-badge" [ngClass]="getDoc(row,'BON_COMMANDE') ? 'doc-ok' : 'doc-missing'">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M9 11l3 3L22 4"/>
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                 </svg>
-                Bon de Cde
+                {{ i18n.t('wr.badge.po') }}
               </span>
             </div>
           </td>
@@ -117,14 +114,14 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
               </svg>
-              Gérer
+              {{ i18n.t('wr.btn.manage') }}
             </button>
           </td>
         </tr>
       </tbody>
       <tfoot>
         <tr class="tfoot-total">
-          <td><strong>TOTAL</strong></td>
+          <td><strong>{{ i18n.t('wr.total') }}</strong></td>
           <td class="td-right"><strong>{{ fmt(totalDeclared) }}</strong></td>
           <td class="td-right"><strong>{{ fmt(totalInvoiced) }}</strong></td>
           <td class="td-right">
@@ -144,11 +141,8 @@
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
         </svg>
       </div>
-      <p class="wip-empty-title">Aucun mois à afficher</p>
-      <p class="wip-empty-sub">
-        Aucune donnée pour {{ selectedYear }} avec ces filtres — essayez d'afficher les mois vides
-        ou changez d'année.
-      </p>
+      <p class="wip-empty-title">{{ i18n.t('wr.empty.title') }}</p>
+      <p class="wip-empty-sub">{{ i18n.t('wr.empty.sub', selectedYear.toString()) }}</p>
     </div>
   </div>
 
@@ -178,17 +172,17 @@
     <!-- Récapitulatif mois -->
     <div class="drawer-recap">
       <div class="drawer-recap-item">
-        <div class="dri-label">Déclaré</div>
+        <div class="dri-label">{{ i18n.t('wr.recap.declared') }}</div>
         <div class="dri-value blue">{{ fmt(drawerRow.declaredAmount) }}</div>
       </div>
       <div class="drawer-recap-sep">→</div>
       <div class="drawer-recap-item">
-        <div class="dri-label">Facturé</div>
+        <div class="dri-label">{{ i18n.t('wr.recap.invoiced') }}</div>
         <div class="dri-value green">{{ fmt(drawerRow.invoicedAmount) }}</div>
       </div>
       <div class="drawer-recap-sep">=</div>
       <div class="drawer-recap-item">
-        <div class="dri-label">WIP</div>
+        <div class="dri-label">{{ i18n.t('wr.recap.wip') }}</div>
         <div class="dri-value" [ngClass]="deltaClass(drawerRow.delta)">
           {{ drawerRow.delta > 0 ? '+' : '' }}{{ fmt(drawerRow.delta) }}
         </div>
@@ -202,23 +196,23 @@
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/>
         </svg>
-        BL Signé
-        <span *ngIf="getDoc(drawerRow,'BL_SIGNE')" class="doc-status-chip ok">✓ Uploadé</span>
-        <span *ngIf="!getDoc(drawerRow,'BL_SIGNE')" class="doc-status-chip missing">Manquant</span>
+        {{ i18n.t('wr.section.bl') }}
+        <span *ngIf="getDoc(drawerRow,'BL_SIGNE')" class="doc-status-chip ok">{{ i18n.t('wr.status.uploaded') }}</span>
+        <span *ngIf="!getDoc(drawerRow,'BL_SIGNE')" class="doc-status-chip missing">{{ i18n.t('wr.status.missing') }}</span>
       </div>
 
       <div class="doc-item" *ngIf="getDoc(drawerRow,'BL_SIGNE') as doc">
         <div class="doc-item-info">
           <span class="doc-file-name">{{ doc.fileName }}</span>
           <span class="doc-amount" *ngIf="doc.confirmedAmount != null">
-            Montant : <strong>{{ fmt(doc.confirmedAmount) }}</strong>
+            {{ i18n.t('wr.amount.label') }} <strong>{{ fmt(doc.confirmedAmount) }}</strong>
           </span>
           <span class="doc-amount pending" *ngIf="doc.confirmedAmount == null && doc.extractedAmount != null">
-            Montant détecté : {{ fmt(doc.extractedAmount) }} — à confirmer
+            {{ i18n.t('wr.amount.detected', fmt(doc.extractedAmount)) }}
           </span>
         </div>
         <div class="doc-item-actions">
-          <button class="btn-dl" (click)="downloadDoc(doc)" title="Télécharger">
+          <button class="btn-dl" (click)="downloadDoc(doc)" [title]="i18n.t('wr.action.download')">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
@@ -228,9 +222,9 @@
           <button class="btn-confirm-amount"
                   *ngIf="doc.confirmedAmount == null && doc.extractedAmount != null"
                   (click)="confirmDoc = doc; confirmAmount = doc.extractedAmount || 0; confirmModal = true">
-            Confirmer
+            {{ i18n.t('wr.action.confirm') }}
           </button>
-          <button class="btn-del" (click)="openDeleteDoc(doc)" title="Supprimer">
+          <button class="btn-del" (click)="openDeleteDoc(doc)" [title]="i18n.t('wr.action.delete')">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6l-1 14H6L5 6"/>
@@ -247,9 +241,9 @@
           <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
         </svg>
         <span *ngIf="!uploading['BL_SIGNE']">
-          {{ getDoc(drawerRow,'BL_SIGNE') ? 'Remplacer le BL' : 'Ajouter BL signé' }}
+          {{ getDoc(drawerRow,'BL_SIGNE') ? i18n.t('wr.upload.replace_bl') : i18n.t('wr.upload.add_bl') }}
         </span>
-        <span *ngIf="uploading['BL_SIGNE']">Envoi en cours…</span>
+        <span *ngIf="uploading['BL_SIGNE']">{{ i18n.t('wr.upload.sending') }}</span>
         <input type="file" accept=".pdf" style="display:none"
                (change)="onFileSelected($event,'BL_SIGNE')">
       </label>
@@ -262,9 +256,9 @@
           <path d="M9 11l3 3L22 4"/>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
         </svg>
-        Bon de Commande
-        <span *ngIf="getDoc(drawerRow,'BON_COMMANDE')" class="doc-status-chip ok">✓ Uploadé</span>
-        <span *ngIf="!getDoc(drawerRow,'BON_COMMANDE')" class="doc-status-chip missing">Manquant</span>
+        {{ i18n.t('wr.section.po') }}
+        <span *ngIf="getDoc(drawerRow,'BON_COMMANDE')" class="doc-status-chip ok">{{ i18n.t('wr.status.uploaded') }}</span>
+        <span *ngIf="!getDoc(drawerRow,'BON_COMMANDE')" class="doc-status-chip missing">{{ i18n.t('wr.status.missing') }}</span>
       </div>
 
       <div class="doc-item" *ngIf="getDoc(drawerRow,'BON_COMMANDE') as doc">
@@ -281,7 +275,7 @@
             </svg>
           </button>
           <button class="btn-confirm-amount" (click)="editOrderAmount(doc)">
-            {{ doc.confirmedAmount == null ? 'Définir montant' : 'Modifier montant' }}
+            {{ doc.confirmedAmount == null ? i18n.t('wr.action.set_amount') : i18n.t('wr.action.edit_amount') }}
           </button>
           <button class="btn-del" (click)="openDeleteDoc(doc)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -300,9 +294,9 @@
           <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
         </svg>
         <span *ngIf="!uploading['BON_COMMANDE']">
-          {{ getDoc(drawerRow,'BON_COMMANDE') ? 'Remplacer le BC' : 'Ajouter Bon de Commande' }}
+          {{ getDoc(drawerRow,'BON_COMMANDE') ? i18n.t('wr.upload.replace_bc') : i18n.t('wr.upload.add_bc') }}
         </span>
-        <span *ngIf="uploading['BON_COMMANDE']">Envoi en cours…</span>
+        <span *ngIf="uploading['BON_COMMANDE']">{{ i18n.t('wr.upload.sending') }}</span>
         <input type="file" accept=".pdf" style="display:none"
                (change)="onFileSelected($event,'BON_COMMANDE')">
       </label>
@@ -322,23 +316,23 @@
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      {{ confirmDoc?.documentType === 'BON_COMMANDE' ? 'Montant du Bon de Commande' : 'Montant détecté dans le BL' }}
+      {{ confirmDoc?.documentType === 'BON_COMMANDE' ? i18n.t('wr.modal.po_title') : i18n.t('wr.modal.bl_title') }}
     </div>
     <div class="modal-body">
-      <p class="modal-hint" *ngIf="confirmDoc?.documentType === 'BON_COMMANDE'">Saisissez le montant total autorisé par ce Bon de Commande.</p>
-      <p class="modal-hint" *ngIf="confirmDoc?.documentType !== 'BON_COMMANDE'">Le système a extrait le montant suivant depuis le PDF. Vérifiez et confirmez.</p>
+      <p class="modal-hint" *ngIf="confirmDoc?.documentType === 'BON_COMMANDE'">{{ i18n.t('wr.modal.po_hint') }}</p>
+      <p class="modal-hint" *ngIf="confirmDoc?.documentType !== 'BON_COMMANDE'">{{ i18n.t('wr.modal.bl_hint') }}</p>
       <div class="modal-amount-row">
-        <label>Montant (€)</label>
+        <label>{{ i18n.t('wr.modal.amount_label') }}</label>
         <input type="number" [(ngModel)]="confirmAmount" class="modal-amount-input" step="0.01">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" (click)="cancelConfirm()">Annuler</button>
+      <button class="btn-cancel" (click)="cancelConfirm()">{{ i18n.t('wr.btn.cancel') }}</button>
       <button class="btn-confirm" (click)="confirmAmountSave()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        Confirmer {{ fmt(confirmAmount) }}
+        {{ i18n.t('wr.btn.confirm_amount', fmt(confirmAmount)) }}
       </button>
     </div>
   </div>
@@ -354,15 +348,15 @@
         <polyline points="3 6 5 6 21 6"/>
         <path d="M19 6l-1 14H6L5 6"/>
       </svg>
-      Supprimer le document
+      {{ i18n.t('wr.modal.delete_doc_title') }}
     </div>
     <div class="modal-body">
-      <p>Voulez-vous supprimer <strong>{{ deleteDocTarget?.fileName }}</strong> ?</p>
-      <p class="modal-hint">Cette action est irréversible.</p>
+      <p [innerHTML]="i18n.t('wr.modal.delete_doc_confirm', '<strong>' + (deleteDocTarget?.fileName || '') + '</strong>')"></p>
+      <p class="modal-hint">{{ i18n.t('wr.modal.irreversible') }}</p>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" (click)="cancelDeleteDoc()">Annuler</button>
-      <button class="btn-danger" (click)="confirmDeleteDoc()">Supprimer</button>
+      <button class="btn-cancel" (click)="cancelDeleteDoc()">{{ i18n.t('wr.btn.cancel') }}</button>
+      <button class="btn-danger" (click)="confirmDeleteDoc()">{{ i18n.t('wr.action.delete') }}</button>
     </div>
   </div>
 </div>
@@ -378,5 +372,5 @@
     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
   </svg>
   {{ toastMsg }}
-  <span class="toast-hint">(clic pour fermer)</span>
+  <span class="toast-hint">{{ i18n.t('wr.toast.close_hint') }}</span>
 </div>

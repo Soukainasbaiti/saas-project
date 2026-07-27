@@ -44,10 +44,10 @@
           <td class="mr-col-realized">{{ fmt(m.realizedGain) }}</td>
           <td><span *ngIf="m.status" class="mr-status-badge" [class]="statusClass(m.status)">{{ m.status }}</span></td>
           <td class="mr-col-action-btns" (click)="$event.stopPropagation()">
-            <button class="mr-view-btn" (click)="openView(m)" title="Voir">
+            <button class="mr-view-btn" (click)="openView(m)" [title]="i18n.t('common.view')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
-            <button class="mr-delete-btn" (click)="openDelete(m, $event)" title="Supprimer">
+            <button class="mr-delete-btn" (click)="openDelete(m, $event)" [title]="i18n.t('common.delete')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
             </button>
           </td>
@@ -83,7 +83,7 @@
               <div class="mr-auto-val">{{ selectedMip.mipId }}</div>
             </div>
             <div class="mr-field mr-field-quarter">
-              <label>Date d'identification</label>
+              <label>{{ i18n.t('mr.field.id_date') }}</label>
               <input type="date" [(ngModel)]="selectedMip.identificationDate" />
             </div>
             <div class="mr-field mr-field-quarter">
@@ -94,7 +94,7 @@
               </select>
             </div>
             <div class="mr-field mr-field-quarter">
-              <label>Action possible</label>
+              <label>{{ i18n.t('mr.field.action_type') }}</label>
               <select [(ngModel)]="selectedMip.actionType" [disabled]="!selectedMip.lever" (change)="onActionTypeChange(selectedMip)">
                 <option value="">— Sélectionner —</option>
                 <option *ngFor="let a of actionsForLever(selectedMip.lever)" [value]="a">{{ a }}</option>
@@ -102,11 +102,11 @@
             </div>
             <div class="mr-field mr-field-quarter">
               <label>Accountable</label>
-              <input type="text" [(ngModel)]="selectedMip.accountable" placeholder="Responsable..." />
+              <input type="text" [(ngModel)]="selectedMip.accountable" [placeholder]="i18n.t('mr.field.responsible_placeholder')" />
             </div>
             <div class="mr-field mr-field-full">
-              <label>Action * <span class="mr-hint">(Verbe d'action + action précise + objectif mesurable)</span></label>
-              <textarea [(ngModel)]="selectedMip.actionDescription" rows="4" placeholder="Ex: Renégocier les contrats avec les fournisseurs afin de réduire les coûts de 8%..."></textarea>
+              <label>Action * <span class="mr-hint">{{ i18n.t('mr.field.action_hint') }}</span></label>
+              <textarea [(ngModel)]="selectedMip.actionDescription" rows="4" [placeholder]="i18n.t('mr.field.action_placeholder')"></textarea>
             </div>
           </div>
         </div>
@@ -132,8 +132,8 @@
               </select>
             </div>
             <div class="mr-field mr-field-full">
-              <label>Risques / Prérequis</label>
-              <textarea [(ngModel)]="selectedMip.risquesPrerequis" rows="2" placeholder="Risques identifiés et prérequis nécessaires..."></textarea>
+              <label>{{ i18n.t('mr.field.risks') }}</label>
+              <textarea [(ngModel)]="selectedMip.risquesPrerequis" rows="2" [placeholder]="i18n.t('mr.field.risks_placeholder')"></textarea>
             </div>
           </div>
         </div>
@@ -175,21 +175,21 @@
           <div class="mr-field">
             <label>Lever</label>
             <select [(ngModel)]="newMip.lever" (change)="onLeverChange(newMip)">
-              <option value="">— Sélectionner —</option>
+              <option value="">{{ i18n.t('common.select_placeholder') }}</option>
               <option *ngFor="let l of levers" [value]="l">{{ l }}</option>
             </select>
           </div>
           <div class="mr-field">
             <label>Action possible</label>
             <select [(ngModel)]="newMip.actionType" [disabled]="!newMip.lever" (change)="onActionTypeChange(newMip)">
-              <option value="">— Sélectionner —</option>
+              <option value="">{{ i18n.t('common.select_placeholder') }}</option>
               <option *ngFor="let a of actionsForLever(newMip.lever)" [value]="a">{{ a }}</option>
             </select>
           </div>
         </div>
         <div class="mr-field">
           <label>Action * <span class="mr-hint">(Verbe d'action + action précise + objectif mesurable)</span></label>
-          <textarea [(ngModel)]="newMip.actionDescription" rows="5" placeholder="Ex: Renégocier les contrats avec les fournisseurs afin de réduire les coûts de 8%..."></textarea>
+          <textarea [(ngModel)]="newMip.actionDescription" rows="5" [placeholder]="i18n.t('mr.field.action_placeholder')"></textarea>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="mr-field">
@@ -198,7 +198,7 @@
           </div>
           <div class="mr-field">
             <label>Accountable</label>
-            <input type="text" [(ngModel)]="newMip.accountable" placeholder="Responsable..." />
+            <input type="text" [(ngModel)]="newMip.accountable" [placeholder]="i18n.t('mr.field.responsible_placeholder')" />
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -223,9 +223,9 @@
         </div>
       </div>
       <div class="mr-create-footer">
-        <button class="mr-cancel-btn" (click)="showCreateModal=false">Annuler</button>
+        <button class="mr-cancel-btn" (click)="showCreateModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="mr-confirm-btn" (click)="confirmCreate()" [disabled]="!newMip.actionDescription?.trim() || saving">
-          {{ saving ? 'Création...' : 'Créer' }}
+          {{ saving ? i18n.t('common.creating') : i18n.t('common.create') }}
         </button>
       </div>
     </div>
@@ -240,12 +240,12 @@
           <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
         </svg>
       </div>
-      <h3>Supprimer le MIP</h3>
-      <p>Supprimer <strong>{{ pendingDelete?.mipId }}</strong> ?</p>
-      <p class="mr-delete-warning">Cette action est irréversible.</p>
+      <h3>{{ i18n.t('mr.delete.title') }}</h3>
+      <p [innerHTML]="i18n.t('mr.delete.confirm', '<strong>' + (pendingDelete?.mipId || '') + '</strong>')"></p>
+      <p class="mr-delete-warning">{{ i18n.t('common.irreversible') }}</p>
       <div class="mr-delete-actions">
-        <button class="mr-cancel-btn" (click)="cancelDelete()">Annuler</button>
-        <button class="mr-delete-confirm-btn" (click)="confirmDelete()">Supprimer</button>
+        <button class="mr-cancel-btn" (click)="cancelDelete()">{{ i18n.t('common.cancel') }}</button>
+        <button class="mr-delete-confirm-btn" (click)="confirmDelete()">{{ i18n.t('common.delete') }}</button>
       </div>
     </div>
   </div>

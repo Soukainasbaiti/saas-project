@@ -282,12 +282,12 @@ export class ProjectManagementComponent implements OnInit {
   // Libellé dynamique de l'onglet Revenus - Résultats selon le module actif (WP vs UoW)
   get resultatsRevenueLabel(): string {
     if (this.engagementModules.workPackage && !this.engagementModules.unitOfWork) {
-      return 'Revenus Work Package (WPK)';
+      return this.i18n.t('pm.rr.rev_label_wp');
     }
     if (this.engagementModules.unitOfWork && !this.engagementModules.workPackage) {
-      return 'Revenus Unit of Work (UoW)';
+      return this.i18n.t('pm.rr.rev_label_uow');
     }
-    return 'Revenus — Résultats';
+    return this.i18n.t('pm.rr.rev_resultats');
   }
   months: string[] = [];
   monthStatus: { [period: string]: 'REAL' | 'FORECAST' } = {};
@@ -756,7 +756,7 @@ export class ProjectManagementComponent implements OnInit {
       },
       error: (err) => {
         this.addingCountry = false;
-        this.addCountryError = err?.error?.error || 'Erreur lors de l\'ajout du pays.';
+        this.addCountryError = err?.error?.error || this.i18n.t('pm.toast.add_country_error');
         this.cdr.markForCheck();
       }
     });
@@ -974,7 +974,7 @@ export class ProjectManagementComponent implements OnInit {
         this.load();
       },
       error: (err) => {
-        alert(err.error?.error || 'Unable to set granularity');
+        alert(err.error?.error || this.i18n.t('pm.toast.granularity_error'));
         this.cdr.markForCheck();
       }
     });
@@ -989,11 +989,11 @@ export class ProjectManagementComponent implements OnInit {
   reopening = false;
   reopenForEditing(): void {
     if (this.reopening) return;
-    if (!confirm('Repasser ce projet en brouillon pour continuer la saisie ? Il faudra le resoumettre pour re-validation.')) return;
+    if (!confirm(this.i18n.t('pm.toast.reopen_confirm'))) return;
     this.reopening = true;
     this.api.reopenForEditing(this.projectId).subscribe({
       next: () => { this.reopening = false; this.load(); },
-      error: (e) => { this.reopening = false; alert(e.error?.error || 'Erreur lors de la réouverture'); this.cdr.markForCheck(); }
+      error: (e) => { this.reopening = false; alert(e.error?.error || this.i18n.t('pm.toast.reopen_error')); this.cdr.markForCheck(); }
     });
   }
 
@@ -1006,7 +1006,7 @@ export class ProjectManagementComponent implements OnInit {
     this.showSubmitModal = false;
     this.api.submitForValidation(this.projectId).subscribe({
       next: () => { this.load(); },
-      error: (e) => { alert(e.error?.error || 'Erreur lors de la soumission'); this.cdr.markForCheck(); }
+      error: (e) => { alert(e.error?.error || this.i18n.t('pm.toast.submit_error')); this.cdr.markForCheck(); }
     });
   }
 
@@ -1016,7 +1016,7 @@ export class ProjectManagementComponent implements OnInit {
     if (!this.rejectComment.trim()) return;
     this.api.rejectProject(this.projectId, this.rejectComment).subscribe({
       next: () => { this.showRejectModal = false; this.load(); },
-      error: (e) => { alert(e.error?.error || 'Erreur lors du rejet'); this.cdr.markForCheck(); }
+      error: (e) => { alert(e.error?.error || this.i18n.t('pm.toast.reject_error')); this.cdr.markForCheck(); }
     });
   }
 
@@ -1029,7 +1029,7 @@ export class ProjectManagementComponent implements OnInit {
     this.showValidateModal = false;
     this.api.validateProject(this.projectId).subscribe({
       next: () => { this.load(); },
-      error: (e) => { alert(e.error?.error || 'Erreur lors de la validation'); this.cdr.markForCheck(); }
+      error: (e) => { alert(e.error?.error || this.i18n.t('pm.toast.validate_error')); this.cdr.markForCheck(); }
     });
   }
 
@@ -1046,7 +1046,7 @@ export class ProjectManagementComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (e) => {
-        this.sdhResult = { imported: 0, skipped: 0, errors: [e.error?.error || 'Erreur import SDH'] };
+        this.sdhResult = { imported: 0, skipped: 0, errors: [e.error?.error || this.i18n.t('pm.toast.sdh_import_error')] };
         this.showSdhModal = true;
         this.cdr.markForCheck();
       }
@@ -1117,7 +1117,9 @@ export class ProjectManagementComponent implements OnInit {
     }
     // Monthly: "2026-01" → "Jan 26"
     const [y, mo] = p.split('-');
-    const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const monthsFr = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const monthsEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = this.i18n.lang() === 'fr' ? monthsFr : monthsEn;
     return `${months[parseInt(mo) - 1]} ${y.slice(2)}`;
   }
 
@@ -1203,7 +1205,7 @@ export class ProjectManagementComponent implements OnInit {
     this.api.saveCountryForecast({ projectId: this.projectId, countryId, month, tcv: val }).subscribe({
       next: () => this.load(),
       error: (err) => {
-        const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+        const msg = err?.error?.message || err?.error?.error || err?.message || this.i18n.t('pm.toast.save_error');
         this.showSaveError('❌ ' + msg);
         this.cdr.markForCheck();
       }
@@ -1255,7 +1257,7 @@ export class ProjectManagementComponent implements OnInit {
       next: () => this.load(),
       error: (err) => {
         row.amounts[month] = previousVal;
-        const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+        const msg = err?.error?.message || err?.error?.error || err?.message || this.i18n.t('pm.toast.save_error');
         this.showSaveError('❌ ' + msg);
         this.cdr.markForCheck();
       }
@@ -1294,6 +1296,48 @@ export class ProjectManagementComponent implements OnInit {
     const tcv = this.tcvGrandTotal();
     const budget = this.budgetGrandTotal();
     return tcv > 0 ? ((tcv - budget) / tcv) * 100 : 0;
+  }
+
+  // ── Financial Summary — détail TCV/Budget par pays ─────────────────
+  financialSummaryCountry: number | 'total' = 'total';
+
+  selectFinancialSummaryCountry(c: number | 'total'): void {
+    this.financialSummaryCountry = c;
+    this.cdr.markForCheck();
+  }
+
+  get fsSelectedCountryLabel(): string {
+    if (this.financialSummaryCountry === 'total') return this.i18n.t('pm.country.all_countries');
+    return this.projectCountries.find(c => c.countryId === this.financialSummaryCountry)?.countryName || '';
+  }
+
+  fsRevenueForMonth(m: string): number {
+    return this.financialSummaryCountry === 'total'
+      ? this.tcvTotalForMonth(m)
+      : this.countryForecastForMonth(this.financialSummaryCountry, m);
+  }
+
+  fsBudgetForMonth(m: string): number {
+    return this.financialSummaryCountry === 'total'
+      ? this.budgetTotalForMonth(m)
+      : this.budgetCountryTotalForMonth(this.financialSummaryCountry, m);
+  }
+
+  fsMarginForMonth(m: string): number {
+    return this.fsRevenueForMonth(m) - this.fsBudgetForMonth(m);
+  }
+
+  fsMarginPctForMonth(m: string): number {
+    const rev = this.fsRevenueForMonth(m);
+    return rev > 0 ? (this.fsMarginForMonth(m) / rev) * 100 : 0;
+  }
+
+  fsRevenueTotal(): number { return this.months.reduce((s, m) => s + this.fsRevenueForMonth(m), 0); }
+  fsBudgetTotal(): number  { return this.months.reduce((s, m) => s + this.fsBudgetForMonth(m), 0); }
+  fsMarginTotal(): number  { return this.fsRevenueTotal() - this.fsBudgetTotal(); }
+  fsMarginPctTotal(): number {
+    const rev = this.fsRevenueTotal();
+    return rev > 0 ? (this.fsMarginTotal() / rev) * 100 : 0;
   }
 
   // ── Financial synthesis calculations ────────────────────────────
@@ -2493,7 +2537,7 @@ export class ProjectManagementComponent implements OnInit {
       error: (err) => {
         // Rollback optimistic update
         resource[prop][month] = previousVal;
-        const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+        const msg = err?.error?.message || err?.error?.error || err?.message || this.i18n.t('pm.toast.save_error');
         this.showSaveError('❌ ' + msg);
         this.cdr.markForCheck();
       }
@@ -2534,7 +2578,7 @@ export class ProjectManagementComponent implements OnInit {
         this.api.saveResourceEntry({ resourceId: target.id, month: m, [field]: num }).subscribe({
           error: (err) => {
             target[prop][m] = previousVal;
-            const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+            const msg = err?.error?.message || err?.error?.error || err?.message || this.i18n.t('pm.toast.save_error');
             this.showSaveError('❌ ' + msg);
             this.cdr.markForCheck();
           }
@@ -2566,7 +2610,7 @@ export class ProjectManagementComponent implements OnInit {
     this.api.saveOtherCost({ projectId: this.projectId, category: row.category, month, amount: val, isRebill: row.isRebill }).subscribe({
       error: (err) => {
         row.amounts[month] = previousVal;
-        const msg = err?.error?.message || err?.error?.error || err?.message || 'Erreur de sauvegarde';
+        const msg = err?.error?.message || err?.error?.error || err?.message || this.i18n.t('pm.toast.save_error');
         this.showSaveError('❌ ' + msg);
         this.cdr.markForCheck();
       }
@@ -2602,7 +2646,7 @@ export class ProjectManagementComponent implements OnInit {
       return;
     }
     if (!this.newResource.countryId) {
-      this.addResourceError = 'Veuillez sélectionner un pays.';
+      this.addResourceError = this.i18n.t('pm.toast.select_country_required');
       this.cdr.markForCheck();
       return;
     }
@@ -2613,7 +2657,7 @@ export class ProjectManagementComponent implements OnInit {
     }).subscribe({
       next: () => { this.showAddModal = false; this.load(); },
       error: (err) => {
-        this.addResourceError = err?.error?.error || 'Erreur lors de l\'ajout.';
+        this.addResourceError = err?.error?.error || this.i18n.t('pm.toast.add_resource_error');
         this.cdr.markForCheck();
       }
     });
@@ -2638,9 +2682,9 @@ export class ProjectManagementComponent implements OnInit {
         const rawCountry = (cols[2] || '').trim();
         const matched = this.matchCountry(rawCountry);
         let error: string | undefined;
-        if (!personName) error = 'Nom manquant';
-        else if (!matricule) error = 'Matricule manquant';
-        else if (matched.id === null) error = 'Pays inconnu : ' + rawCountry;
+        if (!personName) error = this.i18n.t('pm.toast.bulk_name_missing');
+        else if (!matricule) error = this.i18n.t('pm.toast.bulk_matricule_missing');
+        else if (matched.id === null) error = this.i18n.t('pm.toast.bulk_unknown_country', rawCountry);
         return { personName, matricule, countryId: matched.id, countryLabel: matched.label, error };
       });
     this.cdr.markForCheck();

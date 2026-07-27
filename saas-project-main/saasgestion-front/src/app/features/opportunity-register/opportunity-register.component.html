@@ -46,10 +46,10 @@
           <td class="or-col-bool" [class.onhold-yes]="o.onHold">{{ o.onHold ? 'Yes' : 'No' }}</td>
           <td class="or-col-owner">{{ o.owner || '—' }}</td>
           <td class="or-col-action" (click)="$event.stopPropagation()">
-            <button class="or-view-btn" (click)="openView(o)" title="Voir détails">
+            <button class="or-view-btn" (click)="openView(o)" [title]="i18n.t('or.action.view_details')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
-            <button class="or-delete-btn" (click)="openDelete(o, $event)" title="Supprimer">
+            <button class="or-delete-btn" (click)="openDelete(o, $event)" [title]="i18n.t('common.delete')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
             </button>
           </td>
@@ -84,11 +84,11 @@
           <div class="or-section-title">{{ i18n.t('or.sec.ident') }}</div>
           <div class="or-form-grid">
             <div class="or-field or-field-quarter">
-              <label>O-ID <span class="or-auto-tag">auto</span></label>
+              <label>O-ID <span class="or-auto-tag">{{ i18n.t('common.auto') }}</span></label>
               <div class="or-auto-val">{{ selectedOpp.oId }}</div>
             </div>
             <div class="or-field or-field-quarter">
-              <label>Date d'identification</label>
+              <label>{{ i18n.t('or.field.date') }}</label>
               <input type="date" [(ngModel)]="selectedOpp.identificationDate" />
             </div>
             <div class="or-field or-field-quarter">
@@ -96,16 +96,16 @@
               <input type="date" [(ngModel)]="selectedOpp.deadline" />
             </div>
             <div class="or-field or-field-quarter">
-              <label>Catégorie</label>
+              <label>{{ i18n.t('or.field.category') }}</label>
               <select [(ngModel)]="selectedOpp.category">
-                <option value="">— Sélectionner —</option>
+                <option value="">{{ i18n.t('common.select_placeholder') }}</option>
                 <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
               </select>
             </div>
             <div class="or-field or-field-full">
-              <label>Opportunity Description * <span class="or-hint">(SI... Alors... Avec...)</span></label>
+              <label>Opportunity Description * <span class="or-hint">{{ i18n.t('or.field.desc_hint') }}</span></label>
               <textarea [(ngModel)]="selectedOpp.opportunityDescription" rows="4"
-                placeholder="SI [condition]&#10;ALORS [opportunité]&#10;AVEC [bénéfice estimé]"></textarea>
+                [placeholder]="i18n.t('or.field.desc_placeholder')"></textarea>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@
               <input type="number" [(ngModel)]="selectedOpp.price" min="0" placeholder="0" />
             </div>
             <div class="or-field or-field-third">
-              <label>Estimated Benefit <span class="or-auto-tag">auto</span></label>
+              <label>Estimated Benefit <span class="or-auto-tag">{{ i18n.t('common.auto') }}</span></label>
               <div class="or-auto-val or-benefit">
                 {{ computeBenefit(selectedOpp.price, selectedOpp.costs) != null
                   ? fmt(computeBenefit(selectedOpp.price, selectedOpp.costs)) : '—' }}
@@ -135,7 +135,7 @@
             </div>
             <div class="or-field or-field-half">
               <label>Owner</label>
-              <input type="text" [(ngModel)]="selectedOpp.owner" placeholder="Responsable..." />
+              <input type="text" [(ngModel)]="selectedOpp.owner" [placeholder]="i18n.t('common.owner_placeholder')" />
             </div>
           </div>
         </div>
@@ -146,7 +146,7 @@
           <div class="or-form-grid">
             <div class="or-field or-field-full">
               <label>Action to be taken</label>
-              <textarea [(ngModel)]="selectedOpp.actionToBeTaken" rows="3" placeholder="Actions à mener..."></textarea>
+              <textarea [(ngModel)]="selectedOpp.actionToBeTaken" rows="3" [placeholder]="i18n.t('or.field.action_placeholder')"></textarea>
             </div>
           </div>
         </div>
@@ -168,21 +168,21 @@
               </select>
             </div>
             <div class="or-field or-field-third">
-              <label>On Hold ? <span class="or-hint">(No par défaut)</span></label>
+              <label>On Hold ? <span class="or-hint">{{ i18n.t('or.field.onhold_hint') }}</span></label>
               <select [(ngModel)]="selectedOpp.onHold">
                 <option [ngValue]="false">No</option>
                 <option [ngValue]="true">Yes</option>
               </select>
             </div>
             <div class="or-field or-field-half">
-              <label>Overdue <span class="or-auto-tag">auto</span></label>
+              <label>Overdue <span class="or-auto-tag">{{ i18n.t('common.auto') }}</span></label>
               <div class="or-auto-val" [class.or-overdue]="selectedOpp.overdue">
                 {{ selectedOpp.overdue ? '⚠️ Yes' : '✅ No' }}
               </div>
             </div>
             <div class="or-field or-field-full">
               <label>Comments</label>
-              <textarea [(ngModel)]="selectedOpp.comments" rows="2" placeholder="Commentaires..."></textarea>
+              <textarea [(ngModel)]="selectedOpp.comments" rows="2" [placeholder]="i18n.t('or.field.comments_placeholder')"></textarea>
             </div>
           </div>
         </div>
@@ -200,13 +200,13 @@
       </div>
       <div class="or-create-body">
         <div class="or-field">
-          <label>Description * <span class="or-hint">(SI... Alors... Avec...)</span></label>
+          <label>Description * <span class="or-hint">{{ i18n.t('or.field.desc_hint') }}</span></label>
           <textarea [(ngModel)]="newOpp.opportunityDescription" rows="5"
-            placeholder="SI [condition]&#10;ALORS [opportunité]&#10;AVEC [bénéfice estimé]"></textarea>
+            [placeholder]="i18n.t('or.field.desc_placeholder')"></textarea>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="or-field">
-            <label>Date d'identification</label>
+            <label>{{ i18n.t('or.field.date') }}</label>
             <input type="date" [(ngModel)]="newOpp.identificationDate" />
           </div>
           <div class="or-field">
@@ -215,9 +215,9 @@
           </div>
         </div>
         <div class="or-field">
-          <label>Catégorie</label>
+          <label>{{ i18n.t('or.field.category') }}</label>
           <select [(ngModel)]="newOpp.category">
-            <option value="">— Sélectionner —</option>
+            <option value="">{{ i18n.t('common.select_placeholder') }}</option>
             <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
           </select>
         </div>
@@ -234,7 +234,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="or-field">
             <label>Owner</label>
-            <input type="text" [(ngModel)]="newOpp.owner" placeholder="Responsable..." />
+            <input type="text" [(ngModel)]="newOpp.owner" [placeholder]="i18n.t('common.owner_placeholder')" />
           </div>
           <div class="or-field">
             <label>% New PM</label>
@@ -243,10 +243,10 @@
         </div>
       </div>
       <div class="or-create-footer">
-        <button class="or-cancel-btn" (click)="showCreateModal=false">Annuler</button>
+        <button class="or-cancel-btn" (click)="showCreateModal=false">{{ i18n.t('common.cancel') }}</button>
         <button class="or-confirm-btn" (click)="confirmCreate()"
           [disabled]="!newOpp.opportunityDescription?.trim() || !newOpp.deadline || saving">
-          {{ saving ? 'Création...' : 'Créer l\'Opportunité' }}
+          {{ saving ? i18n.t('common.creating') : i18n.t('or.create.btn') }}
         </button>
       </div>
     </div>
@@ -261,12 +261,12 @@
           <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
         </svg>
       </div>
-      <h3>Supprimer l'opportunité</h3>
-      <p>Supprimer <strong>{{ pendingDelete?.oId }}</strong> ?</p>
-      <p class="or-delete-warning">Cette action est irréversible.</p>
+      <h3>{{ i18n.t('or.delete.title') }}</h3>
+      <p [innerHTML]="i18n.t('or.delete.confirm', '<strong>' + (pendingDelete?.oId || '') + '</strong>')"></p>
+      <p class="or-delete-warning">{{ i18n.t('common.irreversible') }}</p>
       <div class="or-delete-actions">
-        <button class="or-cancel-btn" (click)="cancelDelete()">Annuler</button>
-        <button class="or-delete-confirm-btn" (click)="confirmDelete()">Supprimer</button>
+        <button class="or-cancel-btn" (click)="cancelDelete()">{{ i18n.t('common.cancel') }}</button>
+        <button class="or-delete-confirm-btn" (click)="confirmDelete()">{{ i18n.t('common.delete') }}</button>
       </div>
     </div>
   </div>
