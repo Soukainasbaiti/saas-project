@@ -762,6 +762,26 @@ export class ProjectManagementComponent implements OnInit {
     });
   }
 
+  deletingCountry = false;
+  deleteProjectCountry(c: { countryId: number; countryName: string; isLead: boolean }): void {
+    if (c.isLead || this.deletingCountry) return;
+    if (!confirm(this.i18n.t('pm.country.delete_confirm', c.countryName))) return;
+    this.deletingCountry = true;
+    this.api.deleteProjectCountry(this.projectId, c.countryId).subscribe({
+      next: () => {
+        this.deletingCountry = false;
+        this.loadProjectCountries();
+        this.load();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.deletingCountry = false;
+        this.showSaveError('❌ ' + (err?.error?.error || this.i18n.t('pm.country.delete_error')));
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   // Matricule warning
   showMatriculeWarning = false;
   addResourceError = '';

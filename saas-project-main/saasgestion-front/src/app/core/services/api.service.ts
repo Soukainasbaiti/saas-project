@@ -146,6 +146,9 @@ export class ApiService {
   assignCountryPm(projectId: number, countryId: number, pmId: number): Observable<any> {
     return this.http.patch<any>(`${this.base}/projects/${projectId}/countries/${countryId}/pm`, { pmId });
   }
+  deleteProjectCountry(projectId: number, countryId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/countries/${countryId}`);
+  }
 
   // ── Project Management ────────────────────────────────────────
   getProjectManagement(projectId: number): Observable<any> {

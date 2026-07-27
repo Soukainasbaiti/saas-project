@@ -10,5 +10,6 @@ public interface ProjectCountryBudgetLineRepository extends JpaRepository<Projec
     List<ProjectCountryBudgetLine> findByProjectIdOrderByCountryIdAscCategoryAscMonthAsc(Long projectId);
     List<ProjectCountryBudgetLine> findByProjectIdAndCountryIdAndCategory(Long projectId, Long countryId, String category);
     Optional<ProjectCountryBudgetLine> findByProjectIdAndCountryIdAndCategoryAndMonth(Long projectId, Long countryId, String category, String month);
+    boolean existsByProjectIdAndCountryId(Long projectId, Long countryId);
     void deleteByProjectId(Long projectId);
 }

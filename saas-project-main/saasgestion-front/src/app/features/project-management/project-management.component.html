@@ -771,10 +771,11 @@
               <th class="col-name sticky-col">{{ i18n.t('pm.country.col_country') }}</th>
               <th *ngFor="let m of months" class="col-month" [class.th-past]="isPastMonth(m)" [class.th-current]="isCurrentMonth(m)">{{ formatMonth(m) }}</th>
               <th class="col-total">Total</th>
+              <th class="col-action"></th>
             </tr></thead>
             <tbody>
               <tr *ngIf="!projectCountries.length">
-                <td [attr.colspan]="months.length+2" class="empty-msg">{{ i18n.t('pm.country.no_countries') }}</td>
+                <td [attr.colspan]="months.length+3" class="empty-msg">{{ i18n.t('pm.country.no_countries') }}</td>
               </tr>
               <tr *ngFor="let c of projectCountries">
                 <td class="col-name sticky-col category-cell">
@@ -796,6 +797,11 @@
                   </ng-template>
                 </td>
                 <td class="col-total total-cell">{{ cfmt(countryForecastRowTotal(c.countryId)) }}</td>
+                <td class="col-action">
+                  <button *ngIf="!c.isLead" class="btn-delete-row" (click)="deleteProjectCountry(c)" [title]="i18n.t('btn.delete')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                  </button>
+                </td>
               </tr>
             </tbody>
             <tfoot>
@@ -803,6 +809,7 @@
                 <td class="sticky-col">{{ i18n.t('pm.country.tcv_total') }}</td>
                 <td *ngFor="let m of months" class="total-cell">{{ cfmt(tcvTotalForMonth(m)) }}</td>
                 <td class="total-cell grand">{{ cfmt(tcvGrandTotal()) }}</td>
+                <td></td>
               </tr>
             </tfoot>
           </table>

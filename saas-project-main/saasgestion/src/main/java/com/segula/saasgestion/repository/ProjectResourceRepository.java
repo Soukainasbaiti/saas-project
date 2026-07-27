@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface ProjectResourceRepository extends JpaRepository<ProjectResource, Long> {
     List<ProjectResource> findByProjectIdOrderByIdAsc(Long projectId);
     Optional<ProjectResource> findByProjectIdAndMatricule(Long projectId, String matricule);
+    boolean existsByProjectIdAndCountryId(Long projectId, Long countryId);
 }

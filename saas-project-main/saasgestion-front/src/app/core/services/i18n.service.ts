@@ -671,6 +671,8 @@ const T: Record<string, Record<Lang, string>> = {
   'pm.country.pm_to_assign':      { fr: 'À assigner (l\'Admin complètera)', en: 'To be assigned (Admin will complete)' },
   'pm.country.adding':            { fr: 'Ajout en cours...',            en: 'Adding...' },
   'pm.country.add_country_btn':   { fr: 'Ajouter le pays',              en: 'Add country' },
+  'pm.country.delete_confirm':    { fr: 'Retirer {0} de ce projet ?',   en: 'Remove {0} from this project?' },
+  'pm.country.delete_error':      { fr: 'Erreur lors de la suppression du pays.', en: 'Error removing the country.' },
   'pm.country.all_countries':     { fr: 'Tous pays',                    en: 'All countries' },
 
   // ── PM — Synthèse Financière ───────────────────────────────────────

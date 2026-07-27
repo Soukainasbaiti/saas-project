@@ -142,6 +142,22 @@ public class ProjectController {
         }
     }
 
+    @Operation(summary = "Retirer un pays du projet",
+            description = "Corrige une erreur de saisie. Impossible sur le pays chef de file ou si des données existent déjà pour ce pays.")
+    @DeleteMapping("/{id}/countries/{countryId}")
+    public ResponseEntity<?> deleteCountry(
+            @PathVariable Long id,
+            @PathVariable Long countryId,
+            Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        try {
+            projectCountryService.deleteCountry(id, countryId, userId);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(422).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @Operation(summary = "Stats dashboard", description = "KPIs globaux : budget total, CA réalisé, taux de rentabilité, répartition statuts")
     @GetMapping("/stats/dashboard")
     public ResponseEntity<DashboardStatsDto> dashboardStats(

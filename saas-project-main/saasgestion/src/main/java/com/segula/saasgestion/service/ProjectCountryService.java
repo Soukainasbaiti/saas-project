@@ -22,6 +22,9 @@ public class ProjectCountryService {
     private final CountryRepository        countryRepo;
     private final AppUserRepository        userRepo;
     private final EmailService             emailService;
+    private final ProjectCountryForecastRepository   countryForecastRepo;
+    private final ProjectCountryBudgetLineRepository countryBudgetLineRepo;
+    private final ProjectResourceRepository          resourceRepo;
 
     @Transactional(readOnly = true)
     public List<ProjectCountryDto> listByProject(Long projectId) {
@@ -140,6 +143,44 @@ public class ProjectCountryService {
 
         log.info("PM {} assigne au pays {} du projet {}", pm.getFullName(), countryId, projectId);
         return toDto(pc);
+    }
+
+    // Supprime un pays ajoute par erreur. Le pays chef de file ne peut pas
+    // etre retire (il est structurellement lie au PM principal du projet).
+    // Bloque si des donnees existent deja pour ce pays (TCV, Budget, ressources)
+    // afin d'eviter une perte de donnees accidentelle.
+    @Transactional
+    public void deleteCountry(Long projectId, Long countryId, Long requestedByUserId) {
+        ProjectCountry pc = projectCountryRepo.findByProjectIdOrderByDisplayOrderAsc(projectId).stream()
+                .filter(c -> c.getCountry().getId().equals(countryId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Ce pays n'est pas rattache a ce projet."));
+
+        if (pc.isLead()) {
+            throw new IllegalArgumentException("Le pays chef de file ne peut pas etre supprime.");
+        }
+
+        AppUser requestedBy = userRepo.findById(requestedByUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        if (!"ADMIN".equals(requestedBy.getRole())) {
+            boolean isFrontOfficePm = projectCountryRepo.findByProjectIdOrderByDisplayOrderAsc(projectId).stream()
+                    .anyMatch(c -> c.isLead() && c.getPm() != null && c.getPm().getId().equals(requestedByUserId));
+            if (!isFrontOfficePm) {
+                throw new IllegalArgumentException("Seul l'Admin ou le PM du pays Front Office peut supprimer un pays.");
+            }
+        }
+
+        boolean hasData = countryForecastRepo.existsByProjectIdAndCountryId(projectId, countryId)
+                || countryBudgetLineRepo.existsByProjectIdAndCountryId(projectId, countryId)
+                || resourceRepo.existsByProjectIdAndCountryId(projectId, countryId);
+        if (hasData) {
+            throw new IllegalArgumentException(
+                    "Ce pays a deja des donnees saisies (TCV, Budget ou ressources) et ne peut pas etre supprime. Contactez un administrateur.");
+        }
+
+        projectCountryRepo.delete(pc);
+        log.info("Pays {} retire du projet {} par {}", pc.getCountry().getName(), projectId, requestedBy.getFullName());
     }
 
     // ── Notifications ────────────────────────────────────────────────
