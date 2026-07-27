@@ -36,6 +36,16 @@
       <div class="wip-kpi-label">Mois couverts</div>
       <div class="wip-kpi-value">{{ rows.length }}</div>
     </div>
+    <div class="wip-kpi" *ngIf="summary?.totalOrderAmount != null">
+      <div class="wip-kpi-label">Commande Totale{{ summary?.orderPeriod ? ' (' + fmtPeriod(summary!.orderPeriod!) + ')' : '' }}</div>
+      <div class="wip-kpi-value blue">{{ fmt(summary!.totalOrderAmount) }}</div>
+    </div>
+    <div class="wip-kpi" *ngIf="summary?.remainingOnOrder != null">
+      <div class="wip-kpi-label">Reste sur Commande</div>
+      <div class="wip-kpi-value" [ngClass]="orderRemainingClass(summary!.remainingOnOrder!)">
+        {{ fmt(summary!.remainingOnOrder) }}
+      </div>
+    </div>
   </div>
 
   <!-- ── FILTRES ── -->
@@ -260,6 +270,7 @@
       <div class="doc-item" *ngIf="getDoc(drawerRow,'BON_COMMANDE') as doc">
         <div class="doc-item-info">
           <span class="doc-file-name">{{ doc.fileName }}</span>
+          <span class="doc-amount" *ngIf="doc.confirmedAmount != null">{{ fmt(doc.confirmedAmount) }}</span>
         </div>
         <div class="doc-item-actions">
           <button class="btn-dl" (click)="downloadDoc(doc)">
@@ -268,6 +279,9 @@
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
+          </button>
+          <button class="btn-confirm-amount" (click)="editOrderAmount(doc)">
+            {{ doc.confirmedAmount == null ? 'Définir montant' : 'Modifier montant' }}
           </button>
           <button class="btn-del" (click)="openDeleteDoc(doc)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -308,10 +322,11 @@
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      Montant détecté dans le BL
+      {{ confirmDoc?.documentType === 'BON_COMMANDE' ? 'Montant du Bon de Commande' : 'Montant détecté dans le BL' }}
     </div>
     <div class="modal-body">
-      <p class="modal-hint">Le système a extrait le montant suivant depuis le PDF. Vérifiez et confirmez.</p>
+      <p class="modal-hint" *ngIf="confirmDoc?.documentType === 'BON_COMMANDE'">Saisissez le montant total autorisé par ce Bon de Commande.</p>
+      <p class="modal-hint" *ngIf="confirmDoc?.documentType !== 'BON_COMMANDE'">Le système a extrait le montant suivant depuis le PDF. Vérifiez et confirmez.</p>
       <div class="modal-amount-row">
         <label>Montant (€)</label>
         <input type="number" [(ngModel)]="confirmAmount" class="modal-amount-input" step="0.01">

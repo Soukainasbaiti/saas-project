@@ -3,6 +3,7 @@ package com.segula.saasgestion.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ProjectIssueDto {
@@ -36,4 +37,5 @@ public class ProjectIssueDto {
     private LocalDate dtr;
     private Integer resolutionTime;
     private String remarks;
+    private List<IssueDocumentDto> documents;
 }

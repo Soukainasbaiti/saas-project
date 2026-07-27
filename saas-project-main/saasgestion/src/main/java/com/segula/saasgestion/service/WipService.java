@@ -5,6 +5,7 @@ import com.segula.saasgestion.domain.ProjectWip;
 import com.segula.saasgestion.domain.WipMonthDocument;
 import com.segula.saasgestion.dto.ProjectWipDto;
 import com.segula.saasgestion.dto.WipMonthDocumentDto;
+import com.segula.saasgestion.dto.WipSummaryDto;
 import com.segula.saasgestion.dto.WipTableRowDto;
 import com.segula.saasgestion.repository.ProjectRepository;
 import com.segula.saasgestion.repository.ProjectResourceEntryRepository;
@@ -104,6 +105,35 @@ public class WipService {
             cursor = cursor.plusMonths(1);
         }
         return rows;
+    }
+
+    // Somme du declare/facture + montant du dernier Bon de Commande confirme (remplace
+    // les precedents, ex: avenant) = reste sur la commande consommee par le projet.
+    public WipSummaryDto getWipSummary(Long projectId) {
+        List<WipTableRowDto> rows = getWipTable(projectId);
+
+        BigDecimal totalDeclared = rows.stream()
+            .map(WipTableRowDto::getDeclaredAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalInvoiced = rows.stream()
+            .map(WipTableRowDto::getInvoicedAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        WipMonthDocument lastOrder = docRepo.findByProjectIdOrderByDate(projectId).stream()
+            .filter(d -> "BON_COMMANDE".equals(d.getDocumentType()) && d.getConfirmedAmount() != null)
+            .reduce((first, second) -> second) // le plus recent (liste triee par annee/mois croissant)
+            .orElse(null);
+
+        WipSummaryDto summary = new WipSummaryDto();
+        summary.setTotalDeclared(totalDeclared.setScale(2, RoundingMode.HALF_UP));
+        summary.setTotalInvoiced(totalInvoiced.setScale(2, RoundingMode.HALF_UP));
+        if (lastOrder != null) {
+            summary.setTotalOrderAmount(lastOrder.getConfirmedAmount().setScale(2, RoundingMode.HALF_UP));
+            summary.setOrderPeriod(String.format("%d-%02d", lastOrder.getYear(), lastOrder.getMonth()));
+            summary.setRemainingOnOrder(
+                lastOrder.getConfirmedAmount().subtract(totalInvoiced).setScale(2, RoundingMode.HALF_UP));
+        }
+        return summary;
     }
 
     public WipMonthDocumentDto uploadDocument(Long projectId, int year, int month,

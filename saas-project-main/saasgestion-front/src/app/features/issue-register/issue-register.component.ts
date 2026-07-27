@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { I18nService } from '../../core/services/i18n.service';
 
+export interface IssueDocumentRow {
+  id: number;
+  fileName: string;
+  uploadedAt: string;
+}
+
 export interface IssueRow {
   id: number;
   projectId: number;
@@ -30,6 +36,7 @@ export interface IssueRow {
   dtr: string | null;
   resolutionTime: number | null;
   remarks: string;
+  documents: IssueDocumentRow[];
 }
 
 @Component({
@@ -57,6 +64,8 @@ export class IssueRegisterComponent implements OnInit {
   // Modal création
   showCreateModal = false;
   newIssue = this.emptyIssue();
+  newIssueFile: File | null = null;
+  uploadingDoc = false;
 
   // Modal suppression
   showDeleteConfirm = false;
@@ -132,7 +141,14 @@ export class IssueRegisterComponent implements OnInit {
   // ── Create ────────────────────────────────────────────────────
   openCreate(): void {
     this.newIssue = this.emptyIssue();
+    this.newIssueFile = null;
     this.showCreateModal = true;
+    this.cdr.markForCheck();
+  }
+
+  onNewIssueFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.newIssueFile = input.files?.[0] || null;
     this.cdr.markForCheck();
   }
 
@@ -141,10 +157,29 @@ export class IssueRegisterComponent implements OnInit {
     this.saving = true;
     this.api.createIssue(this.projectId, this.newIssue).subscribe({
       next: i => {
-        this.issues = [...this.issues, i];
-        this.showCreateModal = false;
-        this.saving = false;
-        this.cdr.markForCheck();
+        if (this.newIssueFile) {
+          this.api.uploadIssueDocument(this.projectId, i.id, this.newIssueFile).subscribe({
+            next: doc => {
+              i.documents = [doc];
+              this.issues = [...this.issues, i];
+              this.showCreateModal = false;
+              this.saving = false;
+              this.cdr.markForCheck();
+            },
+            error: () => {
+              // L'issue est créée même si l'upload échoue ; on garde l'issue.
+              this.issues = [...this.issues, i];
+              this.showCreateModal = false;
+              this.saving = false;
+              this.cdr.markForCheck();
+            }
+          });
+        } else {
+          this.issues = [...this.issues, i];
+          this.showCreateModal = false;
+          this.saving = false;
+          this.cdr.markForCheck();
+        }
       },
       error: () => { this.saving = false; this.cdr.markForCheck(); }
     });
@@ -191,6 +226,44 @@ export class IssueRegisterComponent implements OnInit {
     });
   }
 
+  // ── Pièces jointes (édition) ─────────────────────────────────────
+  onEditFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.selectedIssue) return;
+    this.uploadingDoc = true;
+    this.cdr.markForCheck();
+    this.api.uploadIssueDocument(this.projectId, this.selectedIssue.id, file).subscribe({
+      next: doc => {
+        this.selectedIssue!.documents = [...(this.selectedIssue!.documents || []), doc];
+        this.uploadingDoc = false;
+        this.cdr.markForCheck();
+      },
+      error: () => { this.uploadingDoc = false; this.cdr.markForCheck(); }
+    });
+    input.value = '';
+  }
+
+  downloadIssueDoc(doc: IssueDocumentRow): void {
+    if (!this.selectedIssue) return;
+    this.api.downloadIssueDocument(this.projectId, this.selectedIssue.id, doc.id).subscribe(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = doc.fileName || 'document.pdf';
+      a.click(); URL.revokeObjectURL(url);
+    });
+  }
+
+  deleteIssueDoc(doc: IssueDocumentRow): void {
+    if (!this.selectedIssue) return;
+    this.api.deleteIssueDocument(this.projectId, this.selectedIssue.id, doc.id).subscribe({
+      next: () => {
+        this.selectedIssue!.documents = this.selectedIssue!.documents.filter(d => d.id !== doc.id);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   // ── Delete ────────────────────────────────────────────────────
   openDeleteConfirm(issue: IssueRow, event?: Event): void {
     event?.stopPropagation();
@@ -225,7 +298,7 @@ export class IssueRegisterComponent implements OnInit {
       sustainableResolution: '', exitCriteria: '', owner: '',
       qualityLeader: '', communication: '', escaladeLevel: '',
       escaladeDate: null, escaladeDecision: '', link: '',
-      status: 'Open', dtr: null, remarks: ''
+      status: 'Open', dtr: null, remarks: '', documents: []
     };
   }
 }

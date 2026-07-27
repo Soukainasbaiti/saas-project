@@ -24,6 +24,14 @@ interface WipTableRow {
   documents: WipDocument[];
 }
 
+interface WipSummary {
+  totalDeclared: number;
+  totalInvoiced: number;
+  totalOrderAmount: number | null;
+  orderPeriod: string | null;
+  remainingOnOrder: number | null;
+}
+
 @Component({
   selector: 'app-wip-register',
   standalone: true,
@@ -36,6 +44,7 @@ export class WipRegisterComponent implements OnInit {
   @Input() projectId!: number;
 
   rows: WipTableRow[] = [];
+  summary: WipSummary | null = null;
   loading = false;
 
   // Filtres
@@ -67,7 +76,13 @@ export class WipRegisterComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadSummary(); }
+
+  loadSummary(): void {
+    this.api.getWipSummary(this.projectId).subscribe({
+      next: s => { this.summary = s; this.cdr.markForCheck(); }
+    });
+  }
 
   load(): void {
     this.loading = true;
@@ -139,10 +154,16 @@ export class WipRegisterComponent implements OnInit {
           this.confirmDoc = doc;
           this.confirmAmount = doc.extractedAmount;
           this.confirmModal = true;
+        } else if (docType === 'BON_COMMANDE') {
+          // Pas d'extraction automatique pour le BC : on ouvre directement la saisie du montant.
+          this.confirmDoc = doc;
+          this.confirmAmount = doc.confirmedAmount || 0;
+          this.confirmModal = true;
         } else {
           this.showToast('Document ajouté avec succès', 'success');
         }
         this.load();
+        this.loadSummary();
         this.cdr.markForCheck();
       },
       error: () => {
@@ -163,6 +184,7 @@ export class WipRegisterComponent implements OnInit {
         this.confirmDoc = null;
         this.showToast('Montant confirmé avec succès', 'success');
         this.load();
+        this.loadSummary();
         this.cdr.markForCheck();
       },
       error: () => {
@@ -170,6 +192,15 @@ export class WipRegisterComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  // Permet de saisir/modifier le montant d'un Bon de Commande déjà uploadé
+  // (pas d'extraction automatique possible pour ce type de document).
+  editOrderAmount(doc: WipDocument): void {
+    this.confirmDoc = doc;
+    this.confirmAmount = doc.confirmedAmount || 0;
+    this.confirmModal = true;
+    this.cdr.markForCheck();
   }
 
   cancelConfirm(): void {
@@ -210,6 +241,7 @@ export class WipRegisterComponent implements OnInit {
         this.deleteDocModal = false;
         this.showToast('Document supprimé', 'success');
         this.load();
+        this.loadSummary();
         this.cdr.markForCheck();
       },
       error: () => {
@@ -275,6 +307,14 @@ export class WipRegisterComponent implements OnInit {
   deltaClass(d: number): string {
     if (d === 0) return 'delta-zero';
     return d > 0 ? 'delta-pos' : 'delta-neg';
+  }
+
+  // Reste sur commande : positif = favorable (encore du budget) -> vert,
+  // négatif = défavorable (commande dépassée) -> orange. Réutilise les
+  // classes delta-pos/delta-neg existantes mais avec la logique inversée.
+  orderRemainingClass(v: number): string {
+    if (v === 0) return 'delta-zero';
+    return v > 0 ? 'delta-neg' : 'delta-pos';
   }
 
   fmt(v: number | undefined | null): string {

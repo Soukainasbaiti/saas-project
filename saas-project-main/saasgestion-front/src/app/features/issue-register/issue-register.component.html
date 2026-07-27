@@ -226,6 +226,29 @@
           </div>
         </div>
 
+        <!-- Section : Pièces jointes -->
+        <div class="ir-section">
+          <div class="ir-section-title">Pièces jointes</div>
+          <div class="ir-form-grid">
+            <div class="ir-field ir-field-full">
+              <div class="ir-doc-list" *ngIf="selectedIssue.documents?.length">
+                <div class="ir-doc-item" *ngFor="let doc of selectedIssue.documents">
+                  <span class="ir-doc-name">{{ doc.fileName }}</span>
+                  <span class="ir-doc-actions">
+                    <button type="button" class="ir-doc-dl" (click)="downloadIssueDoc(doc)">Télécharger</button>
+                    <button type="button" class="ir-doc-del" *ngIf="!isViewMode" (click)="deleteIssueDoc(doc)">Supprimer</button>
+                  </span>
+                </div>
+              </div>
+              <span class="ir-hint" *ngIf="!selectedIssue.documents?.length">Aucune pièce jointe.</span>
+              <div *ngIf="!isViewMode" style="margin-top:8px">
+                <input type="file" accept=".pdf" (change)="onEditFileSelected($event)" [disabled]="uploadingDoc" />
+                <span *ngIf="uploadingDoc" class="ir-hint">Envoi en cours…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -285,6 +308,11 @@
             <label>Quality Leader</label>
             <input type="text" [(ngModel)]="newIssue.qualityLeader" placeholder="Responsable qualité..." />
           </div>
+        </div>
+        <div class="ir-field">
+          <label>Pièce jointe <span class="ir-hint">(PDF — PDCA, 8D...)</span></label>
+          <input type="file" accept=".pdf" (change)="onNewIssueFileSelected($event)" />
+          <span *ngIf="newIssueFile" class="ir-hint">{{ newIssueFile.name }}</span>
         </div>
       </div>
       <div class="ir-create-footer">

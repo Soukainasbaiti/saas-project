@@ -313,6 +313,18 @@ export class ApiService {
   deleteIssue(projectId: number, issueId: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/projects/${projectId}/issues/${issueId}`);
   }
+  uploadIssueDocument(projectId: number, issueId: number, file: File): Observable<any> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<any>(`${this.base}/projects/${projectId}/issues/${issueId}/documents`, form);
+  }
+  downloadIssueDocument(projectId: number, issueId: number, docId: number): Observable<Blob> {
+    return this.http.get(`${this.base}/projects/${projectId}/issues/${issueId}/documents/${docId}/download`,
+      { responseType: 'blob' });
+  }
+  deleteIssueDocument(projectId: number, issueId: number, docId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/projects/${projectId}/issues/${issueId}/documents/${docId}`);
+  }
 
   changeEngagement(projectId: number, engagementType: string): Observable<any> {
     return this.http.put<any>(`${this.base}/projects/${projectId}/engagement`, { engagementType });
@@ -346,6 +358,9 @@ export class ApiService {
   // ── WIP — Nouvelle API (tableau mensuel + documents) ─────────────
   getWipTable(projectId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/projects/${projectId}/wip/table`);
+  }
+  getWipSummary(projectId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/projects/${projectId}/wip/summary`);
   }
   uploadWipDocument(projectId: number, year: number, month: number, type: string, file: File): Observable<any> {
     const form = new FormData();

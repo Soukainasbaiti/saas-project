@@ -33,6 +33,13 @@ public class WipController {
         return wipService.getWipTable(projectId);
     }
 
+    // ── NOUVELLE API — Synthèse : consommation de la commande ─────
+    @GetMapping("/summary")
+    @PreAuthorize("hasAnyRole('PM','BUM','ADMIN')")
+    public com.segula.saasgestion.dto.WipSummaryDto getSummary(@PathVariable Long projectId) {
+        return wipService.getWipSummary(projectId);
+    }
+
     // ── NOUVELLE API — Upload BL signé ou Bon de commande ─────────
     @PostMapping("/months/{year}/{month}/upload")
     @PreAuthorize("hasAnyRole('PM','ADMIN')")
