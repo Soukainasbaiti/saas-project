@@ -11,7 +11,39 @@
 
   <!-- Table -->
   <div class="mr-table-wrap">
-    <div *ngIf="loading" class="mr-empty">{{ i18n.t('loading') }}</div>
+    <table *ngIf="loading" class="mr-table">
+      <thead>
+        <tr>
+          <th>MIP-ID</th>
+          <th>{{ i18n.t('mr.col.lever') }}</th>
+          <th>{{ i18n.t('mr.col.action') }}</th>
+          <th>{{ i18n.t('mr.col.accountable') }}</th>
+          <th>{{ i18n.t('mr.col.client_impact') }}</th>
+          <th>{{ i18n.t('mr.col.due_date') }}</th>
+          <th>{{ i18n.t('mr.col.priority') }}</th>
+          <th>{{ i18n.t('mr.col.planned') }}</th>
+          <th>{{ i18n.t('mr.col.realized') }}</th>
+          <th>{{ i18n.t('mr.col.status') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let _ of [1,2,3,4,5,6]" class="skeleton-row">
+          <td><div class="skeleton" style="width:60%;height:14px"></div></td>
+          <td><div class="skeleton" style="width:55%;height:18px;border-radius:20px"></div></td>
+          <td><div class="skeleton" style="width:80%;height:14px"></div></td>
+          <td><div class="skeleton" style="width:50%;height:14px"></div></td>
+          <td><div class="skeleton" style="width:45%;height:18px;border-radius:20px"></div></td>
+          <td><div class="skeleton" style="width:50%;height:14px"></div></td>
+          <td><div class="skeleton" style="width:45%;height:18px;border-radius:6px"></div></td>
+          <td><div class="skeleton" style="width:40%;height:14px"></div></td>
+          <td><div class="skeleton" style="width:40%;height:14px"></div></td>
+          <td><div class="skeleton" style="width:55%;height:18px;border-radius:20px"></div></td>
+          <td><div class="skeleton" style="width:40px;height:14px"></div></td>
+        </tr>
+      </tbody>
+    </table>
+
     <table *ngIf="!loading" class="mr-table">
       <thead>
         <tr>
@@ -30,7 +62,11 @@
       </thead>
       <tbody>
         <tr *ngIf="!mips.length">
-          <td colspan="11" class="mr-empty">{{ i18n.t('mr.empty') }} — <strong>{{ i18n.t('mr.add') }}</strong></td>
+          <td colspan="11" class="empty-row">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l2-4h14l2 4"/><path d="M8 11h8"/></svg>
+            <div class="empty-row-title">{{ i18n.t('mr.empty') }}</div>
+            <div class="empty-row-sub">{{ i18n.t('mr.add') }}</div>
+          </td>
         </tr>
         <tr *ngFor="let m of mips" class="mr-row" (click)="openEdit(m)">
           <td class="mr-col-id">{{ m.mipId }}</td>

@@ -105,9 +105,14 @@
 
 
   <!-- Loading -->
-  <div class="pm-loading" *ngIf="loading">
-    <div class="spinner"></div>
-    <span>{{ i18n.t('pm.loading') }}</span>
+  <div class="pm-loading-skeleton" *ngIf="loading">
+    <div class="skeleton-kpis">
+      <div class="skeleton skeleton-kpi" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+    <div class="skeleton-table">
+      <div class="skeleton skeleton-row skeleton-row-head"></div>
+      <div class="skeleton skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
+    </div>
   </div>
 
   <ng-container *ngIf="!loading">
@@ -655,7 +660,10 @@
             </tr></thead>
             <tbody>
               <tr *ngIf="nonRebillCosts.length===0">
-                <td [attr.colspan]="months.length+3" class="empty-msg">{{ i18n.t('pm.no_category') }}</td>
+                <td [attr.colspan]="months.length+3" class="empty-row">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l2-4h14l2 4"/><path d="M8 11h8"/></svg>
+                  <div class="empty-row-title">{{ i18n.t('pm.no_category') }}</div>
+                </td>
               </tr>
               <tr *ngFor="let c of nonRebillCosts">
                 <td class="col-name sticky-col category-cell">{{ c.category }}</td>
@@ -718,7 +726,10 @@
             </tr></thead>
             <tbody>
               <tr *ngIf="rebillCostRows.length===0">
-                <td [attr.colspan]="months.length+3" class="empty-msg">{{ i18n.t('pm.empty.no_rebill_cat') }}</td>
+                <td [attr.colspan]="months.length+3" class="empty-row">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l2-4h14l2 4"/><path d="M8 11h8"/></svg>
+                  <div class="empty-row-title">{{ i18n.t('pm.empty.no_rebill_cat') }}</div>
+                </td>
               </tr>
               <tr *ngFor="let c of rebillCostRows" class="row-rebill">
                 <td class="col-name sticky-col category-cell">{{ c.category }}</td>
@@ -1389,7 +1400,10 @@
                   </thead>
                   <tbody>
                     <tr *ngIf="deliverablesForLot(selectedLot).length === 0">
-                      <td colspan="15" class="empty-msg">{{ i18n.t('pm.wp.no_deliverable') }}</td>
+                      <td colspan="15" class="empty-row">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l2-4h14l2 4"/><path d="M8 11h8"/></svg>
+                        <div class="empty-row-title">{{ i18n.t('pm.wp.no_deliverable') }}</div>
+                      </td>
                     </tr>
                     <tr *ngFor="let d of deliverablesForLot(selectedLot)" class="wp-row">
                       <td class="wp-col-id sticky-col" [title]="d.deliverableId"><span class="wp-id-cell">{{ d.deliverableId }}</span></td>

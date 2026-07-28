@@ -68,6 +68,7 @@
   border: none; border-radius: 6px; padding: 6px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all 0.15s;
+  &:hover { transform: translateY(-1px); }
   &.btn-edit       { background: #eff6ff; color: #2563eb; &:hover { background: #dbeafe; } }
   &.btn-toggle-off { background: #fff5f5; color: #dc2626; &:hover { background: #fee2e2; } }
   &.btn-toggle-on  { background: #f0fdf4; color: #16a34a; &:hover { background: #dcfce7; } }

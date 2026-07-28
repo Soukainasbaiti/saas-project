@@ -29,10 +29,30 @@
     <!-- Table -->
     <div class="table-card">
 
-      <div class="table-loading" *ngIf="loading">
-        <div class="spinner"></div>
-        <span>Chargement...</span>
-      </div>
+      <table class="users-table" *ngIf="loading">
+        <thead>
+          <tr>
+            <th>Nom complet</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Statut</th>
+            <th>Créé par</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let _ of [1,2,3,4,5,6]" class="skeleton-row">
+            <td><div class="skeleton" style="width:70%;height:14px"></div></td>
+            <td><div class="skeleton" style="width:60%;height:14px"></div></td>
+            <td><div class="skeleton" style="width:50%;height:18px;border-radius:12px"></div></td>
+            <td><div class="skeleton" style="width:40%;height:14px"></div></td>
+            <td><div class="skeleton" style="width:50%;height:14px"></div></td>
+            <td><div class="skeleton" style="width:45%;height:14px"></div></td>
+            <td><div class="skeleton" style="width:60px;height:22px"></div></td>
+          </tr>
+        </tbody>
+      </table>
 
       <table class="users-table" *ngIf="!loading">
         <thead>
@@ -83,7 +103,11 @@
             </td>
           </tr>
           <tr *ngIf="filteredUsers.length === 0">
-            <td colspan="7" class="empty-row">Aucun utilisateur trouvé</td>
+            <td colspan="7" class="empty-row">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l2-4h14l2 4"/><path d="M8 11h8"/></svg>
+              <div class="empty-row-title">Aucun utilisateur trouvé</div>
+              <div class="empty-row-sub">Essayez d'ajuster vos filtres ou votre recherche</div>
+            </td>
           </tr>
         </tbody>
       </table>

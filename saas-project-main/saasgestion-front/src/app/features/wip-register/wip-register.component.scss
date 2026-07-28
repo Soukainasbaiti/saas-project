@@ -257,7 +257,7 @@ $shadow-lg: 0 16px 40px rgba(15, 23, 42, .16);
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
-  &:hover { background: var(--pm-accent); color: #fff; border-color: var(--pm-accent); }
+  &:hover { background: var(--pm-accent); color: #fff; border-color: var(--pm-accent); transform: translateY(-1px); }
 }
 
 .wip-empty {
