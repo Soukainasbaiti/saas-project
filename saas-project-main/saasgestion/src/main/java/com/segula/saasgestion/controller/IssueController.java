@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Registre Issues", description = "Gestion des issues projet (blocages, actions correctives)")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("@projectAccessGuard.hasAccess(#projectId, authentication)")
 public class IssueController {
 
     private final IssueService issueService;

@@ -32,9 +32,12 @@ server:
     context-path: /api
 
 # ── JWT ────────────────────────────────────────────────────────────
+# Pas de valeur par defaut pour le secret : l'appli doit refuser de demarrer
+# si JWT_SECRET n'est pas explicitement configure (sinon un secret connu/
+# public permettrait de forger des tokens valides, y compris ADMIN).
 app:
   jwt:
-    secret: ${JWT_SECRET:segula-saas-super-secret-key-2024-must-be-at-least-32-chars}
+    secret: ${JWT_SECRET}
     access-token-ms: 3600000
     refresh-token-ms: 604800000
   base-url: ${FRONTEND_URL:http://localhost:4200}

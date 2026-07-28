@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Registre Risques", description = "Gestion des risques projet (criticité, probabilité, impact, statut)")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("@projectAccessGuard.hasAccess(#projectId, authentication)")
 public class RiskController {
 
     private final RiskService riskService;

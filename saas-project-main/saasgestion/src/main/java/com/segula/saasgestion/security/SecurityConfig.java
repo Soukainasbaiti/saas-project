@@ -1,6 +1,7 @@
 package com.segula.saasgestion.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -18,6 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.segula.saasgestion.security.JwtAuthFilter;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -27,6 +29,15 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+
+    // Origines autorisees en CORS : liste exacte separee par des virgules,
+    // configurable via la variable d'environnement APP_CORS_ALLOWED_ORIGINS
+    // (pas de wildcard de domaine type *.vercel.app — n'importe qui peut
+    // deployer sur ces plateformes gratuitement, un wildcard large
+    // laisserait n'importe quelle app tierce appeler cette API avec les
+    // identifiants de l'utilisateur).
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost,https://saas-project-phi.vercel.app}")
+    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -61,18 +72,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-            "http://localhost:4200",
-            "http://localhost",
-            "http://localhost:80",
-            "https://*.ngrok-free.app",
-            "https://*.ngrok-free.dev",
-            "https://*.ngrok.io",
-            "https://*.railway.app",
-            "https://*.up.railway.app",
-            "https://*.onrender.com",
-            "https://*.vercel.app"
-        ));
+        config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
