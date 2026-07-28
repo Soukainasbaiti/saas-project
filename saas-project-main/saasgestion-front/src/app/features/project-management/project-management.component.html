@@ -2483,23 +2483,6 @@
     </div>
   </div>
 
-  <!-- ── Modal : Confirmer suppression Pays ── -->
-  <div class="modal-overlay" *ngIf="showDeleteCountryModal" (click)="cancelDeleteCountry()">
-    <div class="modal-card" (click)="$event.stopPropagation()" style="max-width:420px">
-      <div class="modal-header">
-        <h3>{{ i18n.t('pm.country.delete_title') }}</h3>
-        <button class="modal-close" (click)="cancelDeleteCountry()">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:14px;color:#1e293b;margin:0" [innerHTML]="i18n.t('pm.country.delete_confirm', '<strong>' + (pendingDeleteCountry?.countryName || '') + '</strong>')"></p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-cancel" (click)="cancelDeleteCountry()" [disabled]="deletingCountry">{{ i18n.t('common.cancel') }}</button>
-        <button class="btn-delete-confirm" (click)="confirmDeleteCountry()" [disabled]="deletingCountry">{{ deletingCountry ? i18n.t('common.saving') : i18n.t('common.delete') }}</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ── Modal : Ajouter un Lot (Work Package) ── -->
   <div class="modal-overlay" *ngIf="showAddLotModal" (click)="showAddLotModal=false">
     <div class="modal-card" (click)="$event.stopPropagation()">

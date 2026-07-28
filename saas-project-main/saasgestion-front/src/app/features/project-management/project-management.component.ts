@@ -693,7 +693,7 @@ export class ProjectManagementComponent implements OnInit {
   showSubmitModal = false;
   showValidateModal = false;
   showDeleteModal = false;
-  pendingDelete: { type: 'resource' | 'category' | 'resources-bulk' | 'resources-all' | 'country-budget-category'; id?: number; ids?: number[]; name: string; countryId?: number } | null = null;
+  pendingDelete: { type: 'resource' | 'category' | 'resources-bulk' | 'resources-all' | 'country-budget-category' | 'country'; id?: number; ids?: number[]; name: string; countryId?: number } | null = null;
   selectedResourceIds = new Set<number>();
 
   get isEditable(): boolean {
@@ -762,44 +762,11 @@ export class ProjectManagementComponent implements OnInit {
     });
   }
 
-  deletingCountry = false;
-  showDeleteCountryModal = false;
-  pendingDeleteCountry: { countryId: number; countryName: string } | null = null;
-
   openDeleteCountryModal(c: { countryId: number; countryName: string; isLead: boolean }): void {
     if (c.isLead) return;
-    this.pendingDeleteCountry = { countryId: c.countryId, countryName: c.countryName };
-    this.showDeleteCountryModal = true;
+    this.pendingDelete = { type: 'country', countryId: c.countryId, name: c.countryName };
+    this.showDeleteModal = true;
     this.cdr.markForCheck();
-  }
-
-  cancelDeleteCountry(): void {
-    this.showDeleteCountryModal = false;
-    this.pendingDeleteCountry = null;
-    this.cdr.markForCheck();
-  }
-
-  confirmDeleteCountry(): void {
-    if (!this.pendingDeleteCountry || this.deletingCountry) return;
-    const target = this.pendingDeleteCountry;
-    this.deletingCountry = true;
-    this.api.deleteProjectCountry(this.projectId, target.countryId).subscribe({
-      next: () => {
-        this.deletingCountry = false;
-        this.showDeleteCountryModal = false;
-        this.pendingDeleteCountry = null;
-        this.loadProjectCountries();
-        this.load();
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.deletingCountry = false;
-        this.showDeleteCountryModal = false;
-        this.pendingDeleteCountry = null;
-        this.showSaveError('❌ ' + (err?.error?.error || this.i18n.t('pm.country.delete_error')));
-        this.cdr.markForCheck();
-      }
-    });
   }
 
   // Matricule warning
@@ -2808,6 +2775,11 @@ export class ProjectManagementComponent implements OnInit {
       Promise.allSettled(ids.map(id => lastValueFrom(this.api.deleteResource(id)))).then(() => {
         this.selectedResourceIds.clear();
         this.load();
+      });
+    } else if (this.pendingDelete.type === 'country' && this.pendingDelete.countryId != null) {
+      this.api.deleteProjectCountry(this.projectId, this.pendingDelete.countryId).subscribe({
+        next: () => { this.loadProjectCountries(); this.load(); },
+        error: (err) => this.showSaveError('❌ ' + (err?.error?.error || this.i18n.t('pm.country.delete_error')))
       });
     }
     this.pendingDelete = null;
