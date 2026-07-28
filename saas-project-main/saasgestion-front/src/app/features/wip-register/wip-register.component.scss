@@ -553,7 +553,31 @@ $shadow-lg: 0 16px 40px rgba(15, 23, 42, .16);
   font-weight: 700;
   color: #1e293b;
   border-bottom: 1px solid #f1f5f9;
-  &.danger { color: #dc2626; }
+}
+
+// ── Modal de confirmation (style générique uniformisé) ────────────
+.modal-card { background: #fff; border-radius: 16px; width: min(440px,92vw); box-shadow: 0 20px 60px rgba(0,0,0,.2); overflow: hidden; }
+.confirm-modal {
+  text-align: center;
+  padding: 36px 32px 28px;
+  width: min(420px, 92vw);
+}
+.confirm-modal-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  &.delete-icon { background: rgba(220,38,38,.1); color: #dc2626; }
+}
+.confirm-modal-title { font-size: 17px; font-weight: 700; color: #1e293b; margin: 0 0 12px; }
+.confirm-modal-msg {
+  font-size: 13.5px; color: #475569; line-height: 1.6; margin: 0 0 28px;
+  strong { color: #1e293b; }
+}
+.confirm-modal-actions {
+  display: flex; justify-content: center; gap: 12px;
+  .btn-cancel { min-width: 110px; }
+  .btn-confirm { min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .delete-confirm-btn { background: #dc2626; &:hover { background: #b91c1c; } }
 }
 
 .modal-body {
@@ -616,18 +640,6 @@ $shadow-lg: 0 16px 40px rgba(15, 23, 42, .16);
   font-weight: 600;
   cursor: pointer;
   &:hover { background: #059669; }
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover { background: #dc2626; }
 }
 
 // ── TOAST ──────────────────────────────────────────────────────

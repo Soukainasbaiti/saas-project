@@ -326,20 +326,19 @@
   </div>
 
   <!-- ── MODAL SUPPRESSION ── -->
-  <div class="ir-backdrop" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
-    <div class="ir-delete-modal" (click)="$event.stopPropagation()">
-      <div class="ir-delete-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
-        </svg>
+  <div class="modal-overlay" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+    <div class="modal-card confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-icon delete-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
       </div>
-      <h3>{{ i18n.t('ir.delete.title') }}</h3>
-      <p [innerHTML]="i18n.t('ir.delete.confirm', '<strong>' + (pendingDeleteIssue?.iId || '') + '</strong>')"></p>
-      <p class="ir-delete-warning">{{ i18n.t('common.irreversible') }}</p>
-      <div class="ir-delete-actions">
-        <button class="ir-cancel-btn" (click)="cancelDelete()">{{ i18n.t('common.cancel') }}</button>
-        <button class="ir-delete-confirm-btn" (click)="confirmDelete()">{{ i18n.t('common.delete') }}</button>
+      <h3 class="confirm-modal-title">{{ i18n.t('ir.delete.title') }}</h3>
+      <p class="confirm-modal-msg" [innerHTML]="i18n.t('ir.delete.confirm', '<strong>' + (pendingDeleteIssue?.iId || '') + '</strong>') + ' ' + i18n.t('common.irreversible')"></p>
+      <div class="confirm-modal-actions">
+        <button class="btn-cancel" (click)="cancelDelete()">{{ i18n.t('common.cancel') }}</button>
+        <button class="btn-confirm delete-confirm-btn" (click)="confirmDelete()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          {{ i18n.t('common.delete') }}
+        </button>
       </div>
     </div>
   </div>

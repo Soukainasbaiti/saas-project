@@ -230,16 +230,19 @@
 
 <!-- ── Modale confirmation suppression ────────────────────────── -->
 <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDelete()">
-  <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
-    <div class="modal-icon-wrap danger">🗑️</div>
-    <p class="modal-title">Supprimer l'utilisateur</p>
-    <p class="modal-msg">
-      Êtes-vous sûr de vouloir supprimer <b>{{ deleteTarget?.fullName }}</b> ?<br>
+  <div class="modal-card confirm-modal" (click)="$event.stopPropagation()">
+    <div class="confirm-modal-icon delete-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+    </div>
+    <h3 class="confirm-modal-title">Supprimer l'utilisateur</h3>
+    <p class="confirm-modal-msg">
+      Êtes-vous sûr de vouloir supprimer <strong>{{ deleteTarget?.fullName }}</strong> ?<br>
       Cette action est irréversible.
     </p>
-    <div class="modal-actions">
-      <button class="btn-secondary" (click)="closeDelete()" [disabled]="deleteSaving">Annuler</button>
-      <button class="btn-danger" (click)="confirmDelete()" [disabled]="deleteSaving">
+    <div class="confirm-modal-actions">
+      <button class="btn-cancel" (click)="closeDelete()" [disabled]="deleteSaving">Annuler</button>
+      <button class="btn-confirm delete-confirm-btn" (click)="confirmDelete()" [disabled]="deleteSaving">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
         <span *ngIf="!deleteSaving">Supprimer</span>
         <span *ngIf="deleteSaving">Suppression...</span>
       </button>
