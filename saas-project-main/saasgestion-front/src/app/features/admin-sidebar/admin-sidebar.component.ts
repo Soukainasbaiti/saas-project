@@ -20,11 +20,20 @@ export class AdminSidebarComponent implements OnInit {
   ];
 
   currentThemeKey = localStorage.getItem('pm-theme') ?? '';
+  mobileOpen = false;
 
   constructor(public auth: AuthService, public i18n: I18nService) {}
 
   ngOnInit(): void {
     this.applyTheme(this.currentThemeKey);
+  }
+
+  toggleMobile(): void {
+    this.mobileOpen = !this.mobileOpen;
+  }
+
+  closeMobile(): void {
+    this.mobileOpen = false;
   }
 
   setTheme(key: string): void {

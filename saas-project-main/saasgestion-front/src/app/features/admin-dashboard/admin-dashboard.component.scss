@@ -709,3 +709,20 @@
   &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(21,128,61,0.35); }
   &:disabled { opacity: 0.45; cursor: not-allowed; }
 }
+
+/* ── Responsive : layout admin sous 900px (sidebar en tiroir) ──── */
+@media (max-width: 900px) {
+  .admin-header {
+    flex-wrap: wrap;
+    padding: 10px 16px 10px 60px; // laisse la place au bouton hamburger fixe
+  }
+  .header-right {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .search-input,
+  .filter-select {
+    flex: 1 1 140px;
+    width: auto;
+  }
+}
