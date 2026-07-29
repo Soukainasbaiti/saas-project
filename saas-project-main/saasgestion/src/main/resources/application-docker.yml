@@ -19,6 +19,6 @@ app:
     access-token-ms: 3600000
     refresh-token-ms: 604800000
   mail:
-    from: adamadrissa.07@gmail.com
+    from: ${MAIL_FROM:adamadrissa.07@gmail.com}
   brevo:
     api-key: ${BREVO_API_KEY:}
