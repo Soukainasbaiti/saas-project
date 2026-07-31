@@ -1,0 +1,2 @@
+# Secrets locaux — jamais commités (voir .env.example pour le modele)
+.env

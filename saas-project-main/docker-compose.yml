@@ -13,6 +13,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      # Pas de dump.sql fourni (donnees de demo) : ajoutez le votre ici si besoin,
+      # ex. "- ./dump.sql:/docker-entrypoint-initdb.d/02_dump.sql". Sans ce fichier,
+      # la base demarre avec le schema seul (via init.sql) + un compte
+      # admin de test (admin@segula.fr / Admin123!) — aucune donnee reelle.
     ports:
       - "5432:5432"
     healthcheck:
@@ -30,10 +34,18 @@ services:
     container_name: saas_backend
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      DB_USER: postgres
-      DB_PASSWORD: root
-      JWT_SECRET: segula-saas-super-secret-key-2024-must-be-at-least-32-chars
+      PGUSER: postgres
+      PGPASSWORD: root
+      # Doit correspondre a POSTGRES_DB du service postgres ci-dessus :
+      # sans cette ligne, le backend cherchait une base "railway" (valeur
+      # par defaut d'application-docker.yml) qui n'existe pas en local.
+      POSTGRES_DB: project_saas
+      # Lu depuis un fichier .env local (copiez .env.example en .env et
+      # remplissez une vraie valeur) — jamais de secret en dur ici.
+      JWT_SECRET: ${JWT_SECRET}
       FRONTEND_URL: http://localhost
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
     ports:
       - "8080:8080"
     depends_on:
